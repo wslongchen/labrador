@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
 use serde_json::{Value as JsonValue, Value};
 
-use crate::{request::Response, errors::LabraError, LabradorResult, RequestMethod};
+use crate::{errors::LabraError, LabradorResult, RequestMethod};
 use crate::taobao::constants::ERROR_RESPONSE_KEY;
 
 // 淘宝 ↓
@@ -92,14 +92,6 @@ pub struct TbMaterialSelectResponse {
     /// 商品数据
     pub result_list: Option<ResultlList<MaterialSelectItem>>,
 }
-
-
-impl Response <TbMaterialSelectResponse>  for JsonValue {
-    fn parse_result(&self) -> LabradorResult<TbMaterialSelectResponse> {
-        serde_json::from_value::<TbMaterialSelectResponse>(self.to_owned()).map_err( LabraError::from)
-    }
-}
-
 
 #[derive(Debug, Deserialize,Serialize)]
 pub struct MaterialSelectItem {
@@ -330,25 +322,6 @@ pub struct TbJhsSearchResponse {
 pub struct ModelList {
     /// 商品数据
     pub items: Option<Vec<JhsItem>>,
-}
-
-impl Response <TbJhsSearchResponse>  for JsonValue {
-    fn parse_result(&self) -> LabradorResult<TbJhsSearchResponse> {
-        if let Some(result) = self.get("result") {
-            if let Some(success) = result.get("success") {
-                if success.as_bool().unwrap_or_default() {
-                    serde_json::from_value::<TbJhsSearchResponse>(result.to_owned()).map_err(LabraError::from)
-                } else {
-                    let msg_info = result.get("msg_info").unwrap().as_str().unwrap_or_default();
-                    Err(LabraError::ClientError { errcode: "-1".to_string(), errmsg: msg_info.to_owned() })
-                }
-            } else {
-                Err(LabraError::MissingField("返回参数有误，缺少字段。".to_owned()))
-            }
-        } else {
-            Err(LabraError::MissingField("返回结果有误，缺少字段。".to_owned()))
-        }
-    }
 }
 
 #[derive(Debug, Deserialize,Serialize)]

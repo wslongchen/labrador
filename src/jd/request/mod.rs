@@ -1,19 +1,13 @@
+use std::collections::BTreeMap;
 use serde::{Serialize, Deserialize};
-
-use crate::request::Params;
+use crate::jd::method::JDMethod;
+use crate::JDRequest;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct JdJFGoodsRequest {
     pub goods_req: JdJFGoodsParam,
 }
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct JdOrderRequest {
-    pub order_req: JdOrderRecentQueryParam,
-}
-
 
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -46,27 +40,46 @@ pub struct JdJFGoodsParam {
     pub forbid_types: Option<String>,
 }
 
-impl Params for JdJFGoodsRequest {
-    fn get_params(&self) -> Vec<(String, String)> {
-        vec![("param_json".to_owned(), serde_json::to_string(self).unwrap_or_default())]
+impl JDRequest for JdJFGoodsRequest {
+    fn get_api_method_name(&self) -> JDMethod {
+        JDMethod::FanGoodsSelect
+    }
+
+    fn get_text_params(&self) -> BTreeMap<String, String> {
+        BTreeMap::from([("360buy_param_json".to_owned(), serde_json::to_string(self).unwrap_or_default())])
     }
 }
+//----------------------------------------------------------------------------------------------------------------------------
 
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct JdGoodsInfoQueryParam {
+pub struct JdGoodsInfoQueryRequest {
     /// 京东skuID串，逗号分割，最多100个，开发示例如param_json={'skuIds':'5225346,7275691'}（
     /// 非常重要 请大家关注：如果输入的sk串中某个skuID的商品不在推广中[就是没有佣金]，返回结果中不会包含这个商品的信息）
     pub sku_ids: String,
 }
 
-impl Params for JdGoodsInfoQueryParam {
-    fn get_params(&self) -> Vec<(String, String)> {
-        vec![("param_json".to_owned(), serde_json::to_string(self).unwrap_or_default())]
+impl JDRequest for JdGoodsInfoQueryRequest {
+    fn get_api_method_name(&self) -> JDMethod {
+        JDMethod::GoodsInfoQuery
+    }
+
+    fn get_text_params(&self) -> BTreeMap<String, String> {
+        BTreeMap::from([("360buy_param_json".to_owned(), serde_json::to_string(self).unwrap_or_default())])
     }
 }
 
+//----------------------------------------------------------------------------------------------------------------------------
+
+
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JdPromotionUrlGenerateRequest {
+    /// 请求入参
+    pub promotion_code_req: JdPromotionUrlGenerateParam,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -92,10 +105,22 @@ pub struct JdPromotionUrlGenerateParam {
     pub gift_coupon_key: Option<String>,
 }
 
-impl Params for JdPromotionUrlGenerateParam {
-    fn get_params(&self) -> Vec<(String, String)> {
-        vec![("param_json".to_owned(), serde_json::to_string(self).unwrap_or_default())]
+impl JDRequest for JdPromotionUrlGenerateRequest {
+    fn get_api_method_name(&self) -> JDMethod {
+        JDMethod::PromotionUrlGenerate
     }
+
+    fn get_text_params(&self) -> BTreeMap<String, String> {
+        BTreeMap::from([("360buy_param_json".to_owned(), serde_json::to_string(self).unwrap_or_default())])
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JdOrderRequest {
+    pub order_req: JdOrderRecentQueryParam,
 }
 
 
@@ -120,11 +145,19 @@ pub struct JdOrderRecentQueryParam {
     pub key: Option<String>,
 }
 
-impl Params for JdOrderRequest {
-    fn get_params(&self) -> Vec<(String, String)> {
-        vec![("param_json".to_owned(), serde_json::to_string(self).unwrap_or_default())]
+#[allow(deprecated)]
+impl JDRequest for JdOrderRequest {
+    fn get_api_method_name(&self) -> JDMethod {
+        JDMethod::OrderRecentQuery
+    }
+
+    fn get_text_params(&self) -> BTreeMap<String, String> {
+        BTreeMap::from([("360buy_param_json".to_owned(), serde_json::to_string(self).unwrap_or_default())])
     }
 }
+
+//----------------------------------------------------------------------------------------------------------------------------
+
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -157,9 +190,15 @@ pub struct JdOrderRawRequest {
 }
 
 
+impl JDRequest for JdOrderRawRequest {
+    fn get_api_method_name(&self) -> JDMethod {
+        JDMethod::OrderRawQuery
+    }
 
-impl Params for JdOrderRawRequest {
-    fn get_params(&self) -> Vec<(String, String)> {
-        vec![("param_json".to_owned(), serde_json::to_string(self).unwrap_or_default())]
+    fn get_text_params(&self) -> BTreeMap<String, String> {
+        BTreeMap::from([("360buy_param_json".to_owned(), serde_json::to_string(self).unwrap_or_default())])
     }
 }
+
+//----------------------------------------------------------------------------------------------------------------------------
+

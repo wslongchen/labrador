@@ -20,7 +20,7 @@ use crate::wechat::pay::method::WechatPayMethod;
 
 const SCHEMA: &str = "WECHATPAY2-SHA256-RSA2048";
 
-/// [交易类型]
+/// 交易类型
 #[derive(PartialEq, Debug, Serialize, Deserialize, Clone)]
 pub enum TradeType {
     /// `MICRO`

@@ -1,7 +1,77 @@
 use serde::{Deserialize, Serialize};
+use serde::de::DeserializeOwned;
 use serde_json::{Value as JsonValue};
 
-use crate::{errors::LabraError, LabradorResult, request::Response};
+use crate::{errors::LabraError, LabradorResult, request::Response, RequestMethod};
+use crate::jd::constants::ERROR_RESPONSE_KEY;
+
+
+// 京东 ↓
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct JDResponse {
+    pub code: Option<String>,
+    pub message: Option<String>,
+    pub body: Option<String>,
+}
+
+
+impl JDResponse {
+    pub fn new() -> Self {
+        Self {
+            code: Some("0".to_string()),
+            message: None,
+            body: None,
+        }
+    }
+
+    pub fn parse(str: &str,method: impl RequestMethod) -> LabradorResult<Self> {
+        let v= serde_json::from_str(str).unwrap_or(JsonValue::Null);
+        // 判断是否异常
+        let err= &v[ERROR_RESPONSE_KEY];
+        if !err.is_null() {
+            let resp = serde_json::from_str::<Self>(&err.to_string()).unwrap_or(JDResponse::new());
+            Err(LabraError::ClientError {errcode: resp.code.to_owned().unwrap_or_default().to_string(), errmsg: resp.message.to_owned().unwrap_or_default()})
+        } else {
+            let response = &v[&method.get_response_key()];
+            if !response.is_null() {
+                let mut resp = serde_json::from_str::<Self>(&response.to_string()).unwrap_or(JDResponse::new());
+                if resp.code.is_none() {
+                    resp.code = "0".to_string().into();
+                }
+                resp.body = response.to_string().into();
+                Ok(resp)
+            } else {
+                Err(LabraError::MissingField(format!("无法获取解析返回结果：【{}】", str)))
+            }
+        }
+
+    }
+
+    pub fn is_success(&self) -> bool {
+        self.code.to_owned().unwrap_or_default().eq("0")
+    }
+
+    pub fn get_biz_model<T: DeserializeOwned>(&self, key: Option<&str>) -> LabradorResult<T> {
+        if self.is_success() {
+            if let Some(key) = key {
+                let v = serde_json::from_str::<JsonValue>(&self.body.to_owned().unwrap_or_default())?;
+                let result = &v[key];
+                if result.is_string() {
+                    serde_json::from_str::<T>(result.as_str().unwrap_or_default()).map_err(LabraError::from)
+                } else {
+                    serde_json::from_value::<T>(v[key].to_owned()).map_err(LabraError::from)
+                }
+            } else {
+                serde_json::from_str::<T>(&self.body.to_owned().unwrap_or_default()).map_err(LabraError::from)
+            }
+        } else {
+            Err(LabraError::ClientError { errcode: self.code.to_owned().unwrap_or_default().to_string(), errmsg: self.message.to_owned().unwrap_or_default() })
+        }
+    }
+
+}
 
 //----------------------------------------------------------------------------------------------------------------------------
 
@@ -10,10 +80,15 @@ use crate::{errors::LabraError, LabradorResult, request::Response};
 pub struct JdCommonResponse <T> {
     /// 返回信息
     pub message: Option<String>,
+    /// 请求编号
+    pub request_id: Option<String>,
     /// 是否还有更多,true：还有数据；false:已查询完毕，没有数据
     pub has_more: Option<bool>,
     /// 返回编码
-    pub code: Option<u64>,
+    /// 200:success; 500:服务端异常; 400:参数错误; 401:验证失败; 403:无访问权限; 404数据不存在; 409:数据已存在;
+    /// 410:联盟用户不存在，请检查unionId是否正确; 411:unionId不正确，请检查unionId是否正确; 2003101:参数异常，skuIds为空;
+    /// 2003102:参数异常，sku个数为1-100个; 2003103:接口异常，没有相关权限; 2003104:请求商品信息{X}条，成功返回{Y}条, 失败{Z}条;
+    pub code: Option<i32>,
     /// 总数
     pub total_count: Option<u64>,
     pub data: Option<T>,
@@ -64,7 +139,7 @@ pub struct JdJFGoodsSelect {
     /// 秒杀信息
     pub seckill_info: Option<SeckillInfo>,
     /// 京喜商品类型，1京喜、2京喜工厂直供、3京喜优选（包含3时可在京东APP购买）
-    pub jx_flags: Option<String>,
+    pub jx_flags: Option<Vec<u8>>,
     /// 段子信息
     pub document_info: Option<DocumentInfo>,
     /// 图书信息
@@ -264,7 +339,7 @@ impl Response <JdCommonResponse<Vec<JdJFGoodsSelect>>>  for JsonValue {
 #[serde(rename_all = "camelCase")]
 pub struct JdGoodsInfoQuery {
     /// 商品ID
-    pub sku_id: Option<f64>,
+    pub sku_id: Option<u64>,
     /// 商品单价即京东价
     pub unit_price: Option<f64>,
     /// 无线佣金比例
@@ -335,10 +410,18 @@ impl Response <JdCommonResponse<JdPromotionUrlGenerateResponse>>  for JsonValue 
     }
 }
 
+//----------------------------------------------------------------------------------------------------------------------------
 
 #[derive(Debug, Deserialize,Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct JdOrderQueryResponse{
+pub struct JdOrderQueryResponse {
+    /// 订单完成时间(（购买用户确认收货时间）时间戳，毫秒)
+    pub order_row_resp: Option<Vec<JdOrderQueryResp>>,
+}
+
+#[derive(Debug, Deserialize,Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JdOrderQueryResp{
     /// 订单完成时间(（购买用户确认收货时间）时间戳，毫秒)
     pub finish_time: Option<u64>,
     /// 下单设备(1:PC,2:无线)
@@ -455,9 +538,4 @@ pub struct SkuInfo{
     pub gift_coupon_key: Option<String>,
 }
 
-
-impl Response <JdCommonResponse<Vec<JdOrderQueryResponse>>>  for JsonValue {
-    fn parse_result(&self) -> LabradorResult<JdCommonResponse<Vec<JdOrderQueryResponse>>> {
-        serde_json::from_value::<JdCommonResponse<Vec<JdOrderQueryResponse>>>(self.to_owned()).map_err(LabraError::from)
-    }
-}
+//----------------------------------------------------------------------------------------------------------------------------

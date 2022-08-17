@@ -1,12 +1,12 @@
 [package]
 name = "labrador"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["mrpan <1049058427@qq.com>"]
 edition = "2018"
 description = "Labrador - Mini client for rust."
 readme = "README.md"
 keywords = ["alipay", "wechat", "jd", "taobao", "pdd"]
-categories = ["data-structures", "database-implementations"]
+categories = ["thirtpart-pay", "pay"]
 homepage = "https://github.com/wslongchen/labrador"
 repository = "https://github.com/wslongchen/labrador"
 documentation = "https://docs.rs/labrador"
