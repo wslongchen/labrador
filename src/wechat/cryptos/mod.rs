@@ -84,9 +84,9 @@ impl WeChatCrypto {
 
     /// #获取签名
     ///
-    /// [`timestamp`] 时间戳
-    /// [`nonce`] 随机字符串
-    /// [`encrypted`] 加密数据
+    /// timestamp 时间戳
+    /// nonce 随机字符串
+    /// encrypted 加密数据
     fn get_signature(&self, timestamp: i64, nonce: &str, encrypted: &str) -> LabradorResult<String> {
         let mut data = vec![
             self.token.to_owned(),
@@ -108,9 +108,9 @@ impl WeChatCrypto {
 
     /// #数据解密
     ///
-    /// [`session_key`] key
-    /// [`iv`] 偏移量
-    /// [`encrypted_data`] 加密数据
+    /// session_key key
+    /// iv 偏移量
+    /// encrypted_data 加密数据
     pub fn decrypt_data(session_key: &str, encrypted_data: &str, iv: &str) -> LabradorResult<String> {
         let key = base64::decode(&session_key)?;
         let prp = PrpCrypto::new(key);
@@ -120,9 +120,9 @@ impl WeChatCrypto {
 
     /// #检查签名
     ///
-    /// [`timestamp`] 时间戳
-    /// [`nonce`] 随机字符串
-    /// [`echo_str`] 加密数据
+    /// timestamp 时间戳
+    /// nonce 随机字符串
+    /// echo_str 加密数据
     pub fn check_signature(&self, signature: &str, timestamp: i64, nonce: &str, echo_str: &str) -> LabradorResult<String> {
         let real_signature = self.get_signature(timestamp, nonce, echo_str)?;
         if signature != &real_signature {
@@ -135,9 +135,9 @@ impl WeChatCrypto {
 
     /// #加密消息
     ///
-    /// [`timestamp`] 时间戳
-    /// [`nonce`] 随机字符串
-    /// [`msg`] 加密数据
+    /// timestamp 时间戳
+    /// nonce 随机字符串
+    /// msg 加密数据
     pub fn encrypt_message(&self, msg: &str, timestamp: i64, nonce: &str) -> LabradorResult<String> {
         let prp = PrpCrypto::new(self.key.to_owned());
         let encrypted_msg = prp.aes_128_cbc_encrypt_msg(msg, &self._id)?;
@@ -159,10 +159,10 @@ impl WeChatCrypto {
 
     /// #解密消息
     ///
-    /// [`xml`] 解密内容
-    /// [`nonce`] 随机字符串
-    /// [`timestamp`] 时间戳
-    /// [`signature`] 签名
+    /// xml 解密内容
+    /// nonce 随机字符串
+    /// timestamp 时间戳
+    /// signature 签名
     pub fn decrypt_message(&self, xml: &str, signature: &str, timestamp: i64, nonce: &str) -> LabradorResult<String> {
         use crate::util::xmlutil;
         let package = xmlutil::parse(xml);
@@ -179,8 +179,8 @@ impl WeChatCrypto {
 
     /// #解密退款消息
     ///
-    /// [`app_key`] 应用key
-    /// [`ciphertext`] 加密数据
+    /// app_key 应用key
+    /// ciphertext 加密数据
     pub fn decrypt_data_refund(app_key: &str, ciphertext: &str) -> LabradorResult<String> {
         let b64decoded = base64::decode(ciphertext)?;
         let md5_key = md5::md5(app_key);
@@ -201,12 +201,12 @@ impl WeChatCryptoV3 {
     }
 
     /// # V3  SHA256withRSA 签名.
-    /// [`method`]       请求方法  GET  POST PUT DELETE 等
-    /// [`url`] 例如  https://api.mch.weixin.qq.com/v3/pay/transactions/app?version=1 ——> /v3/pay/transactions/app?version=1
-    /// [`timestamp`]    当前时间戳   因为要配置到TOKEN 中所以 签名中的要跟TOKEN 保持一致
-    /// [`nonceStr`]     随机字符串  要和TOKEN中的保持一致
-    /// [`body`]         请求体 GET 为 "" POST 为JSON
-    /// [`keyPair`]      商户API 证书解析的密钥对  实际使用的是其中的私钥
+    /// method       请求方法  GET  POST PUT DELETE 等
+    /// url 例如 [示例](https://api.mch.weixin.qq.com/v3/pay/transactions/app?version=1) ——> /v3/pay/transactions/app?version=1
+    /// timestamp    当前时间戳   因为要配置到TOKEN 中所以 签名中的要跟TOKEN 保持一致
+    /// nonceStr     随机字符串  要和TOKEN中的保持一致
+    /// body         请求体 GET 为 "" POST 为JSON
+    /// keyPair      商户API 证书解析的密钥对  实际使用的是其中的私钥
     pub fn signature_v3(method: &String, url: &String, timestamp: i64, nonce_str: &String, body: &String, private_key: &String) -> LabradorResult<String> {
         let signature_str = [method, url, &timestamp.to_string(), nonce_str, body];
         let sign = signature_str.iter().map(|item| item.to_string()).collect::<Vec<_>>().join("\n") + "\n";
@@ -214,21 +214,21 @@ impl WeChatCryptoV3 {
     }
 
     /// # V3  SHA256withRSA 签名.
-    /// [`sign`]                签名
-    /// [`private_key`]         私钥
+    /// sign                签名
+    /// private_key         私钥
     pub fn sign(sign: &String, private_key: &String) -> LabradorResult<String> {
         PrpCrypto::rsa_sha256_sign(&sign, private_key)
     }
 
     /// # V3  验证签名
-    /// [`signature`]     签名
-    /// [`public_key`]    公钥
+    /// signature     签名
+    /// public_key    公钥
     pub fn verify(message: &str, signature: &str, public_key: &String) -> LabradorResult<bool> {
         PrpCrypto::rsa_sha256_verify(public_key, message, signature)
     }
 
     /// # V3 消息解密 - 使用V3密钥
-    /// [`decrypt`]     微信返回的待解密的数据体
+    /// decrypt     微信返回的待解密的数据体
     pub fn decrypt_data_v3(&self, decrypt: &EncryptV3) -> LabradorResult<Vec<u8>> {
         let associated_data = decrypt.associated_data.to_owned().unwrap_or_default();
         let nonce = decrypt.nonce.to_owned();

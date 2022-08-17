@@ -93,19 +93,6 @@ impl <T: SessionStore> TaobaoClient<T> {
         }
     }
 
-    #[inline]
-    fn build_common_params(&self) -> Vec<(String, String)> {
-        // build common params
-        let mut params: Vec<(String, String)> = Vec::new();
-        params.push(("app_key".to_owned(), self.api_client.app_key.to_owned()));
-        let now = Local::now().naive_local().format("%Y-%m-%d %H:%M:%S").to_string();
-        params.push(("timestamp".to_owned(), now));
-        params.push(("format".to_owned(), "json".to_owned()));
-        params.push(("v".to_owned(), "2.0".to_owned()));
-        params.push(("sign_method".to_owned(), "md5".to_owned()));
-        params
-    }
-
     /// 签名
     fn sign(&self, sign_content: &str) -> LabradorResult<String> {
         match self.sign_method.as_str() {

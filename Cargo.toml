@@ -1,12 +1,12 @@
 [package]
 name = "labrador"
-version = "0.1.2"
+version = "0.1.4"
 authors = ["mrpan <1049058427@qq.com>"]
 edition = "2018"
 description = "Labrador - Mini client for rust."
 readme = "README.md"
-keywords = ["labrador", "alipay", "wechat", "jd", "taobao", "pdd", "淘宝客", "拼多多", "京东","支付宝", "微信"]
-categories = ["data-structures", "database-implementations"]
+keywords = ["alipay", "wechat", "jd", "taobao", "pdd"]
+categories = ["thirtpart-pay", "pay"]
 homepage = "https://github.com/wslongchen/labrador"
 repository = "https://github.com/wslongchen/labrador"
 documentation = "https://docs.rs/labrador"
@@ -39,6 +39,12 @@ json = {version = "0.12.4", optional= true }
 [dev-dependencies]
 tokio = { version = "1",  features=["full"] }
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = [
+    "--cfg",
+    "docsrs"
+]
 ### FEATURES #################################################################
 
 [features]

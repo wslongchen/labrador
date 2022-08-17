@@ -57,7 +57,7 @@ labrador = { version = "0.1.0", features = ["wechat", "alipay"] }
 
 ## Example
 
-### With Wechat
+### With Wechat（微信开放平台、包含微信支付）
 
  ```rust
 use labrador::{WeChatPayClient, SimpleStorage, TradeType, WeChatPayRequestV3, Amount, Payer};
@@ -95,6 +95,93 @@ use chrono::{Local, SecondsFormat};
      }
  }
  ```
+
+### With Alipay（支付宝）
+
+ ```rust
+use labrador::{AlipayTradeWapPayRequest, AlipayClient};
+
+ #[tokio::main]
+ async fn main() {
+     let param = AlipayTradeWapPayRequest::default();
+     let client = AlipayClient::new("appKey", false);
+     match client.wap_pay("POST".into(), param).await {
+         Ok(res) => {}
+         Err(err) => {}
+     }
+     match result.await {
+         Ok(res) => {}
+         Err(err) => {}
+     }
+ }
+ ```
+
+### With Taobao（淘宝客相关）
+
+ ```rust
+use labrador::{TbItemDetailRequest, TaobaoClient};
+
+ #[tokio::main]
+ async fn main() {
+     let client =  TaobaoClient::<SimpleStorage>::new("appkey", "secret");
+     let req = TbItemDetailRequest {
+         num_iids: Some("597649283190".to_string()),
+         platform: None,
+         ip: None
+     };
+     let result = client.get_item_detail(req);
+     match result.await {
+         Ok(res) => {
+         }
+         Err(err) => {
+         }
+     }
+ }
+ ```
+
+
+### With JD（京东，目前暂时只支持联盟相关）
+
+ ```rust
+use labrador::{JDClient, JdOrderRawQueryParam};
+use chrono::{Local, SecondsFormat};
+
+ #[tokio::main]
+ async fn main() {
+     let client =  JDClient::<SimpleStorage>::new("appkey", "secert");
+     let param = JdOrderRawQueryParam {
+         page_index: 1.into(),
+         page_size: 10.into(),
+         bill_type: 1,
+         start_time: "2022-08-02 21:23:00".to_string(),
+         end_time: "2022-08-02 21:43:00".to_string(),
+         child_union_id: None,
+         key: None,
+         fields: None
+     };
+     let result = client.query_raw_order(param);
+     match result.await {
+         Ok(res) => {
+         }
+         Err(err) => {
+         }
+     }
+ }
+ ```
+
+### With Custom Request
+
+You can implement this trait and then use the custom request
+
++ AlipayRequest - For Alipay(支付宝)
++ JDRequest - For jingdong(京东)
++ TaobaoRequest - For taobao(淘宝)
+
+
+## Feature
+
+We will gradually improve the corresponding API
+
 
 ## Developing
 

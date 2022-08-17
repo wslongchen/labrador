@@ -1,21 +1,59 @@
 use chrono::Local;
-use crate::{client::{APIClient}, request::{RequestType, Method, Response, LabraRequest, RequestMethod}, util::get_sign, errors::LabraError, session::{SessionStore, SimpleStorage}, Params, LabradorResult};
-use serde_json::{Value as JsonValue};
+use crate::{client::{APIClient}, request::{RequestType, Method, LabraRequest, RequestMethod}, session::{SessionStore, SimpleStorage}, LabradorResult, RequestParametersHolder, md5};
+use crate::jd::constants::{RESPONSE_GETRESULT, RESPONSE_QUERYRESULT, SIGN_TYPE_MD5, VERSION_1};
 
 mod method;
 mod request;
 mod response;
+#[allow(unused)]
+mod constants;
 
 use std::collections::BTreeMap;
 use serde::Serialize;
-
-use self::{request::{JdJFGoodsParam, JdJFGoodsRequest, JdGoodsInfoQueryParam, JdOrderRecentQueryParam, JdOrderRequest, JdOrderRawQueryParam, JdOrderRawRequest, JdPromotionUrlGenerateParam}, response::{JdCommonResponse, JdJFGoodsSelect, JdGoodsInfoQuery, JdOrderQueryResponse, JdPromotionUrlGenerateResponse}, method::JDMethod};
-
+pub use request::*;
+pub use response::*;
+use crate::jd::method::JDMethod;
 
 #[derive(Debug, Clone)]
 pub struct JDClient <T: SessionStore> {
-    api_client: APIClient<T>
+    api_client: APIClient<T>,
 }
+
+
+pub trait JDRequest {
+
+    ///
+    /// 获取TOP的API名称。
+    ///
+    /// @return API名称
+    fn get_api_method_name(&self) -> JDMethod;
+
+    ///
+    /// 获取所有的Key-Value形式的文本请求参数集合。其中：
+    /// <ul>
+    /// <li>Key: 请求参数名</li>
+    /// <li>Value: 请求参数值</li>
+    /// </ul>
+    ///
+    /// @return 文本请求参数集合
+    fn get_text_params(&self) -> BTreeMap<String, String> {
+        BTreeMap::default()
+    }
+
+    ///
+    /// 得到当前接口的版本
+    ///
+    /// @return API版本
+    fn get_api_version(&self) -> String {
+        VERSION_1.to_string()
+    }
+
+    fn get_biz_content(&self) -> String where Self: Serialize + Sized {
+        serde_json::to_string(self).unwrap_or_default()
+    }
+
+}
+
 
 /// JDClient
 /// 
@@ -37,102 +75,71 @@ impl <T: SessionStore> JDClient<T> {
 
     pub fn new<Q: Into<String>, S: Into<String>>(app_key: Q, secret: S) -> JDClient<SimpleStorage> {
         JDClient {
-            api_client: APIClient::<SimpleStorage>::new::<Q, String, S>(app_key, secret, "https://router.jd.com/api".to_owned())
+            api_client: APIClient::<SimpleStorage>::new::<Q, String, S>(app_key, secret, "https://api.jd.com/routerjson".to_owned()),
         }
     }
 
 
     pub fn from_session<Q: Into<String>, S: Into<String>>(app_key: Q, secret: S, session: T) -> JDClient<T> {
         JDClient {
-            api_client: APIClient::from_session(app_key, secret, String::from("https://router.jd.com/api"), session)
+            api_client: APIClient::from_session(app_key, secret, String::from("https://api.jd.com/routerjson"), session),
         }
     }
 
-    #[inline]
-    fn build_common_params(&self) -> Vec<(String, String)> {
-        // build common params
-        let mut params: Vec<(String, String)> = Vec::new();
-        params.push(("app_key".to_owned(), self.api_client.app_key.to_owned()));
-        let now = Local::now().naive_local().format("%Y-%m-%d %H:%M:%S").to_string();
-        params.push(("timestamp".to_owned(), now));
-        params.push(("format".to_owned(), "json".to_owned()));
-        params.push(("v".to_owned(), "1.0".to_owned()));
-        params.push(("sign_method".to_owned(), "md5".to_owned()));
-        params
+    /// 签名
+    fn sign(&self, sign_content: &str) -> String {
+        let content = format!("{}{}{}", self.api_client.secret.to_string(), sign_content, self.api_client.secret.to_string());
+        let sign = md5::md5(content).to_uppercase();
+        sign
+    }
+
+    fn get_request_url(&self, holder: &RequestParametersHolder) -> LabradorResult<String> {
+        let mut url_sb = self.api_client.api_path.to_owned();
+        // let sys_must = &holder.protocal_must_params;
+        // let sys_must_query = serde_urlencoded::to_string(sys_must)?;
+        // let opt_param = &holder.application_params;
+        // let sys_opt_query = serde_urlencoded::to_string(opt_param)?;
+        // url_sb += "?";
+        // url_sb += &sys_must_query;
+        // if !sys_opt_query.is_empty() {
+        //     url_sb += "&";
+        //     url_sb += &sys_opt_query;
+        // }
+        Ok(url_sb)
+    }
+
+    ///
+    /// 组装接口参数，处理加密、签名逻辑
+    ///
+    /// @param request
+    fn get_request_holder_with_sign<D>(&self, request: &D) -> LabradorResult<RequestParametersHolder> where D: JDRequest {
+        let mut holder = RequestParametersHolder::new();
+        let mut app_params = request.get_text_params();
+        holder.set_application_params(app_params);
+
+        let mut protocal_must_params = BTreeMap::new();
+        protocal_must_params.insert(constants::METHOD.to_string(), request.get_api_method_name().get_method());
+        protocal_must_params.insert(constants::VERSION.to_string(), request.get_api_version());
+        protocal_must_params.insert(constants::APP_KEY.to_string(), self.api_client.app_key.to_owned());
+        protocal_must_params.insert(constants::SIGN_METHOD.to_string(), SIGN_TYPE_MD5.to_string());
+        protocal_must_params.insert(constants::TIMESTAMP.to_string(), Local::now().naive_local().format(constants::FORMAT_TIME).to_string());
+        holder.set_protocal_must_params(protocal_must_params.to_owned());
+        let pairs = holder.get_sorted_map();
+        let sign_content = pairs.iter().filter(|(k, v)| !k.is_empty() && !v.is_empty()).map(|(k, v)| format!("{}{}", k, v)).collect::<Vec<String>>().join("");
+        protocal_must_params.insert(constants::SIGN.to_string(), self.sign(&sign_content));
+        holder.set_protocal_must_params(protocal_must_params);
+        Ok(holder)
     }
 
     /// 发送请求数据
-    async fn send<D: Serialize + Params>(&self, method: JDMethod, data: D) -> LabradorResult<JsonValue> {
-        let mut params = self.build_common_params();
-        let method_name_str = method.get_method();
-        params.push(("method".to_owned(), method_name_str));
-        let request_type = RequestType::Json;
-        // build sign
-        params.extend_from_slice(data.get_params().as_slice());
-        let mut pairs = BTreeMap::new();
-        for (key, value) in params.iter() {
-            pairs.insert(key.to_string(), value.to_string());
-        }
-        let sign = get_sign(&pairs, self.api_client.secret.to_owned().as_str());
-        params.push(("sign".to_owned(), sign));
-        let result = self.api_client.request(LabraRequest::new().method(Method::Post).data(data).req_type(request_type).params(params)).await?.json::<serde_json::Value>().await?;
-        self.json_decode(result, &method.get_response_key())
-    }
-
-
-    #[inline]
-    fn json_decode(&self, obj: JsonValue, response_key: &String) -> LabradorResult<JsonValue> {
-        match obj.get("error_response") {
-            Some(error_response) => {
-                let errcode = if let Some(code) = error_response.get("code") {
-                    code.as_i64().unwrap_or_default() as i32
-                } else {
-                    0
-                };
-                if errcode != 0 {
-                    let errmsg = match error_response.get("zh_desc") {
-                        Some(msg) => msg.as_str().unwrap_or_default().to_owned(),
-                        None => "".to_string()
-                    };
-                    return Err(LabraError::ClientError { errcode: errcode.to_string(), errmsg: errmsg.to_owned() });
-                }
-            },
-            None => {},
-        }
-        match obj.get(response_key) {
-            Some(response) => {
-                match response.get("result") {
-                    Some(query_result) => {
-                        match serde_json::from_str::<JsonValue>(query_result.as_str().unwrap_or_default()) {
-                            Ok(res) => {
-                                let code = if let Some(code) = res.get("code") {
-                                    code.as_i64().unwrap_or_default() as i32
-                                } else {
-                                    0
-                                };
-                                if code != 200 {
-                                    let errmsg = match res.get("message") {
-                                        Some(msg) => msg.as_str().unwrap_or_default().to_owned(),
-                                        None => "".to_string()
-                                    };
-                                    return Err(LabraError::ClientError { errcode: code.to_string(), errmsg: errmsg.to_owned() });
-                                } 
-                            }
-                            Err(err) => {
-                                return Err(LabraError::ClientError { errcode: "-3".to_string(), errmsg: format!("Response decode error: No Query Result") });
-                            }
-                        }
-                        Ok(query_result.to_owned())
-                    },
-                    None => {
-                        Err(LabraError::ClientError { errcode: "-3".to_string(), errmsg: format!("Response decode error: No Query Result") })
-                    },
-                }
-            },
-            None => {
-                Err(LabraError::ClientError { errcode: "-3".to_string(), errmsg: format!("Response decode error") })
-            }
-        }
+    async fn excute<D>(&self, request: D) -> LabradorResult<JDResponse> where D: JDRequest + Serialize {
+        let method = request.get_api_method_name();
+        let holder = self.get_request_holder_with_sign(&request)?;
+        let url = self.get_request_url(&holder)?;
+        let data = holder.get_sorted_map();
+        let req = LabraRequest::new().url(url).method(Method::Post).data(data).req_type(RequestType::Form);
+        let result = self.api_client.request(req).await?.text().await?;
+        JDResponse::parse(&result, method)
     }
 
     /// 京粉精选商品查询
@@ -145,7 +152,7 @@ impl <T: SessionStore> JDClient<T> {
     /// ```no_run
     /// 
     ///     use labrador::JDClient;
-    ///     use labrador::{TbMaterialSelectParam};
+    ///     use labrador::{JdJFGoodsParam};
     /// 
     ///     async fn main() {
     ///         let param = JdJFGoodsParam {
@@ -167,8 +174,8 @@ impl <T: SessionStore> JDClient<T> {
     /// 
     /// ```
     /// 
-    pub async fn get_jf_select(&self, param: JdJFGoodsParam) -> LabradorResult<JdCommonResponse<Vec<JdJFGoodsSelect>>> {
-        self.send(JDMethod::FanGoodsSelect, JdJFGoodsRequest{ goods_req: param}).await?.parse_result()
+    pub async fn get_jf_select(&self, request: JdJFGoodsParam) -> LabradorResult<JdCommonResponse<Vec<JdJFGoodsSelect>>> {
+        self.excute(JdJFGoodsRequest { goods_req: request }).await?.get_biz_model::<JdCommonResponse<Vec<JdJFGoodsSelect>>>(RESPONSE_QUERYRESULT.into())
     }
 
 
@@ -181,10 +188,10 @@ impl <T: SessionStore> JDClient<T> {
     /// ```no_run
     /// 
     ///     use labrador::JDClient;
-    ///     use labrador::{JdGoodsInfoQueryParam};
+    ///     use labrador::{JdGoodsInfoQueryRequest};
     /// 
     ///     async fn main() {
-    ///         let param = JdGoodsInfoQueryParam {
+    ///         let param = JdGoodsInfoQueryRequest {
     ///             sku_ids: "60566006897".to_string().into(),
     ///         };
     ///         let client = JDClient::new("appKey", "secret");
@@ -196,8 +203,8 @@ impl <T: SessionStore> JDClient<T> {
     /// 
     /// ```
     /// 
-    pub async fn get_goods_detail(&self, param: JdGoodsInfoQueryParam) -> LabradorResult<JdCommonResponse<Vec<JdGoodsInfoQuery>>> {
-        self.send(JDMethod::GoodsInfoQuery, param).await?.parse_result()
+    pub async fn get_goods_detail(&self, request: JdGoodsInfoQueryRequest) -> LabradorResult<JdCommonResponse<Vec<JdGoodsInfoQuery>>> {
+        self.excute(request).await?.get_biz_model::<JdCommonResponse<Vec<JdGoodsInfoQuery>>>(RESPONSE_QUERYRESULT.into())
     }
 
     /// 网站/APP获取推广链接接口
@@ -223,7 +230,7 @@ impl <T: SessionStore> JDClient<T> {
     ///             gift_coupon_key: None,
     ///         };
     ///         let client = JDClient::new("appKey", "secret");
-    ///         match client.get_goods_detail(param).await {
+    ///         match client.generate_promotion_url(param).await {
     ///             Ok(res) => {}
     ///             Err(err) => {}
     ///         }
@@ -231,21 +238,21 @@ impl <T: SessionStore> JDClient<T> {
     ///
     /// ```
     ///
-    pub async fn generate_promotion_url(&self, param: JdPromotionUrlGenerateParam) -> LabradorResult<JdCommonResponse<JdPromotionUrlGenerateResponse>> {
-        self.send(JDMethod::PromotionUrlGenerate, param).await?.parse_result()
+    pub async fn generate_promotion_url(&self, request: JdPromotionUrlGenerateParam) -> LabradorResult<JdCommonResponse<JdPromotionUrlGenerateResponse>> {
+        self.excute(JdPromotionUrlGenerateRequest{ promotion_code_req: request }).await?.get_biz_model::<JdCommonResponse<JdPromotionUrlGenerateResponse>>(RESPONSE_GETRESULT.into())
     }
 
     /// 订单查询
     ///
-    /// 查询推广订单及佣金信息，可查询最近90天内下单的订单，会随着订单状态变化同步更新数据。
-    /// 支持按下单时间、完成时间或更新时间查询。建议按更新时间每分钟调用一次，查询最近一分钟的订单更新数据。
+    /// 查询推广订单及佣金信息，可查询最近90天内下单的订单，会随着订单状态变化同步更新数据。支持按下单时间、完成时间或更新时间查询。建议按更新时间每分钟调用一次，查询最近一分钟的订单更新数据。
     /// 支持查询subunionid、推广位、PID参数，支持普通推客及工具商推客订单查询。
+    /// 该接口即将下线，请使用订单行查询接口https://union.jd.com/openplatform/api/12707
     ///
     /// # 示例
     /// ```no_run
     ///
     ///     use labrador::JDClient;
-    ///     use labrador::{JdPromotionUrlGenerateParam};
+    ///     use labrador::{JdOrderRecentQueryParam};
     ///
     ///     async fn main() {
     ///         let param = JdOrderRecentQueryParam {
@@ -265,8 +272,9 @@ impl <T: SessionStore> JDClient<T> {
     ///
     /// ```
     ///
-    pub async fn query_recent_order(&self, param: JdOrderRecentQueryParam) -> LabradorResult<JdCommonResponse<Vec<JdOrderQueryResponse>>> {
-        self.send(JDMethod::OrderRecentQuery, JdOrderRequest { order_req: param}).await?.parse_result()
+    #[deprecated]
+    pub async fn query_recent_order(&self, request: JdOrderRecentQueryParam) -> LabradorResult<JdCommonResponse<Vec<JdOrderQueryResponse>>> {
+        self.excute(JdOrderRequest { order_req: request}).await?.get_biz_model::<JdCommonResponse<Vec<JdOrderQueryResponse>>>(None)
     }
 
     /// 订单行查询
@@ -275,21 +283,21 @@ impl <T: SessionStore> JDClient<T> {
     /// 支持按下单时间、完成时间或更新时间查询。建议按更新时间每分钟调用一次，查询最近一分钟的订单更新数据。
     /// 支持查询subunionid、推广位、PID参数，支持普通推客及工具商推客订单查询。
     ///
-    /// 如需要通过SDK调用此接口，请接入JOS SDK：https://union.jd.com/helpcenter/13246-13312-108188
+    /// 如需要通过SDK调用此接口，请接入JOS [SDK](https://union.jd.com/helpcenter/13246-13312-108188)
     ///
     /// # 示例
     /// ```no_run
     ///
     ///     use labrador::JDClient;
-    ///     use labrador::{JdPromotionUrlGenerateParam};
+    ///     use labrador::{JdOrderRawQueryParam};
     ///
     ///     async fn main() {
     ///         let param = JdOrderRawQueryParam {
     ///             page_index: 1.into(),
     ///             page_size: 1.into(),
     ///             bill_type: 1,
-    ///             startTime: "".to_owned(),
-    ///             endTime: "".to_owned(),
+    ///             start_time: "".to_string(),
+    ///             end_time: "".to_string(),
     ///             child_union_id: None,
     ///             key: None,
     ///             fields: None,
@@ -303,7 +311,159 @@ impl <T: SessionStore> JDClient<T> {
     ///
     /// ```
     ///
-    pub async fn query_raw_order(&self, param: JdOrderRawQueryParam) -> LabradorResult<JdCommonResponse<Vec<JdOrderQueryResponse>>> {
-        self.send(JDMethod::OrderRawQuery, JdOrderRawRequest { order_req: param}).await?.parse_result()
+    pub async fn query_raw_order(&self, request: JdOrderRawQueryParam) -> LabradorResult<JdCommonResponse<Vec<JdOrderQueryResponse>>> {
+        self.excute(JdOrderRawRequest { order_req: request}).await?.get_biz_model::<JdCommonResponse<Vec<JdOrderQueryResponse>>>(RESPONSE_QUERYRESULT.into())
     }
+}
+
+
+#[cfg(test)]
+#[allow(unused, non_snake_case)]
+mod tests {
+    use std::collections::BTreeMap;
+    use std::fs::File;
+    use std::io::Read;
+    use std::ops::Add;
+    use chrono::{DateTime, Local, NaiveDateTime, SecondsFormat};
+    use reqwest::Url;
+    use serde::{Deserializer, Deserialize, Serialize};
+    use serde_json::{json, Value};
+    use crate::ResponseType::Text;
+    use crate::{SimpleStorage, JDClient, JdPromotionUrlGenerateRequest, JdPromotionUrlGenerateParam, JdOrderRecentQueryParam, JdOrderRawQueryParam};
+    use crate::jd::request::{JdGoodsInfoQueryRequest, JdJFGoodsParam};
+
+    #[test]
+    fn test_get_jf_select() {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let r = rt.spawn(async {
+            let client =  JDClient::<SimpleStorage>::new("appkey", "secert");
+            let param = JdOrderRawQueryParam {
+                page_index: 1.into(),
+                page_size: 10.into(),
+                bill_type: 1,
+                start_time: "2022-08-02 21:23:00".to_string(),
+                end_time: "2022-08-02 21:43:00".to_string(),
+                child_union_id: None,
+                key: None,
+                fields: None
+            };
+            let result = client.query_raw_order(param);
+            match result.await {
+                Ok(res) => {
+                    println!("请求成功:{:?}",res);
+                }
+                Err(err) => {
+                    println!("err:{:?}", err);
+                }
+            }
+        });
+        rt.block_on(r);
+    }
+
+    #[test]
+    fn test_query_recent_order() {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let r = rt.spawn(async {
+            let client =  JDClient::<SimpleStorage>::new("appkey", "secert");
+            let param = JdOrderRecentQueryParam {
+                page_no: None,
+                page_size: None,
+                bill_type: 0,
+                time: "".to_string(),
+                child_union_id: None,
+                key: None
+            };
+            let result = client.query_recent_order(param);
+            match result.await {
+                Ok(res) => {
+                    println!("请求成功:{:?}",res);
+                }
+                Err(err) => {
+                    println!("err:{:?}", err);
+                }
+            }
+        });
+        rt.block_on(r);
+    }
+
+
+    #[test]
+    fn test_generate_promotion_url() {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let r = rt.spawn(async {
+            let client =  JDClient::<SimpleStorage>::new("appkey", "secert");
+            let param = JdPromotionUrlGenerateParam {
+                material_id: "https://item.jd.com/100023064623.html".to_string(),
+                site_id: "1".to_string(),
+                position_id: None,
+                sub_union_id: None,
+                ext1: None,
+                pid: None,
+                coupon_url: None,
+                gift_coupon_key: None
+            };
+            let result = client.generate_promotion_url(param);
+            match result.await {
+                Ok(res) => {
+                    println!("请求成功:{:?}",res);
+                }
+                Err(err) => {
+                    println!("err:{:?}", err);
+                }
+            }
+        });
+        rt.block_on(r);
+    }
+
+
+    #[test]
+    fn test_get_goods_detail() {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let r = rt.spawn(async {
+            let client =  JDClient::<SimpleStorage>::new("appkey", "secert");
+            let param = JdGoodsInfoQueryRequest {
+                sku_ids: "100023064623".to_string().into(),
+            };
+            let result = client.get_goods_detail(param);
+            match result.await {
+                Ok(res) => {
+                    println!("请求成功:{:?}",res);
+                }
+                Err(err) => {
+                    println!("err:{:?}", err);
+                }
+            }
+        });
+        rt.block_on(r);
+    }
+
+
+    #[test]
+    fn test_get_jf_select1() {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let r = rt.spawn(async {
+            let client =  JDClient::<SimpleStorage>::new("appkey", "secert");
+            let param = JdJFGoodsParam {
+                elite_id: 22,
+                page_index: 1.into(),
+                page_size: 1.into(),
+                sort_name: None,
+                sort: None,
+                pid: "1".to_owned().into(),
+                fields: None,
+                forbid_types: None,
+            };
+            let result = client.get_jf_select(param);
+            match result.await {
+                Ok(res) => {
+                    println!("请求成功:{:?}",res);
+                }
+                Err(err) => {
+                    println!("err:{:?}", err);
+                }
+            }
+        });
+        rt.block_on(r);
+    }
+
 }
