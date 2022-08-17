@@ -30,9 +30,9 @@ impl<T: SessionStore> APIClient<T> {
 
     /// # Init the client
     /// 
-    /// [app_key] - ThirdPlatform Assign.
-    /// [secret] - ThirdPlatform Assign.
-    /// [api_path] - ThirdPlatform Url.
+    /// `app_key` - ThirdPlatform Assign.
+    /// `secret` - ThirdPlatform Assign.
+    /// `api_path` - ThirdPlatform Url.
     ///
     #[inline]
     pub fn new<Q: Into<String>, S: Into<String>, R: Into<String>>(app_key: Q, secret: R, api_path: S) -> APIClient<SimpleStorage> {

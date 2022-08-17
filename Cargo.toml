@@ -1,6 +1,6 @@
 [package]
 name = "labrador"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["mrpan <1049058427@qq.com>"]
 edition = "2018"
 description = "Labrador - Mini client for rust."
@@ -39,7 +39,13 @@ json = {version = "0.12.4", optional= true }
 [dev-dependencies]
 tokio = { version = "1",  features=["full"] }
 
-### FEATURES #################################################################
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = [
+    "--cfg",
+    "docsrs"
+]
+    ### FEATURES #################################################################
 
 [features]
 

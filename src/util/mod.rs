@@ -169,7 +169,7 @@ pub fn remove_properties(mut source: serde_json::Value, props: Vec<&str>) -> ser
     source
 }
 
-/// [生成随机数算法]
+/// 生成随机数算法
 ///
 /// 微信支付API接口协议中包含字段nonce_str，主要保证签名不可预测。
 #[allow(unused)]
@@ -268,6 +268,7 @@ macro_rules! cfg_if {
 cfg_if! {if #[cfg(feature = "wechat")]{
     pub mod xmlutil;
 }}
+
 
 #[test]
 fn test() {
