@@ -349,7 +349,6 @@ impl <T: SessionStore> JDClient<T> {
     pub async fn get_promotion_code(&self, request: JdPromotionCodeGetParam) -> LabradorResult<JdCommonResponse<JdPromotionCodeGetResponse>> {
         self.excute(JdPromotionCodeGetRequest { req: request}).await?.get_biz_model::<JdCommonResponse<JdPromotionCodeGetResponse>>(RESPONSE_GETRESULT.into())
     }
-}
 
     /// 社交媒体获取推广链接接口
     ///
@@ -386,6 +385,34 @@ impl <T: SessionStore> JDClient<T> {
     ///
     pub async fn get_promotion_code_by_sub_unionid(&self, request: JdPromotionBySubUnionIdGetParam) -> LabradorResult<JdCommonResponse<JdPromotionCodeGetResponse>> {
         self.excute(JdPromotionBySubUnionIdGetRequest { promotion_code_req: request}).await?.get_biz_model::<JdCommonResponse<JdPromotionCodeGetResponse>>(RESPONSE_GETRESULT.into())
+    }
+
+    /// 商羚商品查询接口
+    ///
+    /// 通过SKUID查询商羚商品的名称、主图、类目、价格、30天销量等详细信息，支持批量查询
+    /// [文档](https://jos.jd.com/apilist?apiGroupId=531&apiId=17769&apiName=jd.union.open.selling.goods.query&apiGroupName=%E4%BA%AC%E4%B8%9C%E8%81%94%E7%9B%9Fapi)
+    ///
+    /// # 示例
+    /// ```no_run
+    ///
+    ///     use labrador::JDClient;
+    ///     use labrador::{SellingGoodsQueryParam};
+    ///
+    ///     async fn main() {
+    ///         let param = SellingGoodsQueryParam {
+    ///             sku_ids: vec![]
+    ///         };
+    ///         let client = JDClient::new("appKey", "secret");
+    ///         match client.get_selling_goods_query(param).await {
+    ///             Ok(res) => {}
+    ///             Err(err) => {}
+    ///         }
+    ///     }
+    ///
+    /// ```
+    ///
+    pub async fn get_selling_goods_query(&self, request: SellingGoodsQueryParam) -> LabradorResult<JdCommonResponse<Vec<SellingGoodsQueryResponse>>> {
+        self.excute(SellingGoodsQueryRequest { req: request}).await?.get_biz_model::<JdCommonResponse<Vec<SellingGoodsQueryResponse>>>(RESPONSE_QUERYRESULT.into())
     }
 }
 
