@@ -202,3 +202,122 @@ impl JDRequest for JdOrderRawRequest {
 
 //----------------------------------------------------------------------------------------------------------------------------
 
+/// 转链获取
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JdPromotionCodeGetRequest {
+   pub req: JdPromotionCodeGetParam
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JdPromotionCodeGetParam {
+    /// 推广物料url，例如活动链接、商品链接等；不支持仅传入skuid
+    pub material_id: String,
+    /// 网站ID/APP ID，入口：京东联盟-推广管理-网站管理/APP管理-查看网站ID/APP ID
+    /// （1、接口禁止使用导购媒体id入参；2、投放链接的网址或应用必须与传入的网站ID/AppID备案一致，否则订单会判“无效-来源与备案网址不符”）
+    pub site_id: String,
+    /// 转链类型，1：长链， 2 ：短链 ，3： 长链+短链，默认短链，短链有效期60天
+    pub chain_type: Option<u8>,
+    /// 优惠券领取链接，在使用优惠券、商品二合一功能时入参，且materialId须为商品详情页链接
+    pub coupon_url: Option<String>,
+    /// 推广位id
+    pub position_id: Option<u64>,
+    /// 子渠道标识，您可自定义传入字母、数字或下划线，最多支持80个字符，该参数会在订单行查询接口中展示
+    /// （需申请权限，申请方法[请见](https://union.jd.com/helpcenter/13246-13247-46301)）
+    pub sub_union_id: Option<String>,
+    /// 系统扩展参数（需申请权限，申请方法[请见](https://union.jd.com/helpcenter/13246-13247-46301)），
+    /// 最多支持40字符，参数会在订单行查询接口中展示
+    pub ext1: Option<String>,
+    /// 联盟子推客身份标识（不能传入接口调用者自己的pid）
+    pub pid: Option<String>,
+    /// 目标推客的联盟ID，工具商给推客转链使用。
+    pub union_id: Option<u64>,
+
+}
+
+
+impl JDRequest for JdPromotionCodeGetRequest {
+    fn get_api_method_name(&self) -> JDMethod {
+        JDMethod::PromotionCodeGet
+    }
+
+    fn get_text_params(&self) -> BTreeMap<String, String> {
+        BTreeMap::from([("360buy_param_json".to_owned(), serde_json::to_string(self).unwrap_or_default())])
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+
+/// 社交媒体获取推广链接接口
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JdPromotionBySubUnionIdGetRequest {
+   pub promotion_code_req: JdPromotionBySubUnionIdGetParam
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JdPromotionBySubUnionIdGetParam {
+    /// 推广物料url，例如活动链接、商品链接等；不支持仅传入skuid
+    pub material_id: String,
+    /// 转链类型，1：长链， 2 ：短链 ，3： 长链+短链，默认短链，短链有效期60天
+    pub chain_type: Option<u8>,
+    /// 优惠券领取链接，在使用优惠券、商品二合一功能时入参，且materialId须为商品详情页链接
+    pub coupon_url: Option<String>,
+    /// 推广位id
+    pub position_id: Option<u64>,
+    /// 子渠道标识，您可自定义传入字母、数字或下划线，最多支持80个字符，该参数会在订单行查询接口中展示
+    /// （需申请权限，申请方法[请见](https://union.jd.com/helpcenter/13246-13247-46301)）
+    pub sub_union_id: Option<String>,
+    /// 联盟子推客身份标识（不能传入接口调用者自己的pid）
+    pub pid: Option<String>,
+    /// 渠道关系ID
+    pub channel_id: Option<u64>,
+    /// 是否生成短口令，1：生成，默认不生成（需申请权限，申请方法[请见](https://union.jd.com/helpcenter/13246-13247-46301)）
+    pub command: Option<u8>,
+    /// 礼金批次号
+    pub gift_coupon_key: Option<String>,
+
+}
+
+
+impl JDRequest for JdPromotionBySubUnionIdGetRequest {
+    fn get_api_method_name(&self) -> JDMethod {
+        JDMethod::PromotionBySubUnionIdGet
+    }
+
+    fn get_text_params(&self) -> BTreeMap<String, String> {
+        BTreeMap::from([("360buy_param_json".to_owned(), serde_json::to_string(self).unwrap_or_default())])
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+/// 商羚商品查询接口
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SellingGoodsQueryRequest {
+   pub req: SellingGoodsQueryParam
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SellingGoodsQueryParam {
+    /// 京东skuId集合，最多100个
+    pub sku_ids: Vec<u64>,
+}
+
+impl JDRequest for SellingGoodsQueryRequest {
+    fn get_api_method_name(&self) -> JDMethod {
+        JDMethod::SellingGoodsQuery
+    }
+
+    fn get_text_params(&self) -> BTreeMap<String, String> {
+        BTreeMap::from([("360buy_param_json".to_owned(), serde_json::to_string(self).unwrap_or_default())])
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
