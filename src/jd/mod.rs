@@ -138,7 +138,7 @@ impl <T: SessionStore> JDClient<T> {
         let url = self.get_request_url(&holder)?;
         let data = holder.get_sorted_map();
         let req = LabraRequest::new().url(url).method(Method::Post).data(data).req_type(RequestType::Form);
-        let result = self.api_client.request(req).await?.text().await?;
+        let result = self.api_client.request(req).await?.text()?;
         JDResponse::parse(&result, method)
     }
 

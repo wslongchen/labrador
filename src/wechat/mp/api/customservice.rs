@@ -32,7 +32,7 @@ impl<'a, T: SessionStore> WeChatCustomService<'a, T> {
             "nickname": nickname.to_owned(),
             "password": encrypted_password
         });
-        let v = self.client.post(WechatMpMethod::CustomService(CustomServiceMethod::AccountAdd), data, RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let v = self.client.post(WechatMpMethod::CustomService(CustomServiceMethod::AccountAdd), data, RequestType::Json).await?.json::<serde_json::Value>()?;
         serde_json::from_value::<WechatCommonResponse<_>>(v).map_err(LabraError::from)
     }
 
@@ -45,19 +45,19 @@ impl<'a, T: SessionStore> WeChatCustomService<'a, T> {
             "nickname": nickname.to_owned(),
             "password": encrypted_password
         });
-        let v = self.client.post(WechatMpMethod::CustomService(CustomServiceMethod::AccountUpdate), data, RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let v = self.client.post(WechatMpMethod::CustomService(CustomServiceMethod::AccountUpdate), data, RequestType::Json).await?.json::<serde_json::Value>()?;
         serde_json::from_value::<WechatCommonResponse<_>>(v).map_err(LabraError::from)
     }
 
     /// 删除账号
     pub async fn delete_account(&self, account: &str) -> LabradorResult<WechatCommonResponse<String>> {
-        let v= self.client.get(WechatMpMethod::CustomService(CustomServiceMethod::AccountDelete), vec![], RequestType::Json).await?.json::<Value>().await?;
+        let v= self.client.get(WechatMpMethod::CustomService(CustomServiceMethod::AccountDelete), vec![], RequestType::Json).await?.json::<Value>()?;
         serde_json::from_value::<WechatCommonResponse<_>>(v).map_err(LabraError::from)
     }
 
     /// 获取账号列表
     pub async fn get_accounts(&self) -> LabradorResult<WechatCommonResponse<Vec<KFAccount>>> {
-        let res = self.client.get(WechatMpMethod::CustomService(CustomServiceMethod::AccountList), vec![], RequestType::Json).await?.json::<Value>().await?;
+        let res = self.client.get(WechatMpMethod::CustomService(CustomServiceMethod::AccountList), vec![], RequestType::Json).await?.json::<Value>()?;
         let mut result = serde_json::from_value::<WechatCommonResponse<_>>(res.to_owned())?;
         if result.is_success() {
             let kf_list = &res["kf_list"];
@@ -87,7 +87,7 @@ impl<'a, T: SessionStore> WeChatCustomService<'a, T> {
 
     /// 获取在线账号
     pub async fn get_online_accounts(&self) -> LabradorResult<WechatCommonResponse<Vec<OnlineKFAccount>>> {
-        let res = self.client.get(WechatMpMethod::CustomService(CustomServiceMethod::AccountOnlineList), vec![], RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let res = self.client.get(WechatMpMethod::CustomService(CustomServiceMethod::AccountOnlineList), vec![], RequestType::Json).await?.json::<serde_json::Value>()?;
         let mut result = serde_json::from_value::<WechatCommonResponse<_>>(res.to_owned())?;
         if result.is_success() {
             let kf_list = &res["kf_online_list"];

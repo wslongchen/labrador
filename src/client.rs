@@ -90,6 +90,7 @@ impl<T: SessionStore> APIClient<T> {
         req.request().await
     }
 
+
     /// Request Http/Https
     ///
     /// # Examples

@@ -106,6 +106,10 @@ impl WeChatCrypto {
         Ok(String::from_utf8_lossy(&signature).to_string())
     }
 
+    pub fn create_hmac_sha256_sign(key: &str, message: &str) -> LabradorResult<String> {
+        PrpCrypto::hmac_sha256_sign(key, message)
+    }
+
     /// #数据解密
     ///
     /// session_key key

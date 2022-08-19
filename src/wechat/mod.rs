@@ -3,10 +3,13 @@ use serde::{Serialize, Deserialize};
 mod mp;
 mod pay;
 mod cryptos;
+mod miniapp;
 
 pub use mp::*;
 pub use pay::*;
 pub use cryptos::*;
+
+
 
 #[allow(unused)]
 #[derive(Debug, Clone, Serialize, Deserialize)]

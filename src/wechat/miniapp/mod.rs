@@ -1,21 +1,50 @@
+use std::collections::BTreeMap;
 use crate::{session::SessionStore, client::APIClient, request::{Method, RequestType, LabraResponse, LabraRequest, RequestMethod}, util::current_timestamp, LabradorResult, SimpleStorage};
 use serde::{Serialize, Deserialize};
-use crate::wechat::mp::api::{ WeChatCustomService, WeChatMenu, WeChatMessage, WeChatUser};
-use crate::wechat::mp::method::WechatMpMethod;
 
-mod api;
 mod method;
+mod api;
 
 pub use api::*;
+use crate::wechat::miniapp::method::WechatMaMethod;
 
 #[allow(unused)]
 #[derive(Debug, Clone)]
-pub struct WeChatMpClient<T: SessionStore> {
+pub struct WeChatMaClient<T: SessionStore> {
     appid: String,
     secret: String,
     client: APIClient<T>,
 }
 
+pub trait WechatRequest<T: Serialize> {
+    ///
+    /// 获取TOP的API名称。
+    ///
+    /// @return API名称
+    fn get_api_method_name<R: RequestMethod>(&self) -> R;
+
+    /// 获取请求类型。
+    fn get_request_type(&self) -> RequestType {
+        RequestType::Json
+    }
+
+    /// 获取请求方法。
+    fn get_request_method(&self) -> Method {
+        Method::Post
+    }
+
+    fn get_query_params(&self) -> BTreeMap<String, String> {
+        BTreeMap::new()
+    }
+
+    fn get_request_body(&self) -> Option<&T>;
+
+    /// 是否需要token
+    fn is_need_token(&self) -> bool {
+        true
+    }
+
+}
 
 #[allow(unused)]
 #[derive(Serialize, Deserialize)]
@@ -25,10 +54,10 @@ pub struct AccessTokenResponse{
 }
 
 #[allow(unused)]
-impl<T: SessionStore> WeChatMpClient<T> {
+impl<T: SessionStore> WeChatMaClient<T> {
 
-    fn from_client(client: APIClient<T>) -> WeChatMpClient<T> {
-        WeChatMpClient {
+    fn from_client(client: APIClient<T>) -> WeChatMaClient<T> {
+        WeChatMaClient {
             appid: client.app_key.to_owned(),
             secret: client.secret.to_owned(),
             client
@@ -36,14 +65,14 @@ impl<T: SessionStore> WeChatMpClient<T> {
     }
 
     /// get the wechat client
-    pub fn new<S: Into<String>>(appid: S, secret: S) -> WeChatMpClient<SimpleStorage> {
-        let client = APIClient::<SimpleStorage>::from_session(appid.into(), secret.into(), "https://api.weixin.qq.com/cgi-bin/", SimpleStorage::new());
-        WeChatMpClient::from_client(client)
+    pub fn new<S: Into<String>>(appid: S, secret: S) -> WeChatMaClient<SimpleStorage> {
+        let client = APIClient::<SimpleStorage>::from_session(appid.into(), secret.into(), "https://api.weixin.qq.com", SimpleStorage::new());
+        WeChatMaClient::<SimpleStorage>::from_client(client)
     }
 
     /// get the wechat client
-    pub fn from_session<S: Into<String>>(appid: S, secret: S, session: T) -> WeChatMpClient<T> {
-        let client = APIClient::from_session(appid.into(), secret.into(), "https://api.weixin.qq.com/cgi-bin/", session);
+    pub fn from_session<S: Into<String>>(appid: S, secret: S, session: T) -> WeChatMaClient<T> {
+        let client = APIClient::from_session(appid.into(), secret.into(), "https://api.weixin.qq.com", session);
         Self::from_client(client)
     }
 
@@ -64,7 +93,7 @@ impl<T: SessionStore> WeChatMpClient<T> {
 
     async fn fetch_access_token(&self) -> LabradorResult<String> {
         let mut session = self.client.session();
-        let mut req = LabraRequest::<String>::new().url(WechatMpMethod::AccessToken.get_method()).params(vec![
+        let mut req = LabraRequest::<String>::new().url(WechatMaMethod::AccessToken.get_method()).params(vec![
             ("grant_type".to_string(), "client_credential".to_string()),
             ("appid".to_string(), self.client.app_key.to_string()),
             ("secret".to_string(), self.client.secret.to_string()),
@@ -80,13 +109,36 @@ impl<T: SessionStore> WeChatMpClient<T> {
         Ok(token.to_owned())
     }
 
+    ///<pre>
+    /// Service没有实现某个API的时候，可以用这个，
+    /// 比 get 和 post 方法更灵活，可以自己构造用来处理不同的参数和不同的返回类型。
+    /// </pre>
+    async fn execute<D: WechatRequest<B>, B: Serialize>(&self, request: D) -> LabradorResult<LabraResponse> {
+        let mut querys = Vec::new();
+        if request.is_need_token() {
+            let mut access_token = self.access_token();
+            if access_token.is_empty() {
+                access_token = self.fetch_access_token().await.unwrap_or_default();
+            }
+            if !access_token.is_empty() {
+                querys.push(("access_token".to_string(), access_token));
+            }
+        }
+        let mut req = LabraRequest::new().url(request.get_api_method_name::<WechatMaMethod>().get_method())
+            .params(querys).method(request.get_request_method()).req_type(request.get_request_type());
+        if let Some(body) = request.get_request_body() {
+            req = req.data(body);
+        }
+        self.client.request(req).await
+    }
+
     /// 发送POST请求
-    async fn post<D: Serialize>(&self, method: WechatMpMethod, data: D, request_type: RequestType) -> LabradorResult<LabraResponse> {
+    async fn post<D: Serialize>(&self, method: WechatMaMethod, mut querys: Vec<(String, String)>, data: D, request_type: RequestType) -> LabradorResult<LabraResponse> {
         let mut access_token = self.access_token();
         if access_token.is_empty() && method.need_token() {
             access_token = self.fetch_access_token().await.unwrap_or_default();
         }
-        let mut querys = Vec::new();
+
         if !access_token.is_empty() {
             querys.push(("access_token".to_string(), access_token));
         }
@@ -95,7 +147,7 @@ impl<T: SessionStore> WeChatMpClient<T> {
     }
 
     /// 发送GET请求
-    async fn get(&self, method: WechatMpMethod, params: Vec<(&str, &str)>, request_type: RequestType) -> LabradorResult<LabraResponse> {
+    async fn get(&self, method: WechatMaMethod, params: Vec<(&str, &str)>, request_type: RequestType) -> LabradorResult<LabraResponse> {
         let mut access_token = self.access_token();
         if access_token.is_empty() && method.need_token() {
             access_token = self.fetch_access_token().await?;
@@ -108,35 +160,18 @@ impl<T: SessionStore> WeChatMpClient<T> {
         self.client.request(req).await
     }
 
-    /// 用户相关服务
-    pub fn user(&self) -> WeChatUser<T> {
-        WeChatUser::new(self)
+    /// codesssion相关服务
+    pub fn code_session(&self) -> WechatMaCodeSession<T> {
+        WechatMaCodeSession::new(self)
     }
 
-
-    /// Oauth2授权相关服务
-    pub fn oauth2(&self) -> Oauth2<T> {
-        Oauth2::new(self)
+    /// 二维码相关操作接口
+    pub fn qrcode(&self) -> WechatMaQrcode<T> {
+        WechatMaQrcode::new(self)
     }
-
-    /// qrcode相关服务
-    pub fn qrcode(&self) -> WeChatQRCode<T> {
-        WeChatQRCode::new(self)
-    }
-
-    /// 客服相关服务
-    pub fn custom_service(&self) -> WeChatCustomService<T> {
-        WeChatCustomService::new(self)
-    }
-
-    /// 菜单相关服务
-    pub fn menu(&self) -> WeChatMenu<T> {
-        WeChatMenu::new(self)
-    }
-
-    /// 消息相关服务
-    pub fn message(&self) -> WeChatMessage<T> {
-        WeChatMessage::new(self)
+    /// 用户相关操作接口
+    pub fn user(&self) -> WeChatMaUser<T> {
+        WeChatMaUser::new(self)
     }
 
 }

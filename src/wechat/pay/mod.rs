@@ -3,7 +3,7 @@ use std::sync::Arc;
 use dashmap::DashMap;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
-use crate::{APIClient, LabraCertificate, LabraError, LabraIdentity, LabraRequest, LabraResponse, Method, RequestType, SessionStore, RequestMethod, LabradorResult};
+use crate::{APIClient, LabraCertificate, LabraError, LabraIdentity, LabraRequest, LabraResponse, Method, RequestType, SessionStore, RequestMethod, LabradorResult, SimpleStorage};
 use crate::util::{current_timestamp, get_nonce_str, get_timestamp};
 
 mod method;
@@ -102,7 +102,13 @@ impl<T: SessionStore> WeChatPayClient<T> {
     }
 
     /// get the wechat client
-    pub fn new<S: Into<String>>(appid: S, secret: S, session: T) -> WeChatPayClient<T> {
+    pub fn new<S: Into<String>>(appid: S, secret: S) -> WeChatPayClient<SimpleStorage> {
+        let client = APIClient::<SimpleStorage>::from_session(appid.into(), secret.into(),"https://api.weixin.qq.com/cgi-bin/", SimpleStorage::new());
+        WeChatPayClient::<SimpleStorage>::from_client(client)
+    }
+
+    /// get the wechat client
+    pub fn from_session<S: Into<String>>(appid: S, secret: S, session: T) -> WeChatPayClient<T> {
         let client = APIClient::from_session(appid.into(), secret.into(), "https://api.mch.weixin.qq.com", session);
         Self::from_client(client)
     }
@@ -258,7 +264,7 @@ impl<T: SessionStore> WeChatPayClient<T> {
         if status.as_u16() == 200 || status.as_u16() == 204 {
             Ok(result)
         } else {
-            Err(LabraError::RequestError(result.text().await?))
+            Err(LabraError::RequestError(result.text()?))
         }
     }
 
@@ -297,7 +303,7 @@ impl<T: SessionStore> WeChatPayClient<T> {
             let response = self.get_v3(WechatPayMethod::Certificate, vec![], RequestType::Json).await?;
             let status_code = response.status().as_u16();
             if status_code == 200 {
-                let body = response.json::<Value>().await?;
+                let body = response.json::<Value>()?;
                 info!("获取平台证书:{}", serde_json::to_string(&body).unwrap_or_default());
                 let bodys = serde_json::from_value::<Vec<PlatformCertificateResponse>>(body["data"].to_owned())?;
                 for body in bodys {
@@ -347,7 +353,7 @@ impl<T: SessionStore> WeChatPayClient<T> {
         let response = self.get_v3(WechatPayMethod::Certificate, vec![], RequestType::Json).await?;
         let status_code = response.status().as_u16();
         if status_code == 200 {
-            let body = response.json::<Value>().await?;
+            let body = response.json::<Value>()?;
             serde_json::from_value::<Vec<PlatformCertificateResponse>>(body["data"].to_owned()).map_err(LabraError::from)
         } else {
             Ok(vec![])

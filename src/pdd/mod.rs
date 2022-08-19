@@ -69,7 +69,7 @@ impl <T: SessionStore> PDDClient<T> {
         }
         let sign = get_sign(&pairs, self.api_client.secret.to_owned().as_str());
         params.push(("sign".to_owned(), sign));
-        let result = self.api_client.request(LabraRequest::new().method(Method::Post).data(data).req_type(request_type).params(params)).await?.json::<serde_json::Value>().await?;
+        let result = self.api_client.request(LabraRequest::new().method(Method::Post).data(data).req_type(request_type).params(params)).await?.json::<serde_json::Value>()?;
         self.json_decode(result, &method.get_response_key())
     }
 

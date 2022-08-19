@@ -29,7 +29,7 @@ impl<'a, T: SessionStore> WeChatUser<'a, T> {
 
     /// 获取用户信息
     pub async fn get_with_lang(&mut self, openid: &str, lang: &str) -> LabradorResult<WechatCommonResponse<WechatUser>> {
-        let res = self.client.get(WechatMpMethod::User(UserMethod::Info), vec![("openid", openid), ("lang", lang)], RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let res = self.client.get(WechatMpMethod::User(UserMethod::Info), vec![("openid", openid), ("lang", lang)], RequestType::Json).await?.json::<serde_json::Value>()?;
         let mut result = serde_json::from_value::<WechatCommonResponse<_>>(res.to_owned())?;
         if result.is_success() {
             result.result = self.json_to_user(&res).into();
@@ -96,7 +96,7 @@ impl<'a, T: SessionStore> WeChatUser<'a, T> {
             "openid": openid.to_owned(),
             "remark": remark.to_owned()
         });
-        let v = self.client.post(WechatMpMethod::User(UserMethod::UpdateRemark), data, RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let v = self.client.post(WechatMpMethod::User(UserMethod::UpdateRemark), data, RequestType::Json).await?.json::<serde_json::Value>()?;
         serde_json::from_value::<WechatCommonResponse<_>>(v).map_err(LabraError::from)
     }
 
@@ -106,7 +106,7 @@ impl<'a, T: SessionStore> WeChatUser<'a, T> {
             Some(openid) => vec![("next_openid", openid)],
             None => vec![],
         };
-        let res = self.client.get(WechatMpMethod::User(UserMethod::Get), params, RequestType::Json, ).await?.json::<serde_json::Value>().await?;
+        let res = self.client.get(WechatMpMethod::User(UserMethod::Get), params, RequestType::Json, ).await?.json::<serde_json::Value>()?;
         let mut result = serde_json::from_value::<WechatCommonResponse<_>>(res.to_owned())?;
         if result.is_success() {
             let total = &res["total"];
@@ -146,7 +146,7 @@ impl<'a, T: SessionStore> WeChatUser<'a, T> {
         let data = json!({
             "openid": openid.to_owned()
         });
-        let res = self.client.post(WechatMpMethod::User(UserMethod::GetGroupId), data, RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let res = self.client.post(WechatMpMethod::User(UserMethod::GetGroupId), data, RequestType::Json).await?.json::<serde_json::Value>()?;
         let group_id = &res["groupid"];
         let group_id = group_id.as_u64().unwrap_or_default();
         let mut result = serde_json::from_value::<WechatCommonResponse<_>>(res)?;
@@ -214,7 +214,7 @@ impl<'a, T: SessionStore> WeChatUser<'a, T> {
         let data = json!({
             "user_list": user_list.to_vec()
         });
-        let res = self.client.post(WechatMpMethod::User(UserMethod::GetBatch), data, RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let res = self.client.post(WechatMpMethod::User(UserMethod::GetBatch), data, RequestType::Json).await?.json::<serde_json::Value>()?;
         let mut result = serde_json::from_value::<WechatCommonResponse<_>>(res.to_owned())?;
         if result.is_success() {
             let info_list = &res["user_info_list"];

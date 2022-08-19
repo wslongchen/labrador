@@ -560,7 +560,7 @@ impl <T: SessionStore> AlipayClient<T> {
         let url = self.get_request_url(&holder)?;
         let data = serde_urlencoded::to_string(&holder.application_params)?;
         let req = LabraRequest::new().url(url).method(Method::Post).data(data).req_type(RequestType::Form);
-        let result = self.api_client.request(req).await?.text().await?;
+        let result = self.api_client.request(req).await?.text()?;
         match AlipayBaseResponse::parse(&result, method) {
             Ok(mut resp) => {
                 let sign = resp.get_sign();

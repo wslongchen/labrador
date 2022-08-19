@@ -13,6 +13,8 @@ pub enum WechatMpMethod {
     Menu(MenuMethod),
     Message(MessageMethod),
     QrCode(QrCodeMethod),
+    /// 自定义方法
+    Custom(String)
 }
 
 
@@ -103,6 +105,7 @@ impl RequestMethod for WechatMpMethod {
             WechatMpMethod::Menu(v) => v.get_method(),
             WechatMpMethod::Message(v) => v.get_method(),
             WechatMpMethod::QrCode(v) => v.get_method(),
+            WechatMpMethod::Custom(v) => v.to_string(),
         }
     }
 }

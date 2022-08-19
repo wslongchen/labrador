@@ -91,21 +91,6 @@ pub enum RequestType {
     Xml,
 }
 
-#[allow(unused)]
-#[derive(Debug, PartialEq, Clone)]
-pub enum ResponseType {
-    Json,
-    Bytes,
-    Text,
-}
-
-#[allow(unused)]
-#[derive(Debug)]
-pub struct LabraResponse {
-   response: Option<reqwest::Response>,
-   block_response: Option<reqwest::blocking::Response>,
-}
-
 /// LabraRequest
 ///
 /// # Examples
@@ -139,7 +124,59 @@ pub struct LabraRequest <T> where T: Serialize {
     pub params: Option<Vec<(String, String)>>,
     pub headers: Option<Vec<(String, String)>>,
     pub data: Option<T>,
+}
 
+#[allow(unused)]
+pub struct LabraResponse {
+    url: Url,
+    status: StatusCode,
+    headers: HeaderMap,
+    remote_addr: Option<SocketAddr>,
+    body: Bytes
+}
+
+impl LabraResponse {
+    fn new(url: Url, status: StatusCode, remote_addr: Option<SocketAddr>, headers: HeaderMap, body: Bytes) -> LabraResponse {
+        LabraResponse {
+            url,
+            headers,
+            remote_addr,
+            status,
+            body
+        }
+    }
+
+    pub fn status(&self) -> StatusCode {
+        self.status
+    }
+
+    pub fn url(&self) -> &Url {
+        &self.url
+    }
+
+    pub fn remote_addr(&self) -> Option<SocketAddr> {
+        self.remote_addr
+    }
+
+    pub fn header(&self) -> &HeaderMap {
+        &self.headers
+    }
+
+    pub fn json<T: DeserializeOwned>(&self) -> LabradorResult<T> {
+        serde_json::from_slice(&self.body).map_err(LabraError::from)
+    }
+
+    pub fn text(&self) -> LabradorResult<String> {
+        unsafe {
+            // decoding returned Cow::Borrowed, meaning these bytes
+            // are already valid utf8
+            Ok(String::from_utf8_unchecked(self.body.to_vec()))
+        }
+    }
+
+    pub fn bytes(&self) -> LabradorResult<Bytes> {
+        Ok(self.body.clone())
+    }
 }
 
 #[allow(unused)]
@@ -247,7 +284,13 @@ impl <T> LabraRequest <T> where T: Serialize {
             }
         }
         tracing::info!("[请求第三方接口参数] url: {}, data:{}", http_url.as_str(), serde_json::to_string(&self.data).unwrap_or_default());
-        ResponseType::from_response(request.send().await?)
+        let result = request.send().await?;
+        let status = result.status();
+        let remote_addr = result.remote_addr();
+        let headers = result.headers();
+        let response = LabraResponse::new(result.url().clone(), status, remote_addr, headers.clone(), result.bytes().await?);
+        tracing::info!("[请求第三方接口响应] data:{}", &response.text().unwrap_or_default());
+        Ok(response)
     }
 
     #[inline]
@@ -276,7 +319,13 @@ impl <T> LabraRequest <T> where T: Serialize {
             }
         }
         tracing::info!("[请求第三方接口参数] url: {}, data:{}", http_url.as_str(), serde_json::to_string(&self.data).unwrap_or_default());
-        ResponseType::from_response_block(request.send()?)
+        let result = request.send()?;
+        let status = result.status();
+        let remote_addr = result.remote_addr();
+        let headers = result.headers();
+        let response = LabraResponse::new(result.url().clone(), status, remote_addr, headers.clone(), result.bytes()?);
+        tracing::info!("[请求第三方接口响应] data:{}", response.text().unwrap_or_default());
+        Ok(response)
     }
 }
 
@@ -374,122 +423,12 @@ impl RequestType {
     }
 }
 
-#[allow(unused)]
-impl ResponseType {
-    pub fn from_response(res: reqwest::Response) -> LabradorResult<LabraResponse> {
-        Ok(LabraResponse {
-            response: res.into(),
-            block_response: None,
-        })
-    }
-
-    pub fn from_response_block(res: reqwest::blocking::Response) -> LabradorResult<LabraResponse> {
-        Ok(LabraResponse {
-            response: None,
-            block_response: res.into(),
-        })
-    }
-}
-
-#[allow(unused)]
-impl LabraResponse {
-
-    pub fn status(&self) -> StatusCode {
-        if let Some(res) = &self.response {
-            res.status()
-        } else {
-            if let Some(res) = &self.block_response {
-                res.status()
-            } else {
-                StatusCode::default()
-            }
-        }
-    }
-
-    pub fn remote_addr(&self) -> Option<SocketAddr> {
-        if let Some(res) = &self.response {
-            res.remote_addr()
-        } else {
-            if let Some(res) = &self.block_response {
-                res.remote_addr()
-            } else {
-                return None;
-            }
-        }
-    }
-
-    pub fn header(&self) -> HeaderMap {
-        if let Some(res) = &self.response {
-            res.headers().to_owned()
-        } else {
-            if let Some(res) = &self.block_response {
-                res.headers().to_owned()
-            } else {
-                return HeaderMap::new();
-            }
-        }
-    }
-
-    pub async fn json<T: DeserializeOwned + Serialize>(self) -> LabradorResult<T> {
-        match self.response {
-            Some(v) => v.json::<T>().await.map(|v| {
-                tracing::info!("[请求第三方接口响应] data:{}", serde_json::to_string(&v).unwrap_or_default());
-                v
-            }).map_err(LabraError::from),
-            _ => Err(LabraError::RequestError(format!("error to parse http response: {:?}", self))),
-        }
-    }
-
-    pub async fn text(self) -> LabradorResult<String> {
-        match self.response {
-            Some(v) => v.text().await.map(|v| {
-                tracing::info!("[请求第三方接口响应] data:{}", serde_json::to_string(&v).unwrap_or_default());
-                v
-            }).map_err(LabraError::from),
-            _ => Err(LabraError::RequestError(format!("error to parse http response: {:?}", self))),
-        }
-    }
-
-    pub async fn bytes(self) -> LabradorResult<Bytes> {
-        match self.response {
-            Some(v) => v.bytes().await.map_err(LabraError::from),
-            _ => Err(LabraError::RequestError(format!("error to parse http response: {:?}", self))),
-        }
-    }
-
-    pub fn json_blocking<T: DeserializeOwned + Serialize>(self) -> LabradorResult<T> {
-        match self.block_response {
-            Some(v) => v.json::<T>().map(|v| {
-                tracing::info!("[请求第三方接口响应] data:{}", serde_json::to_string(&v).unwrap_or_default());
-                v
-            }).map_err(LabraError::from),
-            _ => Err(LabraError::RequestError(format!("error to parse http response: {:?}", self))),
-        }
-    }
-
-    pub fn text_blocking(self) -> LabradorResult<String> {
-        match self.block_response {
-            Some(v) => v.text().map(|v| {
-                tracing::info!("[请求第三方接口响应] data:{}", serde_json::to_string(&v).unwrap_or_default());
-                v
-            }).map_err(LabraError::from),
-            _ => Err(LabraError::RequestError(format!("error to parse http response: {:?}", self))),
-        }
-    }
-
-    pub fn bytes_blocking(self) -> LabradorResult<Bytes> {
-        match self.block_response {
-            Some(v) => v.bytes().map_err(LabraError::from),
-            _ => Err(LabraError::RequestError(format!("error to parse http response: {:?}", self))),
-        }
-    }
-}
-
 pub async fn request<F>(f: F) -> LabradorResult<LabraResponse>
 where
     F: Fn(reqwest::Client) -> reqwest::RequestBuilder,
 {
-    ResponseType::from_response(f(reqwest::Client::new()).send().await?)
+    let result = f(reqwest::Client::new()).send().await?;
+    Ok(LabraResponse::new(result.url().clone(), result.status(), result.remote_addr(), result.headers().clone(), result.bytes().await?))
 }
 
 #[allow(unused)]
@@ -497,5 +436,14 @@ pub fn request_blocking<F>(f: F) -> LabradorResult<LabraResponse>
 where
     F: Fn(reqwest::blocking::Client) -> reqwest::blocking::RequestBuilder,
 {
-    ResponseType::from_response_block(f(reqwest::blocking::Client::new()).send()?)
+    let result = f(reqwest::blocking::Client::new()).send()?;
+    Ok(LabraResponse::new(result.url().clone(), result.status(), result.remote_addr(), result.headers().clone(), result.bytes()?))
+}
+
+
+
+#[test]
+fn test() {
+    let s = LabradorRequest::new("http://www.baidu.com".parse().unwrap()).query("ss", "dd");
+    println!("{:?}", s.url.as_str());
 }

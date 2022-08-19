@@ -22,25 +22,25 @@ impl<'a, T: SessionStore> WeChatMessage<'a, T> {
 
     /// 发送消息
     pub async fn send<D: Serialize>(&self, data: D) -> LabradorResult<WechatCommonResponse<String>> {
-        let v = self.client.post(WechatMpMethod::Message(MessageMethod::Send), data, RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let v = self.client.post(WechatMpMethod::Message(MessageMethod::Send), data, RequestType::Json).await?.json::<serde_json::Value>()?;
         serde_json::from_value::<WechatCommonResponse<_>>(v).map_err(LabraError::from)
     }
 
     /// 发送公众号信息
     pub async fn send_mp_message<D: Serialize>(&self, data: D) -> LabradorResult<WechatCommonResponse<String>> {
-        let v = self.client.post(WechatMpMethod::Message(MessageMethod::SendTemplate), data, RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let v = self.client.post(WechatMpMethod::Message(MessageMethod::SendTemplate), data, RequestType::Json).await?.json::<serde_json::Value>()?;
         serde_json::from_value::<WechatCommonResponse<_>>(v).map_err(LabraError::from)
     }
 
     /// 发送服务消息
     pub async fn send_service_message<D: Serialize>(&self, data: D) -> LabradorResult<WechatCommonResponse<String>> {
-        let v = self.client.post(WechatMpMethod::Message(MessageMethod::SendUniform), data, RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let v = self.client.post(WechatMpMethod::Message(MessageMethod::SendUniform), data, RequestType::Json).await?.json::<serde_json::Value>()?;
         serde_json::from_value::<WechatCommonResponse<_>>(v).map_err(LabraError::from)
     }
 
     /// 发送订阅消息
     pub async fn send_subscribe_message(&self, msg: &SendSubscribeRequest) -> LabradorResult<WechatCommonResponse<String>> {
-        let v = self.client.post(WechatMpMethod::Message(MessageMethod::SendSubscribe), msg, RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let v = self.client.post(WechatMpMethod::Message(MessageMethod::SendSubscribe), msg, RequestType::Json).await?.json::<serde_json::Value>()?;
         serde_json::from_value::<WechatCommonResponse<_>>(v).map_err(LabraError::from)
     }
 

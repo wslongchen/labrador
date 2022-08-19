@@ -42,7 +42,7 @@ impl<'a, T: SessionStore> WeChatMenu<'a, T> {
 
     /// 创建菜单
     pub async fn create_menu<D: Serialize>(&self, data: D) -> LabradorResult<WechatCommonResponse<String>> {
-        let v = self.client.post(WechatMpMethod::Menu(MenuMethod::Create), data, RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let v = self.client.post(WechatMpMethod::Menu(MenuMethod::Create), data, RequestType::Json).await?.json::<serde_json::Value>()?;
         serde_json::from_value::<WechatCommonResponse<_>>(v).map_err(LabraError::from)
     }
 
@@ -55,7 +55,7 @@ impl<'a, T: SessionStore> WeChatMenu<'a, T> {
     /// 创建自建菜单信息
     pub async fn get_current_selfmenu_info(&self) -> LabradorResult<WechatCommonResponse<SelfMenuInfoResponse>> {
         
-        let v = self.client.get(WechatMpMethod::Menu(MenuMethod::GetCurrentMenuInfo), vec![], RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let v = self.client.get(WechatMpMethod::Menu(MenuMethod::GetCurrentMenuInfo), vec![], RequestType::Json).await?.json::<serde_json::Value>()?;
         let mut result = serde_json::from_value::<WechatCommonResponse<_>>(v.to_owned())?;
         if result.is_success() {
             result.result = serde_json::from_value::<SelfMenuInfoResponse>(v)?.into();
@@ -65,7 +65,7 @@ impl<'a, T: SessionStore> WeChatMenu<'a, T> {
 
     /// 获取菜单信息
     pub async fn get_menu(&self) -> LabradorResult<WechatCommonResponse<MenuButtonResponse>> {
-        let response = self.client.get(WechatMpMethod::Menu(MenuMethod::Get), vec![], RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let response = self.client.get(WechatMpMethod::Menu(MenuMethod::Get), vec![], RequestType::Json).await?.json::<serde_json::Value>()?;
         let mut result = serde_json::from_value::<WechatCommonResponse<_>>(response.to_owned())?;
         if result.is_success() {
             result.result = serde_json::from_value::<MenuButtonResponse>(response)?.into();
@@ -75,7 +75,7 @@ impl<'a, T: SessionStore> WeChatMenu<'a, T> {
 
     /// 删除菜单
     pub async fn delete_menu(&self) -> LabradorResult<WechatCommonResponse<MenuButtonResponse>> {
-        let response = self.client.get(WechatMpMethod::Menu(MenuMethod::Delete), vec![], RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let response = self.client.get(WechatMpMethod::Menu(MenuMethod::Delete), vec![], RequestType::Json).await?.json::<serde_json::Value>()?;
         let mut result = serde_json::from_value::<WechatCommonResponse<_>>(response.to_owned())?;
         if result.is_success() {
             result.result = serde_json::from_value::<MenuButtonResponse>(response)?.into();

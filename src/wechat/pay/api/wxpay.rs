@@ -74,7 +74,7 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
             params.notify_url = None;
         }
         params.get_sign(&self.client.secret);
-        let res = self.client.post(WechatPayMethod::WxPay(method), &params.parse_xml(), RequestType::Xml).await?.text().await?;
+        let res = self.client.post(WechatPayMethod::WxPay(method), &params.parse_xml(), RequestType::Xml).await?.text()?;
         WeChatPayResponse::parse_xml(res)
     }
 
@@ -127,12 +127,12 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
         if params.appid.is_none() {
             params.appid = self.client.appid.to_owned().into();
         }
-        let res = self.client.post_v3(params.mch_id.to_owned().into(), WechatPayMethod::WxPay(WxPayMethod::UnifiedOrderV3(trade_type)), vec![],&params, RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let res = self.client.post_v3(params.mch_id.to_owned().into(), WechatPayMethod::WxPay(WxPayMethod::UnifiedOrderV3(trade_type)), vec![],&params, RequestType::Json).await?.json::<serde_json::Value>()?;
         serde_json::from_value::<WeChatPayResponseV3>(res).map_err(LabraError::from)
     }
 
     pub async fn isv_unified_order_v3(&self, trade_type: TradeType, mut params: IsvWeChatPayRequestV3) -> LabradorResult<WeChatPayResponseV3> {
-        let res = self.client.post_v3(None, WechatPayMethod::WxPay(WxPayMethod::IsvUnifiedOrderV3(trade_type)), vec![],&params, RequestType::Json).await?.json::<serde_json::Value>().await?;
+        let res = self.client.post_v3(None, WechatPayMethod::WxPay(WxPayMethod::IsvUnifiedOrderV3(trade_type)), vec![],&params, RequestType::Json).await?.json::<serde_json::Value>()?;
         serde_json::from_value::<WeChatPayResponseV3>(res).map_err(LabraError::from)
     }
 
@@ -187,7 +187,7 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
                              mut params: WeChatCloseOrderRequest) -> LabradorResult<WeChatCloseOrderResponse> {
         params.appid = self.client.appid.to_owned().into();
         params.get_sign(&self.client.api_key.to_owned().unwrap_or_default());
-        let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::CloseOrder), &params.parse_xml(), RequestType::Xml).await?.text().await?;
+        let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::CloseOrder), &params.parse_xml(), RequestType::Xml).await?.text()?;
         WeChatCloseOrderResponse::parse_xml(res)
     }
 
@@ -227,7 +227,7 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
         let out_trade_no = params.out_trade_no.to_owned().unwrap_or_default();
         params.out_trade_no = None;
         let res = self.client.post_v3(params.mchid.to_owned().into(), WechatPayMethod::WxPay(WxPayMethod::CloseOrderV3(out_trade_no)), vec![], &params, RequestType::Json).await?;
-        let _ = res.text().await?;
+        let _ = res.text()?;
         // let s = res.json::<serde_json::Value>().await?;
         Ok(())
     }
@@ -273,7 +273,7 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     ///
     pub async fn query_order(&self, mut params: WeChatQueryOrderRequest) -> LabradorResult<WeChatQueryOrderResponse> {
         let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::QueryOrder), &params, RequestType::Xml).await?;
-        let result = res.text().await?;
+        let result = res.text()?;
         WeChatQueryOrderResponse::parse_xml(result)
     }
 
@@ -318,7 +318,7 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     ///
     pub async fn query_order_v3(&self, params: WeChatQueryOrderRequestV3) -> LabradorResult<WeChatQueryOrderResponseV3> {
         self.client.post_v3(params.mchid.to_owned().into(), WechatPayMethod::WxPay(WxPayMethod::QueryOrderV3((params.out_trade_no.to_owned(), params.out_trade_no.to_owned()))), vec![], "", RequestType::Json)
-            .await?.json::<WeChatQueryOrderResponseV3>().await
+            .await?.json::<WeChatQueryOrderResponseV3>()
     }
 
 
@@ -339,7 +339,7 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
         params.appid = self.client.appid.to_owned().into();
         params.get_sign(&self.client.api_key.to_owned().unwrap_or_default());
         let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::QueryRefundOrder), params, RequestType::Xml)
-            .await?.text().await?;
+            .await?.text()?;
         WeChatQueryRefundResponse::parse_xml(res)
     }
 
@@ -364,7 +364,7 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     /// </pre>
     pub async fn query_refund_order_v2(&self, params: WeChatQueryRefundOrderRequest) -> LabradorResult<WeChatQueryRefundResponse> {
         let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::QueryRefundOrderV2), params, RequestType::Json)
-            .await?.text().await?;
+            .await?.text()?;
         WeChatQueryRefundResponse::parse_xml(res)
     }
 
@@ -380,12 +380,12 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     /// </pre>
     pub async fn query_refund_order_v3(&self, out_refund_no: String) -> LabradorResult<WeChatQueryRefundResponseV3> {
         self.client.post_v3(None, WechatPayMethod::WxPay(WxPayMethod::QueryRefundOrderV3(out_refund_no)), vec![], "", RequestType::Json)
-            .await?.json::<WeChatQueryRefundResponseV3>().await
+            .await?.json::<WeChatQueryRefundResponseV3>()
     }
 
     pub async fn isv_query_refund_order_v3(&self, out_refund_no: String, sub_mch_id: String) -> LabradorResult<WeChatQueryRefundResponseV3> {
         self.client.post_v3(None, WechatPayMethod::WxPay(WxPayMethod::QueryRefundOrderV3(out_refund_no)), vec![("sub_mchid".to_string(), sub_mch_id)], "", RequestType::Json)
-            .await?.json::<WeChatQueryRefundResponseV3>().await
+            .await?.json::<WeChatQueryRefundResponseV3>()
     }
 
     /// # 解析支付结果通知.
@@ -507,7 +507,7 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
         params.appid = self.client.appid.to_owned().into();
         let mch_id = params.mch_id.as_str();
         params.get_sign(&self.client.api_key.to_owned().unwrap_or_default());
-        let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::Refund), &params.parse_xml(), RequestType::Xml).await?.text().await?;
+        let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::Refund), &params.parse_xml(), RequestType::Xml).await?.text()?;
         WeChatRefundResponse::parse_xml(res)
     }
 
@@ -532,7 +532,7 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     ) -> LabradorResult<WeChatOrderReverseResponse> {
         params.appid = self.client.appid.to_owned().into();
         let mch_id = params.mch_id.as_str();
-        let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::ReverseOrder), &params.parse_xml(), RequestType::Xml).await?.text().await?;
+        let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::ReverseOrder), &params.parse_xml(), RequestType::Xml).await?.text()?;
         WeChatOrderReverseResponse::parse_xml(res)
     }
 
@@ -553,7 +553,7 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     ) -> LabradorResult<WxPayShortUrlResponse> {
         params.appid = self.client.appid.to_owned().into();
         let mch_id = params.mch_id.as_str();
-        let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::ShortUrl), &params.parse_xml(), RequestType::Xml).await?.text().await?;
+        let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::ShortUrl), &params.parse_xml(), RequestType::Xml).await?.text()?;
         WxPayShortUrlResponse::parse_xml(res)
     }
 
@@ -583,7 +583,7 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
         mut params: WeChatRefundRequestV3
     ) -> LabradorResult<WeChatRefundResponseV3> {
        self.client.post_v3(None, WechatPayMethod::WxPay(WxPayMethod::RefundV3), vec![],params, RequestType::Json).await?
-            .json::<WeChatRefundResponseV3>().await
+            .json::<WeChatRefundResponseV3>()
     }
 }
 

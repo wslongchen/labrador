@@ -31,7 +31,7 @@ impl<'a, T: SessionStore> Oauth2<'a, T> {
             ("code", code),
             ("appid", &self.client.appid),
             ("secret", &self.client.secret),
-        ], RequestType::Json).await?.json::<serde_json::Value>().await?;
+        ], RequestType::Json).await?.json::<serde_json::Value>()?;
         let mut result = serde_json::from_value::<WechatCommonResponse<_>>(v.to_owned())?;
         if result.is_success() {
             result.result = serde_json::from_value::<Oauth2AccessTokenResponse>(v)?.into();
@@ -48,7 +48,7 @@ impl<'a, T: SessionStore> Oauth2<'a, T> {
             ("grant_type", "refresh_token"),
             ("refresh_token", refresh_token),
             ("appid", &self.client.appid),
-        ], RequestType::Json).await?.json::<serde_json::Value>().await?;
+        ], RequestType::Json).await?.json::<serde_json::Value>()?;
         let mut result = serde_json::from_value::<WechatCommonResponse<_>>(v.to_owned())?;
         if result.is_success() {
             result.result = serde_json::from_value::<Oauth2AccessTokenResponse>(v)?.into();
@@ -64,7 +64,7 @@ impl<'a, T: SessionStore> Oauth2<'a, T> {
             ("access_token", access_token),
             ("openid", openid),
             ("lang", "zh_CN"),
-        ], RequestType::Json).await?.json::<serde_json::Value>().await?;
+        ], RequestType::Json).await?.json::<serde_json::Value>()?;
         let mut result = serde_json::from_value::<WechatCommonResponse<_>>(v.to_owned())?;
         if result.is_success() {
             result.result = serde_json::from_value::<Oauth2UserInfo>(v)?.into();
