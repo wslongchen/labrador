@@ -1,4 +1,4 @@
-use crate::{session::SessionStore, errors::LabraError, request::{RequestType}, LabradorResult};
+use crate::{session::SessionStore, errors::LabraError, request::{RequestType}, LabradorResult, WechatCommonResponse};
 use bytes::Bytes;
 use serde::{Serialize, Deserialize};
 use serde_json::{Value};
@@ -45,11 +45,9 @@ impl<'a, T: SessionStore> WechatMaQrcode<'a, T> {
         };
         let result = self.client.post(WechatMaMethod::QrCode(MaQrCodeMethod::CreateWxaQrCode), vec![], &mini_qr_code, RequestType::Json).await?.bytes()?;
         let res_str = String::from_utf8(result.to_vec()).unwrap_or_default();
-        match serde_json::from_str::<Value>(&res_str) {
+        match WechatCommonResponse::from_str(&res_str) {
             Ok(r) => {
-                let errcode = &r["errcode"].as_i64().unwrap_or_default().to_owned();
-                let errmsg = &r["errmsg"].as_str().unwrap_or_default().to_owned();
-                return Err(LabraError::ClientError { errcode: errcode.to_string(), errmsg: errmsg.to_owned()})
+                return Err(LabraError::ClientError { errcode: r.errcode.to_owned().unwrap_or_default().to_string(), errmsg: r.errmsg.to_owned().unwrap_or_default()})
             }
             Err(err) => {  }
         };
@@ -76,11 +74,9 @@ impl<'a, T: SessionStore> WechatMaQrcode<'a, T> {
         };
         let result = self.client.post(WechatMaMethod::QrCode(MaQrCodeMethod::GetWxaCodeUnlimit), vec![], &mini_qr_code, RequestType::Json).await?.bytes()?;
         let res_str = String::from_utf8(result.to_vec()).unwrap_or_default();
-        match serde_json::from_str::<Value>(&res_str) {
+        match WechatCommonResponse::from_str(&res_str) {
             Ok(r) => {
-                let errcode = &r["errcode"].as_i64().unwrap_or_default().to_owned();
-                let errmsg = &r["errmsg"].as_str().unwrap_or_default().to_owned();
-                return Err(LabraError::ClientError { errcode: errcode.to_string(), errmsg: errmsg.to_owned()})
+                return Err(LabraError::ClientError { errcode: r.errcode.to_owned().unwrap_or_default().to_string(), errmsg: r.errmsg.to_owned().unwrap_or_default()})
             }
             Err(err) => {  }
         };
@@ -105,11 +101,9 @@ impl<'a, T: SessionStore> WechatMaQrcode<'a, T> {
         };
         let result = self.client.post(WechatMaMethod::QrCode(MaQrCodeMethod::GetWxaCodeUnlimit), vec![], &mini_qr_code, RequestType::Json).await?.bytes()?;
         let res_str = String::from_utf8(result.to_vec()).unwrap_or_default();
-        match serde_json::from_str::<Value>(&res_str) {
+        match WechatCommonResponse::from_str(&res_str) {
             Ok(r) => {
-                let errcode = &r["errcode"].as_i64().unwrap_or_default().to_owned();
-                let errmsg = &r["errmsg"].as_str().unwrap_or_default().to_owned();
-                return Err(LabraError::ClientError { errcode: errcode.to_string(), errmsg: errmsg.to_owned()})
+                return Err(LabraError::ClientError { errcode: r.errcode.to_owned().unwrap_or_default().to_string(), errmsg: r.errmsg.to_owned().unwrap_or_default()})
             }
             Err(err) => {  }
         };

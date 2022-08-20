@@ -1,26 +1,87 @@
 use serde::{Serialize, Deserialize};
+use serde::de::DeserializeOwned;
+use serde_json::Value;
 
 mod mp;
 mod pay;
 mod cryptos;
 mod miniapp;
+mod constants;
 
 pub use mp::*;
 pub use pay::*;
 pub use cryptos::*;
-
+use crate::{LabradorResult, LabraError};
 
 
 #[allow(unused)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WechatCommonResponse<T> {
+pub struct WechatCommonResponse {
     pub errcode: Option<i64>,
     pub errmsg: Option<String>,
-    pub result: Option<T>,
+    pub body: Option<String>,
 }
 
-impl <T> WechatCommonResponse<T> {
+impl WechatCommonResponse {
     pub fn is_success(&self) -> bool {
         self.errcode.unwrap_or(0) == 0
+    }
+
+    pub fn parse<T: DeserializeOwned>(v: Value) -> LabradorResult<T> {
+        let mut resp = serde_json::from_value::<Self>(v.to_owned())?;
+        if resp.is_success() {
+            serde_json::from_str::<T>(&v.to_string()).map_err(LabraError::from)
+        } else {
+            Err(LabraError::ClientError { errcode: resp.errcode.to_owned().unwrap_or_default().to_string(), errmsg: resp.errmsg.to_owned().unwrap_or_default() })
+        }
+    }
+
+    pub fn parse_with_key<T: DeserializeOwned>(v: Value, key: Option<&str>) -> LabradorResult<T> {
+        let mut resp = serde_json::from_value::<Self>(v.to_owned())?;
+        if resp.is_success() {
+            if let Some(key) = key {
+                let v = serde_json::from_str::<Value>(&v.to_string())?;
+                let result = &v[key];
+                if result.is_string() {
+                    serde_json::from_str::<T>(result.as_str().unwrap_or_default()).map_err(LabraError::from)
+                } else {
+                    serde_json::from_value::<T>(v[key].to_owned()).map_err(LabraError::from)
+                }
+            } else {
+                serde_json::from_str::<T>(&v.to_string()).map_err(LabraError::from)
+            }
+        } else {
+            Err(LabraError::ClientError { errcode: resp.errcode.to_owned().unwrap_or_default().to_string(), errmsg: resp.errmsg.to_owned().unwrap_or_default() })
+        }
+    }
+
+    pub fn from_value(v: Value) -> LabradorResult<Self> {
+        let mut resp = serde_json::from_value::<Self>(v.to_owned())?;
+        resp.body = v.to_string().into();
+        Ok(resp)
+    }
+
+    pub fn from_str(str: &str) -> LabradorResult<Self> {
+        let mut resp = serde_json::from_str::<Self>(str)?;
+        resp.body = str.to_string().into();
+        Ok(resp)
+    }
+
+    pub fn get_biz_model<T: DeserializeOwned>(&self, key: Option<&str>) -> LabradorResult<T> {
+        if self.is_success() {
+            if let Some(key) = key {
+                let v = serde_json::from_str::<Value>(&self.body.to_owned().unwrap_or_default())?;
+                let result = &v[key];
+                if result.is_string() {
+                    serde_json::from_str::<T>(result.as_str().unwrap_or_default()).map_err(LabraError::from)
+                } else {
+                    serde_json::from_value::<T>(v[key].to_owned()).map_err(LabraError::from)
+                }
+            } else {
+                serde_json::from_str::<T>(&self.body.to_owned().unwrap_or_default()).map_err(LabraError::from)
+            }
+        } else {
+            Err(LabraError::ClientError { errcode: self.errcode.to_owned().unwrap_or_default().to_string(), errmsg: self.errmsg.to_owned().unwrap_or_default() })
+        }
     }
 }

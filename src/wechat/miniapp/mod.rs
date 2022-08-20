@@ -1,5 +1,5 @@
 use std::collections::BTreeMap;
-use crate::{session::SessionStore, client::APIClient, request::{Method, RequestType, LabraResponse, LabraRequest, RequestMethod}, util::current_timestamp, LabradorResult, SimpleStorage};
+use crate::{session::SessionStore, client::APIClient, request::{Method, RequestType, LabraResponse, LabraRequest, RequestMethod}, util::current_timestamp, LabradorResult, SimpleStorage, WeChatCrypto};
 use serde::{Serialize, Deserialize};
 
 mod method;
@@ -13,6 +13,8 @@ use crate::wechat::miniapp::method::WechatMaMethod;
 pub struct WeChatMaClient<T: SessionStore> {
     appid: String,
     secret: String,
+    token: Option<String>,
+    aes_key: Option<String>,
     client: APIClient<T>,
 }
 
@@ -37,7 +39,9 @@ pub trait WechatRequest<T: Serialize> {
         BTreeMap::new()
     }
 
-    fn get_request_body(&self) -> Option<&T>;
+    fn get_request_body(&self) -> Option<&T> {
+        None
+    }
 
     /// 是否需要token
     fn is_need_token(&self) -> bool {
@@ -60,8 +64,20 @@ impl<T: SessionStore> WeChatMaClient<T> {
         WeChatMaClient {
             appid: client.app_key.to_owned(),
             secret: client.secret.to_owned(),
+            token: None,
+            aes_key: None,
             client
         }
+    }
+
+    fn aes_key(mut self, aes_key: &str) -> Self {
+        self.aes_key = aes_key.to_string().into();
+        self
+    }
+
+    fn token(mut self, token: &str) -> Self {
+        self.token = token.to_string().into();
+        self
     }
 
     /// get the wechat client
@@ -107,6 +123,17 @@ impl<T: SessionStore> WeChatMaClient<T> {
         session.set(&token_key, token.to_owned(), Some(expires_in as usize));
         session.set(&expires_key, expires_at, Some(expires_in as usize));
         Ok(token.to_owned())
+    }
+
+    ///
+    /// <pre>
+    /// 验证消息的确来自微信服务器.
+    /// 详情(http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421135319&token=&lang=zh_CN)
+    /// </pre>
+    fn check_signature(&self, signature: &str, timestamp: i64, nonce: &str, echo_str: &str) -> LabradorResult<bool> {
+        let crp = WeChatCrypto::new(&self.aes_key.to_owned().unwrap_or_default());
+        let _ = crp.check_signature(signature, timestamp, nonce, echo_str, "", &self.token.to_owned().unwrap_or_default())?;
+        Ok(true)
     }
 
     ///<pre>

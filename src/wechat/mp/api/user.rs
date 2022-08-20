@@ -23,18 +23,19 @@ impl<'a, T: SessionStore> WeChatUser<'a, T> {
     }
 
     /// 获取用户信息
-    pub async fn get(&mut self, openid: &str) -> LabradorResult<WechatCommonResponse<WechatUser>> {
+    pub async fn get(&mut self, openid: &str) -> LabradorResult<WechatUser> {
         self.get_with_lang(openid, "zh_CN").await
     }
 
     /// 获取用户信息
-    pub async fn get_with_lang(&mut self, openid: &str, lang: &str) -> LabradorResult<WechatCommonResponse<WechatUser>> {
+    pub async fn get_with_lang(&mut self, openid: &str, lang: &str) -> LabradorResult<WechatUser> {
         let res = self.client.get(WechatMpMethod::User(UserMethod::Info), vec![("openid", openid), ("lang", lang)], RequestType::Json).await?.json::<serde_json::Value>()?;
-        let mut result = serde_json::from_value::<WechatCommonResponse<_>>(res.to_owned())?;
+        let result = WechatCommonResponse::from_value(res.clone())?;
         if result.is_success() {
-            result.result = self.json_to_user(&res).into();
+            Ok(self.json_to_user(&res))
+        } else {
+            Err(LabraError::ClientError {errcode: result.errcode.to_owned().unwrap_or_default().to_string(), errmsg: result.errmsg.to_owned().unwrap_or_default()})
         }
-        Ok(result)
     }
 
     /// 解密用户信息
@@ -91,23 +92,22 @@ impl<'a, T: SessionStore> WeChatUser<'a, T> {
     }
 
     /// 修改备注
-    pub async fn update_remark(&mut self, openid: &str, remark: &str) -> LabradorResult<WechatCommonResponse<String>> {
+    pub async fn update_remark(&mut self, openid: &str, remark: &str) -> LabradorResult<WechatCommonResponse> {
         let data = json!({
             "openid": openid.to_owned(),
             "remark": remark.to_owned()
         });
-        let v = self.client.post(WechatMpMethod::User(UserMethod::UpdateRemark), data, RequestType::Json).await?.json::<serde_json::Value>()?;
-        serde_json::from_value::<WechatCommonResponse<_>>(v).map_err(LabraError::from)
+        self.client.post(WechatMpMethod::User(UserMethod::UpdateRemark), data, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
     /// 获取关注的人
-    pub async fn get_followers(&mut self, next_openid: Option<&str>) -> LabradorResult<WechatCommonResponse<Followers>> {
+    pub async fn get_followers(&mut self, next_openid: Option<&str>) -> LabradorResult<Followers> {
         let params = match next_openid {
             Some(openid) => vec![("next_openid", openid)],
             None => vec![],
         };
         let res = self.client.get(WechatMpMethod::User(UserMethod::Get), params, RequestType::Json, ).await?.json::<serde_json::Value>()?;
-        let mut result = serde_json::from_value::<WechatCommonResponse<_>>(res.to_owned())?;
+        let mut result = WechatCommonResponse::from_value(res.clone())?;
         if result.is_success() {
             let total = &res["total"];
             let total = total.as_u64().unwrap_or_default();
@@ -123,7 +123,7 @@ impl<'a, T: SessionStore> WeChatUser<'a, T> {
                         let openids_array = ids.as_array().unwrap();
                         openids_array.iter()
                             .map(|x| x.as_str().unwrap_or_default().to_owned())
-                            .collect::<Vec<_>>()
+                            .collect::<Vec<String>>()
                     }else {
                         vec![]
                     }
@@ -131,29 +131,31 @@ impl<'a, T: SessionStore> WeChatUser<'a, T> {
                 },
                 None => vec![],
             };
-            result.result = Followers {
+            Ok(Followers {
                 total,
                 count,
                 openids,
                 next_openid: next_id.to_owned(),
-            }.into();
+            })
+        } else {
+            Err(LabraError::ClientError {errcode: result.errcode.to_owned().unwrap_or_default().to_string(), errmsg: result.errmsg.to_owned().unwrap_or_default()})
         }
-        Ok(result)
     }
 
     /// 获取分组编号
-    pub async fn get_group_id(&mut self, openid: &str) -> LabradorResult<WechatCommonResponse<u64>> {
+    pub async fn get_group_id(&mut self, openid: &str) -> LabradorResult<u64> {
         let data = json!({
             "openid": openid.to_owned()
         });
         let res = self.client.post(WechatMpMethod::User(UserMethod::GetGroupId), data, RequestType::Json).await?.json::<serde_json::Value>()?;
         let group_id = &res["groupid"];
         let group_id = group_id.as_u64().unwrap_or_default();
-        let mut result = serde_json::from_value::<WechatCommonResponse<_>>(res)?;
+        let mut result = WechatCommonResponse::from_value(res.clone())?;
         if result.is_success() {
-            result.result = group_id.into();
+            Ok(group_id)
+        } else {
+            Err(LabraError::ClientError {errcode: result.errcode.to_owned().unwrap_or_default().to_string(), errmsg: result.errmsg.to_owned().unwrap_or_default()})
         }
-        Ok(result)
     }
 
     fn json_to_user(&self, res: &Value) -> WechatUser {
@@ -210,12 +212,12 @@ impl<'a, T: SessionStore> WeChatUser<'a, T> {
     }
 
     /// 批量获取用户
-    pub async fn get_batch(&mut self, user_list: &[HashMap<String, String>]) -> LabradorResult<WechatCommonResponse<Vec<WechatUser>>> {
+    pub async fn get_batch(&mut self, user_list: &[HashMap<String, String>]) -> LabradorResult<Vec<WechatUser>> {
         let data = json!({
             "user_list": user_list.to_vec()
         });
         let res = self.client.post(WechatMpMethod::User(UserMethod::GetBatch), data, RequestType::Json).await?.json::<serde_json::Value>()?;
-        let mut result = serde_json::from_value::<WechatCommonResponse<_>>(res.to_owned())?;
+        let mut result = WechatCommonResponse::from_value(res.clone())?;
         if result.is_success() {
             let info_list = &res["user_info_list"];
             let info_list = info_list.as_array().unwrap();
@@ -223,14 +225,14 @@ impl<'a, T: SessionStore> WeChatUser<'a, T> {
             for info in info_list {
                 users.push(self.json_to_user(&info));
             }
-            result.result = users.into();
+            Ok(users)
+        } else {
+            Err(LabraError::ClientError {errcode: result.errcode.to_owned().unwrap_or_default().to_string(), errmsg: result.errmsg.to_owned().unwrap_or_default()})
         }
-        Ok(result)
-
     }
 
     /// 批量获取用户
-    pub async fn get_batch_with_lang(&mut self, user_list: &[String], lang: &str) -> LabradorResult<WechatCommonResponse<Vec<WechatUser>>> {
+    pub async fn get_batch_with_lang(&mut self, user_list: &[String], lang: &str) -> LabradorResult<Vec<WechatUser>> {
         let mut users = vec![];
         for openid in user_list {
             let mut user = HashMap::new();

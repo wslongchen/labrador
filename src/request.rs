@@ -1,7 +1,8 @@
 use std::net::SocketAddr;
 use bytes::Bytes;
+use json::value;
 use openssl::x509::X509;
-use reqwest::{self, multipart, StatusCode, Url};
+use reqwest::{self, Body, multipart, StatusCode, Url};
 use reqwest::header::{HeaderMap, HeaderValue};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -81,6 +82,46 @@ impl ToString for Method {
     }
 }
 
+#[derive(Debug)]
+pub enum RequestBody<T: Serialize> {
+    Json(T),
+    Form(T),
+    Multipart(multipart::Form),
+    Xml(String),
+    Text(String),
+    Raw(Bytes),
+    Null
+}
+
+impl <T: Serialize> From<String> for RequestBody<T> {
+    fn from(v: String) -> Self {
+           RequestBody::Text(v)
+    }
+}
+
+impl <T: Serialize> From<&str> for RequestBody<T> {
+    fn from(v: &str) -> Self {
+           RequestBody::Text(v.to_string())
+    }
+}
+
+impl <T: Serialize> From<Bytes> for RequestBody<T> {
+    fn from(v: Bytes) -> Self {
+           RequestBody::Raw(v)
+    }
+}
+
+impl <T: Serialize> From<Vec<u8>> for RequestBody<T> {
+    fn from(vec: Vec<u8>) -> Self {
+        RequestBody::Raw(Bytes::from(vec))
+    }
+}
+
+impl <T: Serialize> From<&'static [u8]> for RequestBody<T> {
+    fn from(s: &'static [u8]) -> Self {
+        RequestBody::Raw(Bytes::from_static(s))
+    }
+}
 
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
@@ -114,7 +155,7 @@ pub enum RequestType {
 /// ```
 ///
 #[allow(unused)]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct LabraRequest <T> where T: Serialize {
     pub url: String,
     pub method: Method,
@@ -124,6 +165,7 @@ pub struct LabraRequest <T> where T: Serialize {
     pub params: Option<Vec<(String, String)>>,
     pub headers: Option<Vec<(String, String)>>,
     pub data: Option<T>,
+    pub body: RequestBody<T>
 }
 
 #[allow(unused)]
@@ -182,7 +224,7 @@ impl LabraResponse {
 #[allow(unused)]
 impl <T> LabraRequest <T> where T: Serialize {
     pub fn new() -> Self {
-        LabraRequest { url: String::default(), method: Method::Post, req_type: RequestType::Json, identity: None, cert: None, params: None, data: None, headers: None }
+        LabraRequest { url: String::default(), method: Method::Post, req_type: RequestType::Json, identity: None, cert: None, params: None, data: None, headers: None, body: RequestBody::Null }
     }
 
     pub fn url(mut self, url: String) -> Self {
@@ -225,8 +267,33 @@ impl <T> LabraRequest <T> where T: Serialize {
         self
     }
 
+    pub fn json(mut self, data: T) -> Self {
+        self.body = RequestBody::Json(data);
+        self
+    }
+
+    pub fn form(mut self, data: T) -> Self {
+        self.body = RequestBody::Form(data);
+        self
+    }
+
+    pub fn multipart_form(mut self, data: multipart::Form) -> Self {
+        self.body = RequestBody::Multipart(data);
+        self
+    }
+
+    pub fn bytes(mut self, bytes: Bytes) -> Self {
+        self.body = bytes.into();
+        self
+    }
+
+    pub fn text(mut self, data: &str) -> Self {
+        self.body = data.into();
+        self
+    }
+
     #[inline]
-    pub async fn request(&self) -> LabradorResult<LabraResponse> {
+    pub async fn request(self) -> LabradorResult<LabraResponse> {
         let mut http_url = Url::parse(&self.url).unwrap();
         if let Some(params) = &self.params {
             http_url.query_pairs_mut().extend_pairs(params.into_iter());
@@ -243,6 +310,27 @@ impl <T> LabraRequest <T> where T: Serialize {
             reqwest::header::CONTENT_TYPE,
             self.req_type.get_content_type(),
         );
+        match self.body {
+            RequestBody::Json(v) => {
+                request = request.json(&v);
+            }
+            RequestBody::Form(v) => {
+                request = request.form(&v);
+            }
+            RequestBody::Multipart(v) => {
+                request = request.multipart(v);
+            }
+            RequestBody::Xml(v) => {
+                request = request.body(v);
+            }
+            RequestBody::Text(v) => {
+                request = request.body(v);
+            }
+            RequestBody::Raw(v) => {
+                request = request.body(v);
+            }
+            RequestBody::Null => {}
+        }
         if let Some(data) = &self.data {
             match self.req_type {
                 RequestType::Json => {
@@ -258,20 +346,7 @@ impl <T> LabraRequest <T> where T: Serialize {
                     }
                 }
                 RequestType::Multipart => {
-                    let value = serde_json::to_value(data.clone()).unwrap_or(Value::Null);
-                    if value.is_object() {
-                        let mut form = multipart::Form::new();
-                        if let Some(v) = value.as_object() {
-                            for (k, v) in v.into_iter() {
-                                let v = v.as_str().unwrap_or_default();
-                                form = form.text(k.to_owned(), v.to_owned());
-                            }
-                        }
-                        request = request.multipart(form);
-                    } else {
-                        let v = value.to_string();
-                        request = request.body(v.replace("\"",""));
-                    }
+
                 }
                 _ => {
                     request = request.body(serde_json::to_string(data).unwrap_or_default())

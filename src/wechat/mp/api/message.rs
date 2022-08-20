@@ -21,54 +21,50 @@ impl<'a, T: SessionStore> WeChatMessage<'a, T> {
     }
 
     /// 发送消息
-    pub async fn send<D: Serialize>(&self, data: D) -> LabradorResult<WechatCommonResponse<String>> {
-        let v = self.client.post(WechatMpMethod::Message(MessageMethod::Send), data, RequestType::Json).await?.json::<serde_json::Value>()?;
-        serde_json::from_value::<WechatCommonResponse<_>>(v).map_err(LabraError::from)
+    pub async fn send<D: Serialize>(&self, data: D) -> LabradorResult<WechatCommonResponse> {
+        self.client.post(WechatMpMethod::Message(MessageMethod::Send), data, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
     /// 发送公众号信息
-    pub async fn send_mp_message<D: Serialize>(&self, data: D) -> LabradorResult<WechatCommonResponse<String>> {
-        let v = self.client.post(WechatMpMethod::Message(MessageMethod::SendTemplate), data, RequestType::Json).await?.json::<serde_json::Value>()?;
-        serde_json::from_value::<WechatCommonResponse<_>>(v).map_err(LabraError::from)
+    pub async fn send_mp_message<D: Serialize>(&self, data: D) -> LabradorResult<WechatCommonResponse> {
+        self.client.post(WechatMpMethod::Message(MessageMethod::SendTemplate), data, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
     /// 发送服务消息
-    pub async fn send_service_message<D: Serialize>(&self, data: D) -> LabradorResult<WechatCommonResponse<String>> {
-        let v = self.client.post(WechatMpMethod::Message(MessageMethod::SendUniform), data, RequestType::Json).await?.json::<serde_json::Value>()?;
-        serde_json::from_value::<WechatCommonResponse<_>>(v).map_err(LabraError::from)
+    pub async fn send_service_message<D: Serialize>(&self, data: D) -> LabradorResult<WechatCommonResponse> {
+        self.client.post(WechatMpMethod::Message(MessageMethod::SendUniform), data, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
     /// 发送订阅消息
-    pub async fn send_subscribe_message(&self, msg: &SendSubscribeRequest) -> LabradorResult<WechatCommonResponse<String>> {
-        let v = self.client.post(WechatMpMethod::Message(MessageMethod::SendSubscribe), msg, RequestType::Json).await?.json::<serde_json::Value>()?;
-        serde_json::from_value::<WechatCommonResponse<_>>(v).map_err(LabraError::from)
+    pub async fn send_subscribe_message(&self, msg: &SendSubscribeRequest) -> LabradorResult<WechatCommonResponse> {
+        self.client.post(WechatMpMethod::Message(MessageMethod::SendSubscribe), msg, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
     /// 发送模板消息
-    pub async fn send_template_message(&self, touser: &str, msg: &TemplateMessage) -> LabradorResult<WechatCommonResponse<String>> {
+    pub async fn send_template_message(&self, touser: &str, msg: &TemplateMessage) -> LabradorResult<WechatCommonResponse> {
         self.send_mp_message(msg).await
     }
 
     /// 发送消息
-    pub async fn send_message(&self, msg: &TemplateMsg) -> LabradorResult<WechatCommonResponse<String>> {
+    pub async fn send_message(&self, msg: &TemplateMsg) -> LabradorResult<WechatCommonResponse> {
         self.send_service_message(msg).await
     }
 
 
     /// 发送文字消息
-    pub async fn send_text(&self, openid: &str, content: &str) -> LabradorResult<WechatCommonResponse<String>> {
+    pub async fn send_text(&self, openid: &str, content: &str) -> LabradorResult<WechatCommonResponse> {
         let req = SendTextRequest::new(openid, content);
         self.send(req.to_json()).await
     }
 
     /// 发送图片消息
-    pub async fn send_image(&self, openid: &str, media_id: &str) -> LabradorResult<WechatCommonResponse<String>> {
+    pub async fn send_image(&self, openid: &str, media_id: &str) -> LabradorResult<WechatCommonResponse> {
         let req = SendImageRequest::new(openid, media_id);
         self.send(req.to_json()).await
     }
 
     /// 发送声音消息
-    pub async fn send_voice(&self, openid: &str, media_id: &str) -> LabradorResult<WechatCommonResponse<String>> {
+    pub async fn send_voice(&self, openid: &str, media_id: &str) -> LabradorResult<WechatCommonResponse> {
         let req = SendVoiceRequest::new(openid, media_id);
         self.send(req.to_json()).await
     }

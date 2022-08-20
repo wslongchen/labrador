@@ -20,9 +20,9 @@ impl<'a, T: SessionStore> WeChatQRCode<'a, T> {
     }
 
     /// 创建二维码凭证
-    pub async fn create<D: Serialize>(&mut self, data: D) -> LabradorResult<WechatCommonResponse<QRCodeTicket>> {
+    pub async fn create<D: Serialize>(&mut self, data: D) -> LabradorResult<QRCodeTicket> {
         let res = self.client.post(WechatMpMethod::QrCode(QrCodeMethod::Create), data, RequestType::Json).await?.json::<serde_json::Value>()?;
-        let mut result = serde_json::from_value::<WechatCommonResponse<_>>(res.to_owned())?;
+        let mut result = WechatCommonResponse::from_value(res.clone())?;
         if result.is_success() {
             let ticket = &res["ticket"];
             let ticket = ticket.as_str().unwrap_or_default().to_owned();
@@ -32,13 +32,14 @@ impl<'a, T: SessionStore> WeChatQRCode<'a, T> {
             };
             let url = &res["url"];
             let url = url.as_str().unwrap_or_default().to_owned();
-            result.result = QRCodeTicket {
+            Ok(QRCodeTicket {
                 ticket: ticket.to_owned(),
                 expire_seconds: expire_seconds as u32,
                 url: url.to_owned(),
-            }.into();
+            })
+        } else {
+            Err(LabraError::ClientError {errcode: result.errcode.to_owned().unwrap_or_default().to_string(), errmsg: result.errmsg.to_owned().unwrap_or_default()})
         }
-        Ok(result)
     }
 
 
