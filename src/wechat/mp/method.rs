@@ -39,7 +39,21 @@ pub enum CustomServiceMethod {
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum MpMediaMethod {
+    /// 上传临时永久
     UploadMedia(String),
+    /// 添加永久素材
+    AddMaterial(String),
+    /// 上传图片
+    UploadImage,
+    /// 获取永久素材
+    GetMaterial,
+    /// 删除永久素材
+    DeleteMaterial,
+    /// 获取永久素材数量
+    GetMaterialCount,
+    /// 获取永久素材列表
+    GetMaterialList,
+    /// 获取临时素材
     GetMedia,
 }
 
@@ -48,6 +62,12 @@ impl MpMediaMethod {
     pub fn get_method(&self) -> String {
         match self {
             MpMediaMethod::UploadMedia(v) => format!("/cgi-bin/media/upload?type={}", v),
+            MpMediaMethod::AddMaterial(v) => format!("/cgi-bin/material/add_material?type={}", v),
+            MpMediaMethod::GetMaterial => String::from("/cgi-bin/material/get_material"),
+            MpMediaMethod::DeleteMaterial => String::from("/cgi-bin/material/del_material"),
+            MpMediaMethod::GetMaterialCount => String::from("/cgi-bin/material/get_materialcount"),
+            MpMediaMethod::GetMaterialList => String::from("/cgi-bin/material/batchget_material"),
+            MpMediaMethod::UploadImage => String::from("/cgi-bin/media/uploadimg"),
             MpMediaMethod::GetMedia => String::from("/cgi-bin/media/get"),
         }
     }
