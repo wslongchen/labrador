@@ -507,7 +507,9 @@ impl <T: SessionStore> AlipayClient<T> {
                 };
                 let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
                 signer.update(sign_content.as_bytes())?;
+                println!("sign:{}",sign_content);
                 let sign = base64::encode(&signer.sign_to_vec()?);
+                println!("sign:{}",sign);
                 Ok(sign)
             }
             // constants::SIGN_TYPE_RSA => {
@@ -558,8 +560,7 @@ impl <T: SessionStore> AlipayClient<T> {
         let method = request.get_api_method_name();
         let holder = self.get_request_holder_with_sign(request, access_token, app_auth_token, target_app_id)?;
         let url = self.get_request_url(&holder)?;
-        let data = serde_urlencoded::to_string(&holder.application_params)?;
-        let req = LabraRequest::new().url(url).method(Method::Post).data(data).req_type(RequestType::Form);
+        let req = LabraRequest::new().url(url).method(Method::Post).form(&holder.application_params).req_type(RequestType::Form);
         let result = self.api_client.request(req).await?.text()?;
         match AlipayBaseResponse::parse(&result, method) {
             Ok(mut resp) => {

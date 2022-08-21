@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
-use serde_json::{json, Value};
+use serde_json::{ Value};
 
-use crate::{session::SessionStore, request::{RequestType}, errors::LabraError, util::xmlutil, WechatCommonResponse, WeChatMpClient, LabradorResult};
+use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult};
 use crate::wechat::constants::{KEFU_MSGTYPE_IMAGE, KEFU_MSGTYPE_MA_PAGE, KEFU_MSGTYPE_TEXT};
 use crate::wechat::miniapp::method::{MaMessageMethod, WechatMaMethod};
 use crate::wechat::miniapp::WeChatMaClient;
@@ -94,6 +94,7 @@ pub struct KfText {
     pub content: Option<String>,
 }
 
+#[allow(unused)]
 impl KfText {
 
     pub fn new() -> Self {
@@ -124,6 +125,7 @@ pub struct KfImage {
     pub media_id: Option<String>,
 }
 
+#[allow(unused)]
 impl KfImage {
 
     pub fn new() -> Self {
@@ -157,6 +159,7 @@ pub struct KfLink {
     pub url: Option<String>,
 }
 
+#[allow(unused)]
 impl KfLink {
 
     pub fn new() -> Self {
@@ -204,6 +207,7 @@ pub struct KfMaPage {
     pub thumb_media_id: Option<String>,
 }
 
+#[allow(unused)]
 impl KfMaPage {
 
     pub fn new() -> Self {
@@ -239,7 +243,7 @@ impl KfMaPage {
     }
 }
 
-
+#[allow(unused)]
 impl WxMaKefuMsgRequest {
 
     fn touser(mut self, touser: &str) -> Self {
@@ -296,7 +300,7 @@ pub struct WxMaSubscribeMsgRequest {
     /// 是否必填： 是
     /// 描述： 模板内容，不填则下发空模板
     /// </pre>
-    pub data: Option<Vec<MsgData>>,
+    pub data: Option<Value>,
     /// 跳转小程序类型：developer为开发版；trial为体验版；formal为正式版；默认为正式版
     pub miniprogram_state: Option<String>,
     /// 进入小程序查看的语言类型，支持zh_CN(简体中文)、en_US(英文)、zh_HK(繁体中文)、zh_TW(繁体中文)，默认为zh_CN

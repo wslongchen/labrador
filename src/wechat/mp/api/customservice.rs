@@ -32,7 +32,7 @@ impl<'a, T: SessionStore> WeChatCustomService<'a, T> {
             "nickname": nickname.to_owned(),
             "password": encrypted_password
         });
-       self.client.post(WechatMpMethod::CustomService(CustomServiceMethod::AccountAdd), data, RequestType::Json).await?.json::<WechatCommonResponse>()
+       self.client.post(WechatMpMethod::CustomService(CustomServiceMethod::AccountAdd), vec![], data, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
     /// 修改账号
@@ -44,7 +44,7 @@ impl<'a, T: SessionStore> WeChatCustomService<'a, T> {
             "nickname": nickname.to_owned(),
             "password": encrypted_password
         });
-        self.client.post(WechatMpMethod::CustomService(CustomServiceMethod::AccountUpdate), data, RequestType::Json).await?.json::<WechatCommonResponse>()
+        self.client.post(WechatMpMethod::CustomService(CustomServiceMethod::AccountUpdate), vec![], data, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
     /// 删除账号

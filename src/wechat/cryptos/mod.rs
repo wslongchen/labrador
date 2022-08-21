@@ -87,7 +87,6 @@ impl WeChatCrypto {
             token.to_string(),
             timestamp.to_string(),
             nonce.to_string(),
-            encrypted.to_string(),
         ];
         data.sort();
         let data_str = data.join("");
@@ -98,7 +97,7 @@ impl WeChatCrypto {
         // read hash digest
         let signature = hasher.finish();
         // let signature = hash::hash(MessageDigest::sha1(), data_str.as_bytes())?;
-        Ok(String::from_utf8_lossy(&signature).to_string())
+        Ok(signature.to_hex())
     }
 
     pub fn create_hmac_sha256_sign(key: &str, message: &str) -> LabradorResult<String> {
@@ -122,14 +121,14 @@ impl WeChatCrypto {
     /// timestamp 时间戳
     /// nonce 随机字符串
     /// echo_str 加密数据
-    pub fn check_signature(&self, signature: &str, timestamp: i64, nonce: &str, echo_str: &str, id: &str, token: &str) -> LabradorResult<String> {
+    pub fn check_signature(&self, signature: &str, timestamp: i64, nonce: &str, echo_str: &str, id: &str, token: &str) -> LabradorResult<bool> {
         let real_signature = self.get_signature(timestamp, nonce, echo_str, token)?;
         if signature != &real_signature {
             return Err(LabraError::InvalidSignature("Unmatched signature.".to_string()));
         }
-        let prp = PrpCrypto::new(self.key.to_owned());
-        let msg = prp.aes_128_cbc_decrypt_msg(echo_str, id)?;
-        Ok(msg)
+        // let prp = PrpCrypto::new(self.key.to_owned());
+        // let msg = prp.aes_128_cbc_decrypt_msg(echo_str, id)?;
+        Ok(true)
     }
 
     /// #加密消息

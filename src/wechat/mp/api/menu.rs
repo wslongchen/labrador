@@ -42,7 +42,7 @@ impl<'a, T: SessionStore> WeChatMenu<'a, T> {
 
     /// 创建菜单
     pub async fn create_menu<D: Serialize>(&self, data: D) -> LabradorResult<WechatCommonResponse> {
-        self.client.post(WechatMpMethod::Menu(MenuMethod::Create), data, RequestType::Json).await?.json::<WechatCommonResponse>()
+        self.client.post(WechatMpMethod::Menu(MenuMethod::Create), vec![], data, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
 

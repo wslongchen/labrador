@@ -1,12 +1,10 @@
 use std::net::SocketAddr;
 use bytes::Bytes;
-use json::value;
 use openssl::x509::X509;
-use reqwest::{self, Body, multipart, StatusCode, Url};
+use reqwest::{self, multipart, StatusCode, Url};
 use reqwest::header::{HeaderMap, HeaderValue};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use serde_json::{Value};
 use crate::errors::LabraError;
 use crate::LabradorResult;
 
@@ -93,6 +91,28 @@ pub enum RequestBody<T: Serialize> {
     Null
 }
 
+impl <T: Serialize> RequestBody<T> {
+
+    pub fn to_string(&self) -> String {
+        match self {
+            RequestBody::Json(v) => serde_json::to_string(&v).unwrap_or_default(),
+            RequestBody::Form(v) => serde_json::to_string(&v).unwrap_or_default(),
+            RequestBody::Multipart(v) => {
+                v.boundary().to_string()
+            }
+            RequestBody::Xml(v) => v.to_string(),
+            RequestBody::Text(v) => v.to_string(),
+            RequestBody::Raw(_v) => String::from("bytes"),
+            RequestBody::Null => String::default(),
+        }
+    }
+}
+
+impl <T: Serialize> From<multipart::Form> for RequestBody<T> {
+    fn from(v: multipart::Form) -> Self {
+           RequestBody::Multipart(v)
+    }
+}
 impl <T: Serialize> From<String> for RequestBody<T> {
     fn from(v: String) -> Self {
            RequestBody::Text(v)
@@ -164,7 +184,6 @@ pub struct LabraRequest <T> where T: Serialize {
     pub cert: Option<LabraCertificate>,
     pub params: Option<Vec<(String, String)>>,
     pub headers: Option<Vec<(String, String)>>,
-    pub data: Option<T>,
     pub body: RequestBody<T>
 }
 
@@ -224,7 +243,7 @@ impl LabraResponse {
 #[allow(unused)]
 impl <T> LabraRequest <T> where T: Serialize {
     pub fn new() -> Self {
-        LabraRequest { url: String::default(), method: Method::Post, req_type: RequestType::Json, identity: None, cert: None, params: None, data: None, headers: None, body: RequestBody::Null }
+        LabraRequest { url: String::default(), method: Method::Post, req_type: RequestType::Json, identity: None, cert: None, params: None, headers: None, body: RequestBody::Null }
     }
 
     pub fn url(mut self, url: String) -> Self {
@@ -262,8 +281,8 @@ impl <T> LabraRequest <T> where T: Serialize {
         self
     }
 
-    pub fn data(mut self, data: T) -> Self {
-        self.data = data.into();
+    pub fn body(mut self, body: RequestBody<T>) -> Self {
+        self.body = body.into();
         self
     }
 
@@ -310,6 +329,7 @@ impl <T> LabraRequest <T> where T: Serialize {
             reqwest::header::CONTENT_TYPE,
             self.req_type.get_content_type(),
         );
+        let mut data = &self.body.to_string();
         match self.body {
             RequestBody::Json(v) => {
                 request = request.json(&v);
@@ -331,75 +351,40 @@ impl <T> LabraRequest <T> where T: Serialize {
             }
             RequestBody::Null => {}
         }
-        if let Some(data) = &self.data {
-            match self.req_type {
-                RequestType::Json => {
-                    request = request.json(data);
-                }
-                RequestType::Form => {
-                    let value = serde_json::to_value(data.clone()).unwrap_or(Value::Null);
-                    if value.is_string() {
-                        let v = value.to_string();
-                        request = request.body(v.replace("\"",""));
-                    } {
-                        request = request.form(data);
-                    }
-                }
-                RequestType::Multipart => {
-
-                }
-                _ => {
-                    request = request.body(serde_json::to_string(data).unwrap_or_default())
-                }
-            }
-        }
+        // if let Some(data) = &self.data {
+        //     match self.req_type {
+        //         RequestType::Json => {
+        //             request = request.json(data);
+        //         }
+        //         RequestType::Form => {
+        //             let value = serde_json::to_value(data.clone()).unwrap_or(Value::Null);
+        //             if value.is_string() {
+        //                 let v = value.to_string();
+        //                 request = request.body(v.replace("\"",""));
+        //             } {
+        //                 request = request.form(data);
+        //             }
+        //         }
+        //         RequestType::Multipart => {
+        //
+        //         }
+        //         _ => {
+        //             request = request.body(serde_json::to_string(data).unwrap_or_default())
+        //         }
+        //     }
+        // }
         if let Some(headers) = &self.headers {
             for (k, v) in headers.into_iter() {
                 request = request.header(k, HeaderValue::from_str(v)?);
             }
         }
-        tracing::info!("[请求第三方接口参数] url: {}, data:{}", http_url.as_str(), serde_json::to_string(&self.data).unwrap_or_default());
+        tracing::info!("[请求第三方接口参数] url: {}, data:{}", http_url.as_str(), data);
         let result = request.send().await?;
         let status = result.status();
         let remote_addr = result.remote_addr();
         let headers = result.headers();
         let response = LabraResponse::new(result.url().clone(), status, remote_addr, headers.clone(), result.bytes().await?);
         tracing::info!("[请求第三方接口响应] data:{}", &response.text().unwrap_or_default());
-        Ok(response)
-    }
-
-    #[inline]
-    pub fn request_blocking(&self) -> LabradorResult<LabraResponse> {
-        let mut http_url = Url::parse(&self.url).unwrap();
-        if let Some(params) = &self.params {
-            http_url.query_pairs_mut().extend_pairs(params.into_iter());
-        }
-        let mut client = reqwest::blocking::Client::builder().user_agent(APP_USER_AGENT);
-        if let Some(identity) = &self.identity {
-            client = client.identity(identity.identity());
-        }
-        if let Some(cert) = &self.cert {
-            client = client.add_root_certificate(cert.reqwest_cert()?);
-        }
-        let mut request = client.build()?.request(self.method.clone().into(), http_url.to_owned()).header(
-            reqwest::header::CONTENT_TYPE,
-            self.req_type.get_content_type(),
-        );
-        if let Some(data) = &self.data {
-            request = request.body(serde_json::to_string(data).unwrap_or_default());
-        }
-        if let Some(headers) = &self.headers {
-            for (k, v) in headers.into_iter() {
-                request = request.header(k, v);
-            }
-        }
-        tracing::info!("[请求第三方接口参数] url: {}, data:{}", http_url.as_str(), serde_json::to_string(&self.data).unwrap_or_default());
-        let result = request.send()?;
-        let status = result.status();
-        let remote_addr = result.remote_addr();
-        let headers = result.headers();
-        let response = LabraResponse::new(result.url().clone(), status, remote_addr, headers.clone(), result.bytes()?);
-        tracing::info!("[请求第三方接口响应] data:{}", response.text().unwrap_or_default());
         Ok(response)
     }
 }

@@ -1,5 +1,5 @@
 use std::collections::BTreeMap;
-use crate::{session::SessionStore, client::APIClient, request::{Method, RequestType, LabraResponse, LabraRequest, RequestMethod}, util::current_timestamp, LabradorResult, SimpleStorage, WeChatCrypto};
+use crate::{session::SessionStore, client::APIClient, request::{Method, RequestType, LabraResponse, LabraRequest, RequestMethod}, util::current_timestamp, LabradorResult, SimpleStorage, WeChatCrypto, RequestBody};
 use serde::{Serialize, Deserialize};
 
 mod method;
@@ -18,12 +18,12 @@ pub struct WeChatMaClient<T: SessionStore> {
     client: APIClient<T>,
 }
 
-pub trait WechatRequest<T: Serialize> {
+pub trait WechatRequest {
     ///
     /// 获取TOP的API名称。
     ///
     /// @return API名称
-    fn get_api_method_name<R: RequestMethod>(&self) -> R;
+    fn get_api_method_name(&self) -> String;
 
     /// 获取请求类型。
     fn get_request_type(&self) -> RequestType {
@@ -39,8 +39,8 @@ pub trait WechatRequest<T: Serialize> {
         BTreeMap::new()
     }
 
-    fn get_request_body(&self) -> Option<&T> {
-        None
+    fn get_request_body<T: Serialize>(&self) -> RequestBody<T> {
+        RequestBody::Null
     }
 
     /// 是否需要token
@@ -70,12 +70,12 @@ impl<T: SessionStore> WeChatMaClient<T> {
         }
     }
 
-    fn aes_key(mut self, aes_key: &str) -> Self {
+    pub fn aes_key(mut self, aes_key: &str) -> Self {
         self.aes_key = aes_key.to_string().into();
         self
     }
 
-    fn token(mut self, token: &str) -> Self {
+    pub fn token(mut self, token: &str) -> Self {
         self.token = token.to_string().into();
         self
     }
@@ -130,7 +130,7 @@ impl<T: SessionStore> WeChatMaClient<T> {
     /// 验证消息的确来自微信服务器.
     /// 详情(http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421135319&token=&lang=zh_CN)
     /// </pre>
-    fn check_signature(&self, signature: &str, timestamp: i64, nonce: &str, echo_str: &str) -> LabradorResult<bool> {
+    pub fn check_signature(&self, signature: &str, timestamp: i64, nonce: &str, echo_str: &str) -> LabradorResult<bool> {
         let crp = WeChatCrypto::new(&self.aes_key.to_owned().unwrap_or_default());
         let _ = crp.check_signature(signature, timestamp, nonce, echo_str, "", &self.token.to_owned().unwrap_or_default())?;
         Ok(true)
@@ -140,7 +140,7 @@ impl<T: SessionStore> WeChatMaClient<T> {
     /// Service没有实现某个API的时候，可以用这个，
     /// 比 get 和 post 方法更灵活，可以自己构造用来处理不同的参数和不同的返回类型。
     /// </pre>
-    async fn execute<D: WechatRequest<B>, B: Serialize>(&self, request: D) -> LabradorResult<LabraResponse> {
+    async fn execute<D: WechatRequest, B: Serialize>(&self, request: D) -> LabradorResult<LabraResponse> {
         let mut querys = Vec::new();
         if request.is_need_token() {
             let mut access_token = self.access_token();
@@ -151,11 +151,8 @@ impl<T: SessionStore> WeChatMaClient<T> {
                 querys.push(("access_token".to_string(), access_token));
             }
         }
-        let mut req = LabraRequest::new().url(request.get_api_method_name::<WechatMaMethod>().get_method())
-            .params(querys).method(request.get_request_method()).req_type(request.get_request_type());
-        if let Some(body) = request.get_request_body() {
-            req = req.data(body);
-        }
+        let mut req = LabraRequest::<B>::new().url(request.get_api_method_name())
+            .params(querys).method(request.get_request_method()).req_type(request.get_request_type()).body(request.get_request_body::<B>());
         self.client.request(req).await
     }
 
@@ -169,7 +166,7 @@ impl<T: SessionStore> WeChatMaClient<T> {
         if !access_token.is_empty() {
             querys.push(("access_token".to_string(), access_token));
         }
-        let mut req = LabraRequest::new().url(method.get_method()).params(querys).method(Method::Post).data(data).req_type(request_type);
+        let mut req = LabraRequest::new().url(method.get_method()).params(querys).method(Method::Post).json(data).req_type(request_type);
         self.client.request(req).await
     }
 

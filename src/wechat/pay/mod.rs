@@ -103,7 +103,7 @@ impl<T: SessionStore> WeChatPayClient<T> {
 
     /// get the wechat client
     pub fn new<S: Into<String>>(appid: S, secret: S) -> WeChatPayClient<SimpleStorage> {
-        let client = APIClient::<SimpleStorage>::from_session(appid.into(), secret.into(),"https://api.weixin.qq.com/cgi-bin/", SimpleStorage::new());
+        let client = APIClient::<SimpleStorage>::from_session(appid.into(), secret.into(),"https://api.mch.weixin.qq.com", SimpleStorage::new());
         WeChatPayClient::<SimpleStorage>::from_client(client)
     }
 
@@ -202,9 +202,9 @@ impl<T: SessionStore> WeChatPayClient<T> {
     #[inline]
     pub fn token<F: Serialize>(&self, req: &LabraRequest<F>, mch_id: Option<String>) -> LabradorResult<String> {
         let api_path = self.client.api_path.to_owned();
-        let LabraRequest { url, method, data, ..} = req;
+        let LabraRequest { url, method, body, ..} = req;
         let method = method.to_string();
-        let body = if data.is_none() { String::from("") } else { serde_json::to_string(data).unwrap_or_default() };
+        let body = body.to_string();
         let mut mch_id = mch_id.unwrap_or_default();
         let mut private_key = self.private_key.to_owned().unwrap_or_default();
         let mut serial_no = self.serial_no.to_owned().unwrap_or_default();
@@ -232,7 +232,7 @@ impl<T: SessionStore> WeChatPayClient<T> {
         if !access_token.is_empty() {
             querys.push(("access_token".to_string(), access_token));
         }
-        let mut req = LabraRequest::new().url(method.get_method()).params(querys).method(Method::Post).data(data).req_type(request_type);
+        let mut req = LabraRequest::new().url(method.get_method()).params(querys).method(Method::Post).json(data).req_type(request_type);
         if let Some(_) = &self.pkcs12_path {
             req = req.identity(self.get_identity(None)?);
         }
@@ -247,7 +247,7 @@ impl<T: SessionStore> WeChatPayClient<T> {
     /// request_type 请求方式
     /// </pre>
     async fn post_v3<D: Serialize>(&self, mchid: Option<String>, method: WechatPayMethod, mut querys: Vec<(String, String)>, data: D, request_type: RequestType) -> LabradorResult<LabraResponse> {
-        let mut req = LabraRequest::new().url(method.get_method()).params(querys).method(Method::Post).data(data).req_type(request_type);
+        let mut req = LabraRequest::new().url(method.get_method()).params(querys).method(Method::Post).json(data).req_type(request_type);
         let auth = self.token(&req, mchid)?;
         self.auto_load_cert().await?;
         let headers = vec![(String::from("Authorization"), auth),(String::from("Accept"), String::from("application/json"))];

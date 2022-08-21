@@ -7,7 +7,7 @@ use sxd_xpath::{Value, Functions, Variables, Namespaces, Factory, EvaluationCont
 
 
 pub fn parse<T: AsRef<str>>(xml: T) -> Package {
-    parser::parse(xml.as_ref()).unwrap()
+    parser::parse(xml.as_ref()).unwrap_or(Package::new())
 }
 
 pub fn evaluate<'d, T: AsRef<str>>(package: &'d Document<'d>, xpath: T) -> Value<'d> {
@@ -44,7 +44,7 @@ impl<'d> XPathEvaluator<'d> {
             &self.namespaces,
         );
 
-        let xpath = self.factory.build(xpath).unwrap().unwrap();
-        xpath.evaluate(&context).ok().unwrap()
+        let v = self.factory.build(xpath).unwrap_or(None).map(|xpath| xpath.evaluate(&context).ok().unwrap_or(Value::String("".to_string())));
+        v.unwrap_or(Value::String("".to_string()))
     }
 }

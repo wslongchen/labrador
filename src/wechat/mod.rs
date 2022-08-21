@@ -6,11 +6,14 @@ mod mp;
 mod pay;
 mod cryptos;
 mod miniapp;
+#[allow(unused)]
 mod constants;
+mod msg_parser;
 
 pub use mp::*;
 pub use pay::*;
 pub use cryptos::*;
+pub use msg_parser::*;
 use crate::{LabradorResult, LabraError};
 
 
@@ -28,7 +31,7 @@ impl WechatCommonResponse {
     }
 
     pub fn parse<T: DeserializeOwned>(v: Value) -> LabradorResult<T> {
-        let mut resp = serde_json::from_value::<Self>(v.to_owned())?;
+        let resp = serde_json::from_value::<Self>(v.to_owned())?;
         if resp.is_success() {
             serde_json::from_str::<T>(&v.to_string()).map_err(LabraError::from)
         } else {
@@ -36,19 +39,15 @@ impl WechatCommonResponse {
         }
     }
 
-    pub fn parse_with_key<T: DeserializeOwned>(v: Value, key: Option<&str>) -> LabradorResult<T> {
-        let mut resp = serde_json::from_value::<Self>(v.to_owned())?;
+    pub fn parse_with_key<T: DeserializeOwned>(v: Value, key: &str) -> LabradorResult<T> {
+        let resp = serde_json::from_value::<Self>(v.to_owned())?;
         if resp.is_success() {
-            if let Some(key) = key {
-                let v = serde_json::from_str::<Value>(&v.to_string())?;
-                let result = &v[key];
-                if result.is_string() {
-                    serde_json::from_str::<T>(result.as_str().unwrap_or_default()).map_err(LabraError::from)
-                } else {
-                    serde_json::from_value::<T>(v[key].to_owned()).map_err(LabraError::from)
-                }
+            let v = serde_json::from_str::<Value>(&v.to_string())?;
+            let result = &v[key];
+            if result.is_string() {
+                serde_json::from_str::<T>(result.as_str().unwrap_or_default()).map_err(LabraError::from)
             } else {
-                serde_json::from_str::<T>(&v.to_string()).map_err(LabraError::from)
+                serde_json::from_value::<T>(v[key].to_owned()).map_err(LabraError::from)
             }
         } else {
             Err(LabraError::ClientError { errcode: resp.errcode.to_owned().unwrap_or_default().to_string(), errmsg: resp.errmsg.to_owned().unwrap_or_default() })

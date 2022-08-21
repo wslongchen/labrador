@@ -89,40 +89,6 @@ impl<T: SessionStore> APIClient<T> {
         }
         req.request().await
     }
-
-
-    /// Request Http/Https
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use labrador::APIClient;
-    /// use serde_json::json;
-    /// use labrador::Method;
-    /// use labrador::{LabraRequest, LabradorResult};
-    /// use std::error::Error;
-    /// fn main() -> LabradorResult<(), Error> {
-    ///     let api = APIClient::new("appkey", "secret", "http_url");
-    ///     let params = vec![(String::from("key"), String::from("value"))];
-    ///     let data = json!({
-    ///         "key": "value"
-    ///     });
-    ///     api.request(LabraRequest::new().method(Method::Post).data(data).req_type(request_type).params(params))?;
-    /// }
-    /// ```
-    ///
-    #[inline]
-    pub async fn request_blocking<D: Serialize>(&self, mut req: LabraRequest<D>) -> LabradorResult<LabraResponse> {
-        let mut api_path = self.api_path.to_owned();
-        let LabraRequest { url, ..} = req;
-        if url.starts_with("http") {
-            req.url = url;
-        } else {
-            req.url = api_path + &url;
-        }
-        req.request_blocking()
-    }
-
 }
 
 

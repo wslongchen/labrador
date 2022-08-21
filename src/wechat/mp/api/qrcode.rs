@@ -21,7 +21,7 @@ impl<'a, T: SessionStore> WeChatQRCode<'a, T> {
 
     /// 创建二维码凭证
     pub async fn create<D: Serialize>(&mut self, data: D) -> LabradorResult<QRCodeTicket> {
-        let res = self.client.post(WechatMpMethod::QrCode(QrCodeMethod::Create), data, RequestType::Json).await?.json::<serde_json::Value>()?;
+        let res = self.client.post(WechatMpMethod::QrCode(QrCodeMethod::Create), vec![], data, RequestType::Json).await?.json::<serde_json::Value>()?;
         let mut result = WechatCommonResponse::from_value(res.clone())?;
         if result.is_success() {
             let ticket = &res["ticket"];
@@ -49,7 +49,7 @@ impl<'a, T: SessionStore> WeChatQRCode<'a, T> {
             scene: scene.to_owned(),
             page: page.to_owned(),
         };
-        let res = self.client.post(WechatMpMethod::QrCode(QrCodeMethod::GetWxaCodeUnlimit), &mini_qr_code, RequestType::Json).await?;
+        let res = self.client.post(WechatMpMethod::QrCode(QrCodeMethod::GetWxaCodeUnlimit), vec![], &mini_qr_code, RequestType::Json).await?;
         let bytes = res.bytes()?;
         let res_str = String::from_utf8(bytes.to_owned().to_vec()).unwrap_or_default();
         match serde_json::from_str::<Value>(res_str.as_str()) {

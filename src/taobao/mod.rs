@@ -156,7 +156,7 @@ impl <T: SessionStore> TaobaoClient<T> {
         let method = request.get_api_method_name();
         let holder = self.get_request_holder_with_sign(&request)?;
         let url = self.get_request_url(&holder)?;
-        let req = LabraRequest::new().url(url).method(Method::Post).data(request).req_type(RequestType::Form);
+        let req = LabraRequest::new().url(url).method(Method::Post).form(request).req_type(RequestType::Form);
         let result = self.api_client.request(req).await?.text()?;
         TaobaoResponse::parse(&result, method)
     }
