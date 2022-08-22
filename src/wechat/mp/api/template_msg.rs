@@ -26,7 +26,7 @@ impl<'a, T: SessionStore> WeChatMpTemplateMessage<'a, T> {
     /// [`industry_id2`] 公众号模板消息所属行业编号
     ///
     /// [地址](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html)
-    pub async fn set_industry<D: Serialize>(&self, industry_id1: &str, industry_id2: &str) -> LabradorResult<WechatCommonResponse> {
+    pub async fn set_industry(&self, industry_id1: &str, industry_id2: &str) -> LabradorResult<WechatCommonResponse> {
         self.client.post(WechatMpMethod::TemplateMessage(MpTemplateMessageMethod::SetIndustry), vec![], json!({
             "industry_id1": industry_id1,
             "industry_id2": industry_id2,
@@ -37,7 +37,7 @@ impl<'a, T: SessionStore> WeChatMpTemplateMessage<'a, T> {
     /// 获取帐号设置的行业信息。可登录微信公众平台，在公众号后台中查看行业信息。为方便第三方开发者，提供通过接口调用的方式来获取帐号所设置的行业信息
     ///
     /// [地址](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html)
-    pub async fn get_industry<D: Serialize>(&self) -> LabradorResult<IndustryResponse> {
+    pub async fn get_industry(&self) -> LabradorResult<IndustryResponse> {
         let response = self.client.post(WechatMpMethod::TemplateMessage(MpTemplateMessageMethod::GetIndustry), vec![], Value::Null, RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse::<IndustryResponse>(response)
     }
@@ -45,7 +45,7 @@ impl<'a, T: SessionStore> WeChatMpTemplateMessage<'a, T> {
     /// 发送公众号信息(发送模板消息)
     ///
     /// [地址](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html)
-    pub async fn send_mp_message<D: Serialize>(&self, data: TemplateMessage) -> LabradorResult<WechatCommonResponse> {
+    pub async fn send_mp_message(&self, data: TemplateMessage) -> LabradorResult<WechatCommonResponse> {
         self.client.post(WechatMpMethod::TemplateMessage(MpTemplateMessageMethod::SendTemplate), vec![], data, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
@@ -54,7 +54,7 @@ impl<'a, T: SessionStore> WeChatMpTemplateMessage<'a, T> {
     /// [`template_id_short`] 模板库中模板的编号，有“TM**”和“OPENTMTM**”等形式
     ///
     /// [地址](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html)
-    pub async fn get_template_id<D: Serialize>(&self, template_id_short: &str) -> LabradorResult<String> {
+    pub async fn get_template_id(&self, template_id_short: &str) -> LabradorResult<String> {
         let response = self.client.post(WechatMpMethod::TemplateMessage(MpTemplateMessageMethod::GetTemplateId), vec![], json!({ "template_id_short": template_id_short }), RequestType::Json).await?.json::<Value>()?;
         let v = WechatCommonResponse::parse::<Value>(response)?;
         let template_id = v["template_id"].as_str().unwrap_or_default();
@@ -65,7 +65,7 @@ impl<'a, T: SessionStore> WeChatMpTemplateMessage<'a, T> {
     /// 获取已添加至帐号下所有模板列表，可在微信公众平台后台中查看模板列表信息。为方便第三方开发者，提供通过接口调用的方式来获取帐号下所有模板信息
     ///
     /// [地址](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html)
-    pub async fn get_template_list<D: Serialize>(&self) -> LabradorResult<Vec<TemplateMessageInfo>> {
+    pub async fn get_template_list(&self) -> LabradorResult<Vec<TemplateMessageInfo>> {
         let response = self.client.post(WechatMpMethod::TemplateMessage(MpTemplateMessageMethod::GetTemplateList), vec![], Value::Null, RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse_with_key::<Vec<TemplateMessageInfo>>(response, "template_list")
     }
@@ -75,7 +75,7 @@ impl<'a, T: SessionStore> WeChatMpTemplateMessage<'a, T> {
     /// [`template_id`]
     ///
     /// [地址](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html)
-    pub async fn delete_template<D: Serialize>(&self, template_id: &str) -> LabradorResult<WechatCommonResponse> {
+    pub async fn delete_template(&self, template_id: &str) -> LabradorResult<WechatCommonResponse> {
         self.client.post(WechatMpMethod::TemplateMessage(MpTemplateMessageMethod::DeleteTemplate), vec![], json!({ "template_id": template_id }), RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 }
