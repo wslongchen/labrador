@@ -86,7 +86,7 @@ impl<'a, T: SessionStore> WeChatMpMenu<'a, T> {
     }
 
     /// 自定义菜单查询接口
-    /// 详情请见： https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421141014&token=&lang=zh_CN
+    /// 详情[请见](https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421141014&token=&lang=zh_CN)
     /// 获取菜单信息
     pub async fn get_menu(&self) -> LabradorResult<MenuButtonResponse> {
         let v = self.client.get(WechatMpMethod::Menu(MpMenuMethod::Get), vec![], RequestType::Json).await?.json::<serde_json::Value>()?;
@@ -100,7 +100,7 @@ impl<'a, T: SessionStore> WeChatMpMenu<'a, T> {
 
     /// <pre>
     /// 删除个性化菜单接口
-    /// 详情请见: https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1455782296&token=&lang=zh_CN
+    /// 详情[请见](https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1455782296&token=&lang=zh_CN)
     /// </pre>
     pub async fn delete_menu(&self) -> LabradorResult<MenuButtonResponse> {
         let v = self.client.get(WechatMpMethod::Menu(MpMenuMethod::Delete), vec![], RequestType::Json).await?.json::<serde_json::Value>()?;
