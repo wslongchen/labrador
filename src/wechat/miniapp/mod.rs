@@ -197,5 +197,13 @@ impl<T: SessionStore> WeChatMaClient<T> {
     pub fn user(&self) -> WeChatMaUser<T> {
         WeChatMaUser::new(self)
     }
+    /// 媒体操作接口
+    pub fn media(&self) -> WechatMaMedia<T> {
+        WechatMaMedia::new(self)
+    }
+    /// 媒体操作接口
+    pub fn message(&self) -> WechatMaMessage<T> {
+        WechatMaMessage::new(self)
+    }
 
 }

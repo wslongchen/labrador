@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 
 use crate::{session::SessionStore, request::{RequestType}, wechat::{mp::method::WechatMpMethod}, WechatCommonResponse, WeChatMpClient, LabradorResult, LabraError};
+use crate::wechat::mp::constants::{ACCESS_TOKEN, APPID, CODE, GRANT_TYPE, LANG, OPENID, REFRESH_TOKEN, SECRET, ZH_CN};
 use crate::wechat::mp::method::Oauth2Method;
 
 
@@ -27,10 +28,10 @@ impl<'a, T: SessionStore> Oauth2<'a, T> {
     /// 尤其注意：由于公众号的 secret 和获取到的access_token安全级别都非常高，必须只保存在服务器，不允许传给客户端。后续刷新access_token、通过access_token获取用户信息等步骤，也必须从服务器发起。
     pub async fn oauth2_token(&self, code: &str) -> LabradorResult<Oauth2AccessTokenResponse> {
         let v = self.client.get(WechatMpMethod::Oauth2(Oauth2Method::AccessToken), vec![
-            ("grant_type", "authorization_code"),
-            ("code", code),
-            ("appid", &self.client.appid),
-            ("secret", &self.client.secret),
+            (GRANT_TYPE, "authorization_code"),
+            (CODE, code),
+            (APPID, &self.client.appid),
+            (SECRET, &self.client.secret),
         ], RequestType::Json).await?.json::<serde_json::Value>()?;
         let mut result = WechatCommonResponse::from_value(v.clone())?;
         if result.is_success() {
@@ -46,9 +47,9 @@ impl<'a, T: SessionStore> Oauth2<'a, T> {
     /// 由于access_token拥有较短的有效期，当access_token超时后，可以使用refresh_token进行刷新，refresh_token有效期为30天，当refresh_token失效之后，需要用户重新授权。
     pub async fn refresh_token(&self, refresh_token: &str) -> LabradorResult<Oauth2AccessTokenResponse> {
         let v = self.client.get(WechatMpMethod::Oauth2(Oauth2Method::RefreshToken), vec![
-            ("grant_type", "refresh_token"),
-            ("refresh_token", refresh_token),
-            ("appid", &self.client.appid),
+            (GRANT_TYPE, REFRESH_TOKEN),
+            (REFRESH_TOKEN, refresh_token),
+            (APPID, &self.client.appid),
         ], RequestType::Json).await?.json::<serde_json::Value>()?;
         let mut result = WechatCommonResponse::from_value(v.to_owned())?;
         if result.is_success() {
@@ -63,9 +64,9 @@ impl<'a, T: SessionStore> Oauth2<'a, T> {
     /// 如果网页授权作用域为snsapi_userinfo，则此时开发者可以通过access_token和 openid 拉取用户信息了。
     pub async fn oauth2_userinfo(&self, access_token: &str, openid: &str) -> LabradorResult<Oauth2UserInfo> {
         let v = self.client.get(WechatMpMethod::Oauth2(Oauth2Method::UserInfo), vec![
-            ("access_token", access_token),
-            ("openid", openid),
-            ("lang", "zh_CN"),
+            (ACCESS_TOKEN, access_token),
+            (OPENID, openid),
+            (LANG, ZH_CN),
         ], RequestType::Json).await?.json::<serde_json::Value>()?;
         let mut result = WechatCommonResponse::from_value(v.to_owned())?;
         if result.is_success() {

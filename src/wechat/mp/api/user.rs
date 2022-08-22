@@ -4,32 +4,42 @@ use serde_json::{json, Value};
 use serde::{Serialize, Deserialize};
 
 use crate::{session::SessionStore, errors::LabraError, wechat::{cryptos::WeChatCrypto}, request::RequestType, WechatCommonResponse, WeChatMpClient, LabradorResult};
-use crate::wechat::mp::method::{UserMethod, WechatMpMethod};
+use crate::wechat::mp::method::{MpUserMethod, WechatMpMethod};
 
 
 #[derive(Debug, Clone)]
-pub struct WeChatUser<'a, T: SessionStore> {
+pub struct WeChatMpUser<'a, T: SessionStore> {
     client: &'a WeChatMpClient<T>,
 }
 
 #[allow(unused)]
-impl<'a, T: SessionStore> WeChatUser<'a, T> {
+impl<'a, T: SessionStore> WeChatMpUser<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMpClient<T>) -> WeChatUser<T> {
-        WeChatUser {
+    pub fn new(client: &WeChatMpClient<T>) -> WeChatMpUser<T> {
+        WeChatMpUser {
             client,
         }
     }
 
-    /// 获取用户信息
+    /// <pre>
+    /// 获取用户基本信息（语言为默认的zh_CN 简体）
+    /// 详情请见: http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421140839&token=&lang=zh_CN
+    /// http请求方式: GET
+    /// 接口地址：https://api.weixin.qq.com/cgi-bin/user/info?access_token=ACCESS_TOKEN&openid=OPENID&lang=zh_CN
+    /// </pre>
     pub async fn get(&mut self, openid: &str) -> LabradorResult<WechatUser> {
         self.get_with_lang(openid, "zh_CN").await
     }
 
-    /// 获取用户信息
+    /// <pre>
+    /// 获取用户基本信息
+    /// 详情请见: http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421140839&token=&lang=zh_CN
+    /// http请求方式: GET
+    /// 接口地址：https://api.weixin.qq.com/cgi-bin/user/info?access_token=ACCESS_TOKEN&openid=OPENID&lang=zh_CN
+    /// </pre>
     pub async fn get_with_lang(&mut self, openid: &str, lang: &str) -> LabradorResult<WechatUser> {
-        let res = self.client.get(WechatMpMethod::User(UserMethod::Info), vec![("openid", openid), ("lang", lang)], RequestType::Json).await?.json::<serde_json::Value>()?;
+        let res = self.client.get(WechatMpMethod::User(MpUserMethod::Info), vec![("openid", openid), ("lang", lang)], RequestType::Json).await?.json::<serde_json::Value>()?;
         let result = WechatCommonResponse::from_value(res.clone())?;
         if result.is_success() {
             Ok(self.json_to_user(&res))
@@ -91,22 +101,35 @@ impl<'a, T: SessionStore> WeChatUser<'a, T> {
         
     }
 
-    /// 修改备注
+    /// <pre>
+    /// 设置用户备注名
+    /// 详情请见: http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421140838&token=&lang=zh_CN
+    /// http请求方式: POST（请使用https协议）
+    /// 接口地址：https://api.weixin.qq.com/cgi-bin/user/info/updateremark?access_token=ACCESS_TOKEN
+    /// </pre>
     pub async fn update_remark(&mut self, openid: &str, remark: &str) -> LabradorResult<WechatCommonResponse> {
         let data = json!({
             "openid": openid.to_owned(),
             "remark": remark.to_owned()
         });
-        self.client.post(WechatMpMethod::User(UserMethod::UpdateRemark), vec![], data, RequestType::Json).await?.json::<WechatCommonResponse>()
+        self.client.post(WechatMpMethod::User(MpUserMethod::UpdateRemark), vec![], data, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
-    /// 获取关注的人
+    /// <pre>
+    /// 获取用户列表
+    /// 公众号可通过本接口来获取帐号的关注者列表，
+    /// 关注者列表由一串OpenID（加密后的微信号，每个用户对每个公众号的OpenID是唯一的）组成。
+    /// 一次拉取调用最多拉取10000个关注者的OpenID，可以通过多次拉取的方式来满足需求。
+    /// 详情请见: http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421140840&token=&lang=zh_CN
+    /// http请求方式: GET（请使用https协议）
+    /// 接口地址：https://api.weixin.qq.com/cgi-bin/user/get?access_token=ACCESS_TOKEN&next_openid=NEXT_OPENID
+    /// </pre>
     pub async fn get_followers(&mut self, next_openid: Option<&str>) -> LabradorResult<Followers> {
         let params = match next_openid {
             Some(openid) => vec![("next_openid", openid)],
             None => vec![],
         };
-        let res = self.client.get(WechatMpMethod::User(UserMethod::Get), params, RequestType::Json, ).await?.json::<serde_json::Value>()?;
+        let res = self.client.get(WechatMpMethod::User(MpUserMethod::Get), params, RequestType::Json, ).await?.json::<serde_json::Value>()?;
         let mut result = WechatCommonResponse::from_value(res.clone())?;
         if result.is_success() {
             let total = &res["total"];
@@ -147,7 +170,7 @@ impl<'a, T: SessionStore> WeChatUser<'a, T> {
         let data = json!({
             "openid": openid.to_owned()
         });
-        let res = self.client.post(WechatMpMethod::User(UserMethod::GetGroupId), vec![], data, RequestType::Json).await?.json::<serde_json::Value>()?;
+        let res = self.client.post(WechatMpMethod::User(MpUserMethod::GetGroupId), vec![], data, RequestType::Json).await?.json::<serde_json::Value>()?;
         let group_id = &res["groupid"];
         let group_id = group_id.as_u64().unwrap_or_default();
         let mut result = WechatCommonResponse::from_value(res.clone())?;
@@ -211,12 +234,18 @@ impl<'a, T: SessionStore> WeChatUser<'a, T> {
         }
     }
 
-    /// 批量获取用户
+    /// <pre>
+    /// 获取用户基本信息列表
+    /// 开发者可通过该接口来批量获取用户基本信息。最多支持一次拉取100条。
+    /// 详情请见: http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421140839&token=&lang=zh_CN
+    /// http请求方式: POST
+    /// 接口地址：https://api.weixin.qq.com/cgi-bin/user/info/batchget?access_token=ACCESS_TOKEN
+    /// </pre>
     pub async fn get_batch(&mut self, user_list: &[HashMap<String, String>]) -> LabradorResult<Vec<WechatUser>> {
         let data = json!({
             "user_list": user_list.to_vec()
         });
-        let res = self.client.post(WechatMpMethod::User(UserMethod::GetBatch), vec![], data, RequestType::Json).await?.json::<serde_json::Value>()?;
+        let res = self.client.post(WechatMpMethod::User(MpUserMethod::GetBatch), vec![], data, RequestType::Json).await?.json::<serde_json::Value>()?;
         let mut result = WechatCommonResponse::from_value(res.clone())?;
         if result.is_success() {
             let info_list = &res["user_info_list"];
@@ -231,7 +260,13 @@ impl<'a, T: SessionStore> WeChatUser<'a, T> {
         }
     }
 
-    /// 批量获取用户
+    /// <pre>
+    /// 获取用户基本信息列表
+    /// 开发者可通过该接口来批量获取用户基本信息。最多支持一次拉取100条。
+    /// 详情请见: http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421140839&token=&lang=zh_CN
+    /// http请求方式: POST
+    /// 接口地址：https://api.weixin.qq.com/cgi-bin/user/info/batchget?access_token=ACCESS_TOKEN
+    /// </pre>
     pub async fn get_batch_with_lang(&mut self, user_list: &[String], lang: &str) -> LabradorResult<Vec<WechatUser>> {
         let mut users = vec![];
         for openid in user_list {
