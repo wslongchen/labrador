@@ -125,3 +125,10 @@ impl From<DecodeError> for LabraError {
         LabraError::InvalidSignature(format!("字符编码出错：{}", err.to_string()))
     }
 }
+
+
+// impl From<reqwest::> for LabraError {
+//     fn from(err: url::parser::ParseError) -> Self {
+//         LabraError::InvalidSignature(format!("URL解析出错：{}", err.to_string()))
+//     }
+// }

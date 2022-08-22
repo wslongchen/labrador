@@ -163,6 +163,14 @@ impl PrpCrypto {
         Ok(ver)
     }
 
+    pub fn hmac_sha256_sign(key: &str, message: &str) -> LabradorResult<String> {
+        let pkey = PKey::hmac(key.as_bytes())?;
+        let mut signer = Signer::new(MessageDigest::sha256(), &pkey).unwrap();
+        signer.update(message.as_bytes())?;
+        let result = signer.sign_to_vec()?;
+        Ok(result.to_hex())
+    }
+
     /// # 加密(aes_256_gcm)
     pub fn aes_256_gcm_encrypt(&self, associated_data: &[u8], nonce: &[u8], plain_text: &[u8]) -> LabradorResult<Vec<u8>> {
         let mut out_tag: Vec<u8> = repeat(0).take(16).collect();

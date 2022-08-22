@@ -8,11 +8,16 @@ pub enum WechatMpMethod {
     /// codesession
     CodeSession,
     /// 客户服务
-    CustomService(CustomServiceMethod),
-    User(UserMethod),
-    Menu(MenuMethod),
-    Message(MessageMethod),
-    QrCode(QrCodeMethod),
+    CustomService(MpCustomServiceMethod),
+    User(MpUserMethod),
+    Menu(MpMenuMethod),
+    Message(MpMessageMethod),
+    SubscribeMessage(MpSubscribeMessageMethod),
+    TemplateMessage(MpTemplateMessageMethod),
+    QrCode(MpQrCodeMethod),
+    Media(MpMediaMethod),
+    /// 自定义方法
+    Custom(String)
 }
 
 
@@ -26,17 +31,58 @@ pub enum Oauth2Method {
 
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
-pub enum CustomServiceMethod {
+pub enum MpCustomServiceMethod {
+    /// 客服消息
+    CustomSend,
     AccountAdd,
     AccountUpdate,
     AccountDelete,
     AccountList,
     AccountOnlineList,
 }
+#[allow(unused)]
+#[derive(Debug, PartialEq, Clone)]
+pub enum MpMediaMethod {
+    /// 上传临时永久
+    UploadMedia(String),
+    /// 添加永久素材
+    AddMaterial(String),
+    /// 上传图片
+    UploadImage,
+    /// 获取永久素材
+    GetMaterial,
+    /// 删除永久素材
+    DeleteMaterial,
+    /// 获取永久素材数量
+    GetMaterialCount,
+    /// 获取永久素材列表
+    GetMaterialList,
+    /// 获取临时素材
+    GetMedia,
+    /// 获取素材JSSDK
+    GetMediaJssdk,
+}
+
+#[allow(unused)]
+impl MpMediaMethod {
+    pub fn get_method(&self) -> String {
+        match self {
+            MpMediaMethod::UploadMedia(v) => format!("/cgi-bin/media/upload?type={}", v),
+            MpMediaMethod::AddMaterial(v) => format!("/cgi-bin/material/add_material?type={}", v),
+            MpMediaMethod::GetMaterial => String::from("/cgi-bin/material/get_material"),
+            MpMediaMethod::DeleteMaterial => String::from("/cgi-bin/material/del_material"),
+            MpMediaMethod::GetMaterialCount => String::from("/cgi-bin/material/get_materialcount"),
+            MpMediaMethod::GetMaterialList => String::from("/cgi-bin/material/batchget_material"),
+            MpMediaMethod::UploadImage => String::from("/cgi-bin/media/uploadimg"),
+            MpMediaMethod::GetMedia => String::from("/cgi-bin/media/get"),
+            MpMediaMethod::GetMediaJssdk => String::from("/cgi-bin/media/get/jssdk"),
+        }
+    }
+}
 
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
-pub enum UserMethod {
+pub enum MpUserMethod {
     Info,
     UpdateRemark,
     Get,
@@ -47,7 +93,7 @@ pub enum UserMethod {
 
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
-pub enum MenuMethod {
+pub enum MpMenuMethod {
     Create,
     GetCurrentMenuInfo,
     Get,
@@ -58,7 +104,7 @@ pub enum MenuMethod {
 
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
-pub enum QrCodeMethod {
+pub enum MpQrCodeMethod {
     Create,
     GetWxaCodeUnlimit,
     ShowQrCode,
@@ -68,41 +114,103 @@ pub enum QrCodeMethod {
 
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
-pub enum MessageMethod {
-    Send,
-    SendTemplate,
-    SendUniform,
-    SendSubscribe,
+pub enum MpMessageMethod {
+
+
 }
+
+
+
+#[allow(unused)]
+#[derive(Debug, PartialEq, Clone)]
+pub enum MpTemplateMessageMethod {
+    SendTemplate,
+    /// 设置行业
+    SetIndustry,
+    /// 获取设置行业
+    GetIndustry,
+    /// 获取模版ID
+    GetTemplateId,
+    /// 获取模版列表
+    GetTemplateList,
+    /// 删除模版列表
+    DeleteTemplate,
+}
+
+#[allow(unused)]
+impl MpTemplateMessageMethod {
+    pub fn get_method(&self) -> String {
+        match *self {
+            MpTemplateMessageMethod::SendTemplate => String::from("/cgi-bin/message/template/send"),
+            MpTemplateMessageMethod::SetIndustry => String::from("/cgi-bin/template/api_set_industry"),
+            MpTemplateMessageMethod::GetIndustry => String::from("/cgi-bin/template/get_industry"),
+            MpTemplateMessageMethod::GetTemplateId => String::from("/cgi-bin/template/api_add_template"),
+            MpTemplateMessageMethod::GetTemplateList => String::from("/cgi-bin/template/get_all_private_template"),
+            MpTemplateMessageMethod::DeleteTemplate => String::from("/cgi-bin/template/del_private_template"),
+        }
+    }
+}
+
 
 
 
 
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
-pub enum PayMethod {
-    /// 统一下单
-    UnifiedOrder,
-    MicroPay,
-    /// 关闭订单
-    CloseOrder,
-    /// 退款
-    Refund,
-    /// 查询订单
-    OrderQuery,
+pub enum MpSubscribeMessageMethod {
+    /// 一次性订阅模板消息
+    SubscribeMessageOnce,
+    /// 订阅通知消息发送
+    SendSubscribeMessage,
+    /// 订阅授权url
+    SubscribeAuthorizeUrl,
+    /// 获取模板标题下的关键词列表
+    GetPubTemplateKeywords,
+    /// 获取模板标题下的关键词列表
+    GetPubTemplateTitles,
+    /// 组合模板并添加至帐号下的个人模板库
+    AddTemplate,
+    /// 获取当前帐号下的个人模板列表
+    GetTemplate,
+    /// 删除帐号下的某个模板
+    DeleteTemplate,
+    /// 获取小程序账号的类目
+    GetCategory,
 }
+
+#[allow(unused)]
+impl MpSubscribeMessageMethod {
+    pub fn get_method(&self) -> String {
+        match *self {
+            MpSubscribeMessageMethod::SubscribeMessageOnce => String::from("/cgi-bin/message/template/subscribe"),
+            MpSubscribeMessageMethod::SubscribeAuthorizeUrl => String::from("/mp/subscribemsg?action=get_confirm"),
+            MpSubscribeMessageMethod::GetPubTemplateKeywords => String::from("/wxaapi/newtmpl/getpubtemplatekeywords"),
+            MpSubscribeMessageMethod::GetPubTemplateTitles => String::from("/wxaapi/newtmpl/getpubtemplatetitles"),
+            MpSubscribeMessageMethod::AddTemplate => String::from("/wxaapi/newtmpl/addtemplate"),
+            MpSubscribeMessageMethod::GetTemplate => String::from("/wxaapi/newtmpl/gettemplate"),
+            MpSubscribeMessageMethod::DeleteTemplate => String::from("/wxaapi/newtmpl/deltemplate"),
+            MpSubscribeMessageMethod::GetCategory => String::from("/wxaapi/newtmpl/getcategory"),
+            MpSubscribeMessageMethod::SendSubscribeMessage => String::from("/cgi-bin/message/subscribe/bizsend"),
+        }
+    }
+}
+
 
 impl RequestMethod for WechatMpMethod {
     fn get_method(&self) -> String {
         match self {
-            WechatMpMethod::CodeSession => String::from("https://api.weixin.qq.com/sns/jscode2session"),
-            WechatMpMethod::AccessToken => String::from("token"),
+            WechatMpMethod::CodeSession => String::from("/sns/jscode2session"),
+            WechatMpMethod::AccessToken => String::from("/cgi-bin/token"),
             WechatMpMethod::Oauth2(v) => v.get_method(),
             WechatMpMethod::CustomService(v) => v.get_method(),
             WechatMpMethod::User(v) => v.get_method(),
             WechatMpMethod::Menu(v) => v.get_method(),
             WechatMpMethod::Message(v) => v.get_method(),
+            WechatMpMethod::TemplateMessage(v) => v.get_method(),
             WechatMpMethod::QrCode(v) => v.get_method(),
+            WechatMpMethod::Media(v) => v.get_method(),
+            WechatMpMethod::Custom(v) => v.to_string(),
+            WechatMpMethod::SubscribeMessage(v) => v.get_method(),
         }
     }
 }
@@ -120,14 +228,15 @@ impl WechatMpMethod {
 
 
 #[allow(unused)]
-impl CustomServiceMethod {
+impl MpCustomServiceMethod {
     pub fn get_method(&self) -> String {
         match *self {
-            CustomServiceMethod::AccountAdd => String::from("https://api.weixin.qq.com/customservice/kfaccount/add"),
-            CustomServiceMethod::AccountUpdate => String::from("https://api.weixin.qq.com/customservice/kfaccount/update"),
-            CustomServiceMethod::AccountDelete => String::from("https://api.weixin.qq.com/customservice/kfaccount/del"),
-            CustomServiceMethod::AccountList => String::from("customservice/getkflist"),
-            CustomServiceMethod::AccountOnlineList => String::from("customservice/getonlinekflist"),
+            MpCustomServiceMethod::CustomSend => String::from("/cgi-bin/message/custom/send"),
+            MpCustomServiceMethod::AccountAdd => String::from("/cgi-bin/customservice/kfaccount/add"),
+            MpCustomServiceMethod::AccountUpdate => String::from("/cgi-bin/customservice/kfaccount/update"),
+            MpCustomServiceMethod::AccountDelete => String::from("/cgi-bin/customservice/kfaccount/del"),
+            MpCustomServiceMethod::AccountList => String::from("/cgi-bin/customservice/getkflist"),
+            MpCustomServiceMethod::AccountOnlineList => String::from("/cgi-bin/customservice/getonlinekflist"),
         }
     }
 }
@@ -138,9 +247,9 @@ impl CustomServiceMethod {
 impl Oauth2Method {
     pub fn get_method(&self) -> String {
         match *self {
-            Oauth2Method::AccessToken => String::from("https://api.weixin.qq.com/sns/oauth2/access_token"),
-            Oauth2Method::RefreshToken => String::from("https://api.weixin.qq.com/sns/oauth2/refresh_token"),
-            Oauth2Method::UserInfo => String::from("https://api.weixin.qq.com/sns/userinfo"),
+            Oauth2Method::AccessToken => String::from("/sns/oauth2/access_token"),
+            Oauth2Method::RefreshToken => String::from("/sns/oauth2/refresh_token"),
+            Oauth2Method::UserInfo => String::from("/sns/userinfo"),
         }
     }
 }
@@ -148,51 +257,48 @@ impl Oauth2Method {
 
 
 #[allow(unused)]
-impl UserMethod {
+impl MpUserMethod {
     pub fn get_method(&self) -> String {
         match *self {
-            UserMethod::Info => String::from("user/info"),
-            UserMethod::UpdateRemark => String::from("user/info/updateremark"),
-            UserMethod::Get => String::from("user/get"),
-            UserMethod::GetGroupId => String::from("groups/getid"),
-            UserMethod::GetBatch => String::from("user/info/batchget"),
+            MpUserMethod::Info => String::from("/cgi-bin/user/info"),
+            MpUserMethod::UpdateRemark => String::from("/cgi-bin/user/info/updateremark"),
+            MpUserMethod::Get => String::from("/cgi-bin/user/get"),
+            MpUserMethod::GetGroupId => String::from("/cgi-bin/groups/getid"),
+            MpUserMethod::GetBatch => String::from("/cgi-bin/user/info/batchget"),
         }
     }
 }
 
 
 #[allow(unused)]
-impl MenuMethod {
+impl MpMenuMethod {
     pub fn get_method(&self) -> String {
         match *self {
-            MenuMethod::Create => String::from("menu/create"),
-            MenuMethod::GetCurrentMenuInfo => String::from("get_current_selfmenu_info"),
-            MenuMethod::Get => String::from("menu/get"),
-            MenuMethod::Delete => String::from("menu/delete"),
+            MpMenuMethod::Create => String::from("/cgi-bin/menu/create"),
+            MpMenuMethod::GetCurrentMenuInfo => String::from("/cgi-bin/get_current_selfmenu_info"),
+            MpMenuMethod::Get => String::from("/cgi-bin/menu/get"),
+            MpMenuMethod::Delete => String::from("/cgi-bin/menu/delete"),
         }
     }
 }
 
 
 #[allow(unused)]
-impl MessageMethod {
+impl MpMessageMethod {
     pub fn get_method(&self) -> String {
         match *self {
-            MessageMethod::Send => String::from("message/custom/send"),
-            MessageMethod::SendTemplate => String::from("message/template/send"),
-            MessageMethod::SendUniform => String::from("message/wxopen/template/uniform_send"),
-            MessageMethod::SendSubscribe => String::from("message/subscribe/send"),
+
         }
     }
 }
 
 #[allow(unused)]
-impl QrCodeMethod {
+impl MpQrCodeMethod {
     pub fn get_method(&self) -> String {
         match *self {
-            QrCodeMethod::Create => String::from("qrcode/create"),
-            QrCodeMethod::GetWxaCodeUnlimit => String::from("https://api.weixin.qq.com/wxa/getwxacodeunlimit"),
-            QrCodeMethod::ShowQrCode => String::from("https://mp.weixin.qq.com/cgi-bin/showqrcode"),
+            MpQrCodeMethod::Create => String::from("/cgi-bin/qrcode/create"),
+            MpQrCodeMethod::GetWxaCodeUnlimit => String::from("/cgi-bin/wxa/getwxacodeunlimit"),
+            MpQrCodeMethod::ShowQrCode => String::from("https://mp.weixin.qq.com/cgi-bin/showqrcode"),
         }
     }
 }

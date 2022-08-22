@@ -228,7 +228,7 @@ pub struct ShopInfo {
     /// 店铺名称（或供应商名称）
     pub shop_name: Option<String>,
     /// 店铺Id
-    pub shop_id: Option<f64>,
+    pub shop_id: Option<u64>,
     pub afs_factor_score_rank_grade: Option<String>,
     pub after_service_score: Option<String>,
     pub comment_factor_score_rank_grade: Option<String>,
@@ -536,6 +536,116 @@ pub struct SkuInfo{
     pub ext1: Option<String>,
     /// 礼金批次ID：使用礼金的订单会有该值
     pub gift_coupon_key: Option<String>,
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+/// 转链获取
+#[derive(Debug, Deserialize,Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JdPromotionCodeGetResponse{
+    /// 生成的推广目标链接，以短链接形式，有效期60天
+    pub short_u_r_l: Option<String>,
+    /// 生成推广目标的长链，长期有效
+    pub click_u_r_l: Option<String>,
+    /// 需要权限申请，京口令（匹配到红包活动有效配置才会返回京口令）
+    pub j_command: Option<String>,
+    /// 需要权限申请，短口令
+    pub j_short_command: Option<String>,
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+/// 转链获取
+#[derive(Debug, Deserialize,Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JdPromotionBySubUnionIdGetResponse {
+    /// 生成的推广目标链接，以短链接形式，有效期60天
+    pub short_u_r_l: Option<String>,
+    /// 生成推广目标的长链，长期有效
+    pub click_u_r_l: Option<String>,
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+#[derive(Debug, Deserialize,Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PromotionCode {
+    /// 优惠码名称
+    pub promo_name: Option<String>,
+    /// 优惠码code
+    pub promo_code: Option<String>,
+    /// 开始时间
+    pub begin_time: Option<u64>,
+    /// 结束时间
+    pub end_time: Option<u64>,
+    /// 可用总次数
+    pub total_cnt: Option<u64>,
+    /// 促销类型，1直降，2满减，3满折
+    pub promo_type: Option<u8>,
+    /// 优惠码状态,1有效，0失效
+    pub state: Option<u8>,
+    /// 优惠方式，直降金额
+    pub direct_reduce_amount: Option<u8>,
+}
+
+#[derive(Debug, Deserialize,Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SellingGoodsQueryShopInfo {
+    /// 店铺名称
+    pub shop_name: Option<String>,
+    /// 店铺类型：0国内，1海外
+    pub shop_type: Option<u8>,
+}
+
+/// 商羚商品查询
+#[derive(Debug, Deserialize,Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SellingGoodsQueryResponse {
+    /// 商品ID
+    pub sku_id: Option<u64>,
+    /// 商品名称
+    pub sku_name: Option<String>,
+    /// 商品落地页
+    pub material_url: Option<String>,
+    /// g=自营，p=pop
+    pub owner: Option<String>,
+    /// 主图链接
+    pub image_url: Option<String>,
+    /// 图片链接集合
+    pub img_list: Option<Vec<String>>,
+    /// 一级类目ID
+    pub cid1: Option<u64>,
+    /// 二级类目ID
+    pub cid2: Option<u64>,
+    /// 三级类目ID
+    pub cid3: Option<u64>,
+    /// 一级类目名称
+    pub cid1_name: Option<String>,
+    /// 二级类目名称
+    pub cid2_name: Option<String>,
+    /// 三级类目名称
+    pub cid3_name: Option<String>,
+    /// 30天引单数量
+    pub in_order_count30_days: Option<u64>,
+    /// 好评数
+    pub goods_comments: Option<u64>,
+    /// 无线价格
+    pub wl_price: Option<f64>,
+    /// 促销价格
+    pub lowest_price: Option<f64>,
+    /// 无线佣金比例
+    pub wl_commission_share: Option<f64>,
+    /// 无线佣金
+    pub wl_commission: Option<f64>,
+    /// 优惠券合集
+    pub coupon_list: Option<Vec<JdCouponDetail>>,
+    /// 店铺信息
+    pub shop_info: Option<ShopInfo>,
+    /// 优惠码列表，目前仅商羚海外站有该字段
+    pub promotion_code_list: Option<Vec<PromotionCode>>,
+    /// 币种：USD代表美元，CNY代表人民币
+    pub currency: Option<String>,
 }
 
 //----------------------------------------------------------------------------------------------------------------------------

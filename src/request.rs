@@ -5,7 +5,6 @@ use reqwest::{self, multipart, StatusCode, Url};
 use reqwest::header::{HeaderMap, HeaderValue};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use serde_json::{Value};
 use crate::errors::LabraError;
 use crate::LabradorResult;
 
@@ -81,6 +80,68 @@ impl ToString for Method {
     }
 }
 
+#[derive(Debug)]
+pub enum RequestBody<T: Serialize> {
+    Json(T),
+    Form(T),
+    Multipart(multipart::Form),
+    Xml(String),
+    Text(String),
+    Raw(Bytes),
+    Null
+}
+
+impl <T: Serialize> RequestBody<T> {
+
+    pub fn to_string(&self) -> String {
+        match self {
+            RequestBody::Json(v) => serde_json::to_string(&v).unwrap_or_default(),
+            RequestBody::Form(v) => serde_json::to_string(&v).unwrap_or_default(),
+            RequestBody::Multipart(v) => {
+                v.boundary().to_string()
+            }
+            RequestBody::Xml(v) => v.to_string(),
+            RequestBody::Text(v) => v.to_string(),
+            RequestBody::Raw(_v) => String::from("bytes"),
+            RequestBody::Null => String::default(),
+        }
+    }
+}
+
+impl <T: Serialize> From<multipart::Form> for RequestBody<T> {
+    fn from(v: multipart::Form) -> Self {
+           RequestBody::Multipart(v)
+    }
+}
+impl <T: Serialize> From<String> for RequestBody<T> {
+    fn from(v: String) -> Self {
+           RequestBody::Text(v)
+    }
+}
+
+impl <T: Serialize> From<&str> for RequestBody<T> {
+    fn from(v: &str) -> Self {
+           RequestBody::Text(v.to_string())
+    }
+}
+
+impl <T: Serialize> From<Bytes> for RequestBody<T> {
+    fn from(v: Bytes) -> Self {
+           RequestBody::Raw(v)
+    }
+}
+
+impl <T: Serialize> From<Vec<u8>> for RequestBody<T> {
+    fn from(vec: Vec<u8>) -> Self {
+        RequestBody::Raw(Bytes::from(vec))
+    }
+}
+
+impl <T: Serialize> From<&'static [u8]> for RequestBody<T> {
+    fn from(s: &'static [u8]) -> Self {
+        RequestBody::Raw(Bytes::from_static(s))
+    }
+}
 
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
@@ -89,21 +150,6 @@ pub enum RequestType {
     Form,
     Multipart,
     Xml,
-}
-
-#[allow(unused)]
-#[derive(Debug, PartialEq, Clone)]
-pub enum ResponseType {
-    Json,
-    Bytes,
-    Text,
-}
-
-#[allow(unused)]
-#[derive(Debug)]
-pub struct LabraResponse {
-   response: Option<reqwest::Response>,
-   block_response: Option<reqwest::blocking::Response>,
 }
 
 /// LabraRequest
@@ -129,7 +175,7 @@ pub struct LabraResponse {
 /// ```
 ///
 #[allow(unused)]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct LabraRequest <T> where T: Serialize {
     pub url: String,
     pub method: Method,
@@ -138,14 +184,66 @@ pub struct LabraRequest <T> where T: Serialize {
     pub cert: Option<LabraCertificate>,
     pub params: Option<Vec<(String, String)>>,
     pub headers: Option<Vec<(String, String)>>,
-    pub data: Option<T>,
+    pub body: RequestBody<T>
+}
 
+#[allow(unused)]
+pub struct LabraResponse {
+    url: Url,
+    status: StatusCode,
+    headers: HeaderMap,
+    remote_addr: Option<SocketAddr>,
+    body: Bytes
+}
+
+impl LabraResponse {
+    fn new(url: Url, status: StatusCode, remote_addr: Option<SocketAddr>, headers: HeaderMap, body: Bytes) -> LabraResponse {
+        LabraResponse {
+            url,
+            headers,
+            remote_addr,
+            status,
+            body
+        }
+    }
+
+    pub fn status(&self) -> StatusCode {
+        self.status
+    }
+
+    pub fn url(&self) -> &Url {
+        &self.url
+    }
+
+    pub fn remote_addr(&self) -> Option<SocketAddr> {
+        self.remote_addr
+    }
+
+    pub fn header(&self) -> &HeaderMap {
+        &self.headers
+    }
+
+    pub fn json<T: DeserializeOwned>(&self) -> LabradorResult<T> {
+        serde_json::from_slice(&self.body).map_err(LabraError::from)
+    }
+
+    pub fn text(&self) -> LabradorResult<String> {
+        unsafe {
+            // decoding returned Cow::Borrowed, meaning these bytes
+            // are already valid utf8
+            Ok(String::from_utf8_unchecked(self.body.to_vec()))
+        }
+    }
+
+    pub fn bytes(&self) -> LabradorResult<Bytes> {
+        Ok(self.body.clone())
+    }
 }
 
 #[allow(unused)]
 impl <T> LabraRequest <T> where T: Serialize {
     pub fn new() -> Self {
-        LabraRequest { url: String::default(), method: Method::Post, req_type: RequestType::Json, identity: None, cert: None, params: None, data: None, headers: None }
+        LabraRequest { url: String::default(), method: Method::Post, req_type: RequestType::Json, identity: None, cert: None, params: None, headers: None, body: RequestBody::Null }
     }
 
     pub fn url(mut self, url: String) -> Self {
@@ -183,13 +281,38 @@ impl <T> LabraRequest <T> where T: Serialize {
         self
     }
 
-    pub fn data(mut self, data: T) -> Self {
-        self.data = data.into();
+    pub fn body(mut self, body: RequestBody<T>) -> Self {
+        self.body = body.into();
+        self
+    }
+
+    pub fn json(mut self, data: T) -> Self {
+        self.body = RequestBody::Json(data);
+        self
+    }
+
+    pub fn form(mut self, data: T) -> Self {
+        self.body = RequestBody::Form(data);
+        self
+    }
+
+    pub fn multipart_form(mut self, data: multipart::Form) -> Self {
+        self.body = RequestBody::Multipart(data);
+        self
+    }
+
+    pub fn bytes(mut self, bytes: Bytes) -> Self {
+        self.body = bytes.into();
+        self
+    }
+
+    pub fn text(mut self, data: &str) -> Self {
+        self.body = data.into();
         self
     }
 
     #[inline]
-    pub async fn request(&self) -> LabradorResult<LabraResponse> {
+    pub async fn request(self) -> LabradorResult<LabraResponse> {
         let mut http_url = Url::parse(&self.url).unwrap();
         if let Some(params) = &self.params {
             http_url.query_pairs_mut().extend_pairs(params.into_iter());
@@ -206,77 +329,63 @@ impl <T> LabraRequest <T> where T: Serialize {
             reqwest::header::CONTENT_TYPE,
             self.req_type.get_content_type(),
         );
-        if let Some(data) = &self.data {
-            match self.req_type {
-                RequestType::Json => {
-                    request = request.json(data);
-                }
-                RequestType::Form => {
-                    let value = serde_json::to_value(data.clone()).unwrap_or(Value::Null);
-                    if value.is_string() {
-                        let v = value.to_string();
-                        request = request.body(v.replace("\"",""));
-                    } {
-                        request = request.form(data);
-                    }
-                }
-                RequestType::Multipart => {
-                    let value = serde_json::to_value(data.clone()).unwrap_or(Value::Null);
-                    if value.is_object() {
-                        let mut form = multipart::Form::new();
-                        if let Some(v) = value.as_object() {
-                            for (k, v) in v.into_iter() {
-                                let v = v.as_str().unwrap_or_default();
-                                form = form.text(k.to_owned(), v.to_owned());
-                            }
-                        }
-                        request = request.multipart(form);
-                    } else {
-                        let v = value.to_string();
-                        request = request.body(v.replace("\"",""));
-                    }
-                }
-                _ => {
-                    request = request.body(serde_json::to_string(data).unwrap_or_default())
-                }
+        let mut data = &self.body.to_string();
+        match self.body {
+            RequestBody::Json(v) => {
+                request = request.json(&v);
             }
+            RequestBody::Form(v) => {
+                request = request.form(&v);
+            }
+            RequestBody::Multipart(v) => {
+                request = request.multipart(v);
+            }
+            RequestBody::Xml(v) => {
+                request = request.body(v);
+            }
+            RequestBody::Text(v) => {
+                request = request.body(v);
+            }
+            RequestBody::Raw(v) => {
+                request = request.body(v);
+            }
+            RequestBody::Null => {}
         }
+        // if let Some(data) = &self.data {
+        //     match self.req_type {
+        //         RequestType::Json => {
+        //             request = request.json(data);
+        //         }
+        //         RequestType::Form => {
+        //             let value = serde_json::to_value(data.clone()).unwrap_or(Value::Null);
+        //             if value.is_string() {
+        //                 let v = value.to_string();
+        //                 request = request.body(v.replace("\"",""));
+        //             } {
+        //                 request = request.form(data);
+        //             }
+        //         }
+        //         RequestType::Multipart => {
+        //
+        //         }
+        //         _ => {
+        //             request = request.body(serde_json::to_string(data).unwrap_or_default())
+        //         }
+        //     }
+        // }
         if let Some(headers) = &self.headers {
             for (k, v) in headers.into_iter() {
                 request = request.header(k, HeaderValue::from_str(v)?);
             }
         }
-        tracing::info!("[请求第三方接口参数] url: {}, data:{}", http_url.as_str(), serde_json::to_string(&self.data).unwrap_or_default());
-        ResponseType::from_response(request.send().await?)
-    }
-
-    #[inline]
-    pub fn request_blocking(&self) -> LabradorResult<LabraResponse> {
-        let mut http_url = Url::parse(&self.url).unwrap();
-        if let Some(params) = &self.params {
-            http_url.query_pairs_mut().extend_pairs(params.into_iter());
-        }
-        let mut client = reqwest::blocking::Client::builder().user_agent(APP_USER_AGENT);
-        if let Some(identity) = &self.identity {
-            client = client.identity(identity.identity());
-        }
-        if let Some(cert) = &self.cert {
-            client = client.add_root_certificate(cert.reqwest_cert()?);
-        }
-        let mut request = client.build()?.request(self.method.clone().into(), http_url.to_owned()).header(
-            reqwest::header::CONTENT_TYPE,
-            self.req_type.get_content_type(),
-        );
-        if let Some(data) = &self.data {
-            request = request.body(serde_json::to_string(data).unwrap_or_default());
-        }
-        if let Some(headers) = &self.headers {
-            for (k, v) in headers.into_iter() {
-                request = request.header(k, v);
-            }
-        }
-        tracing::info!("[请求第三方接口参数] url: {}, data:{}", http_url.as_str(), serde_json::to_string(&self.data).unwrap_or_default());
-        ResponseType::from_response_block(request.send()?)
+        tracing::info!("[请求第三方接口参数] url: {}, data:{}", http_url.as_str(), data);
+        let result = request.send().await?;
+        let status = result.status();
+        let remote_addr = result.remote_addr();
+        let headers = result.headers();
+        let response = LabraResponse::new(result.url().clone(), status, remote_addr, headers.clone(), result.bytes().await?);
+        tracing::info!("[请求第三方接口响应] data:{}", &response.text().unwrap_or_default());
+        Ok(response)
     }
 }
 
@@ -374,122 +483,12 @@ impl RequestType {
     }
 }
 
-#[allow(unused)]
-impl ResponseType {
-    pub fn from_response(res: reqwest::Response) -> LabradorResult<LabraResponse> {
-        Ok(LabraResponse {
-            response: res.into(),
-            block_response: None,
-        })
-    }
-
-    pub fn from_response_block(res: reqwest::blocking::Response) -> LabradorResult<LabraResponse> {
-        Ok(LabraResponse {
-            response: None,
-            block_response: res.into(),
-        })
-    }
-}
-
-#[allow(unused)]
-impl LabraResponse {
-
-    pub fn status(&self) -> StatusCode {
-        if let Some(res) = &self.response {
-            res.status()
-        } else {
-            if let Some(res) = &self.block_response {
-                res.status()
-            } else {
-                StatusCode::default()
-            }
-        }
-    }
-
-    pub fn remote_addr(&self) -> Option<SocketAddr> {
-        if let Some(res) = &self.response {
-            res.remote_addr()
-        } else {
-            if let Some(res) = &self.block_response {
-                res.remote_addr()
-            } else {
-                return None;
-            }
-        }
-    }
-
-    pub fn header(&self) -> HeaderMap {
-        if let Some(res) = &self.response {
-            res.headers().to_owned()
-        } else {
-            if let Some(res) = &self.block_response {
-                res.headers().to_owned()
-            } else {
-                return HeaderMap::new();
-            }
-        }
-    }
-
-    pub async fn json<T: DeserializeOwned + Serialize>(self) -> LabradorResult<T> {
-        match self.response {
-            Some(v) => v.json::<T>().await.map(|v| {
-                tracing::info!("[请求第三方接口响应] data:{}", serde_json::to_string(&v).unwrap_or_default());
-                v
-            }).map_err(LabraError::from),
-            _ => Err(LabraError::RequestError(format!("error to parse http response: {:?}", self))),
-        }
-    }
-
-    pub async fn text(self) -> LabradorResult<String> {
-        match self.response {
-            Some(v) => v.text().await.map(|v| {
-                tracing::info!("[请求第三方接口响应] data:{}", serde_json::to_string(&v).unwrap_or_default());
-                v
-            }).map_err(LabraError::from),
-            _ => Err(LabraError::RequestError(format!("error to parse http response: {:?}", self))),
-        }
-    }
-
-    pub async fn bytes(self) -> LabradorResult<Bytes> {
-        match self.response {
-            Some(v) => v.bytes().await.map_err(LabraError::from),
-            _ => Err(LabraError::RequestError(format!("error to parse http response: {:?}", self))),
-        }
-    }
-
-    pub fn json_blocking<T: DeserializeOwned + Serialize>(self) -> LabradorResult<T> {
-        match self.block_response {
-            Some(v) => v.json::<T>().map(|v| {
-                tracing::info!("[请求第三方接口响应] data:{}", serde_json::to_string(&v).unwrap_or_default());
-                v
-            }).map_err(LabraError::from),
-            _ => Err(LabraError::RequestError(format!("error to parse http response: {:?}", self))),
-        }
-    }
-
-    pub fn text_blocking(self) -> LabradorResult<String> {
-        match self.block_response {
-            Some(v) => v.text().map(|v| {
-                tracing::info!("[请求第三方接口响应] data:{}", serde_json::to_string(&v).unwrap_or_default());
-                v
-            }).map_err(LabraError::from),
-            _ => Err(LabraError::RequestError(format!("error to parse http response: {:?}", self))),
-        }
-    }
-
-    pub fn bytes_blocking(self) -> LabradorResult<Bytes> {
-        match self.block_response {
-            Some(v) => v.bytes().map_err(LabraError::from),
-            _ => Err(LabraError::RequestError(format!("error to parse http response: {:?}", self))),
-        }
-    }
-}
-
 pub async fn request<F>(f: F) -> LabradorResult<LabraResponse>
 where
     F: Fn(reqwest::Client) -> reqwest::RequestBuilder,
 {
-    ResponseType::from_response(f(reqwest::Client::new()).send().await?)
+    let result = f(reqwest::Client::new()).send().await?;
+    Ok(LabraResponse::new(result.url().clone(), result.status(), result.remote_addr(), result.headers().clone(), result.bytes().await?))
 }
 
 #[allow(unused)]
@@ -497,5 +496,14 @@ pub fn request_blocking<F>(f: F) -> LabradorResult<LabraResponse>
 where
     F: Fn(reqwest::blocking::Client) -> reqwest::blocking::RequestBuilder,
 {
-    ResponseType::from_response_block(f(reqwest::blocking::Client::new()).send()?)
+    let result = f(reqwest::blocking::Client::new()).send()?;
+    Ok(LabraResponse::new(result.url().clone(), result.status(), result.remote_addr(), result.headers().clone(), result.bytes()?))
+}
+
+
+
+#[test]
+fn test() {
+    let s = LabradorRequest::new("http://www.baidu.com".parse().unwrap()).query("ss", "dd");
+    println!("{:?}", s.url.as_str());
 }

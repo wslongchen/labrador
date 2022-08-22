@@ -1,71 +1,110 @@
 use crate::{session::SessionStore, errors::LabraError, request::{RequestType}, WechatCommonResponse, WeChatMpClient, LabradorResult};
-use bytes::Bytes;
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
-use crate::wechat::mp::method::{QrCodeMethod, WechatMpMethod};
+use crate::wechat::mp::constants::{QR_LIMIT_SCENE, QR_SCENE};
+use crate::wechat::mp::method::{MpQrCodeMethod, WechatMpMethod};
 
 #[derive(Debug, Clone)]
-pub struct WeChatQRCode<'a, T: SessionStore> {
+pub struct WeChatMpQRCode<'a, T: SessionStore> {
     client: &'a WeChatMpClient<T>,
 }
 
 #[allow(unused)]
-impl<'a, T: SessionStore> WeChatQRCode<'a, T> {
+impl<'a, T: SessionStore> WeChatMpQRCode<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMpClient<T>) -> WeChatQRCode<T> {
-        WeChatQRCode {
+    pub fn new(client: &WeChatMpClient<T>) -> WeChatMpQRCode<T> {
+        WeChatMpQRCode {
             client,
         }
     }
 
-    /// 创建二维码凭证
-    pub async fn create<D: Serialize>(&mut self, data: D) -> LabradorResult<WechatCommonResponse<QRCodeTicket>> {
-        let res = self.client.post(WechatMpMethod::QrCode(QrCodeMethod::Create), data, RequestType::Json).await?.json::<serde_json::Value>().await?;
-        let mut result = serde_json::from_value::<WechatCommonResponse<_>>(res.to_owned())?;
-        if result.is_success() {
-            let ticket = &res["ticket"];
-            let ticket = ticket.as_str().unwrap_or_default().to_owned();
-            let expire_seconds = match res.get("expire_seconds") {
-                Some(seconds) => seconds.as_u64().unwrap(),
-                None => 0u64,
-            };
-            let url = &res["url"];
-            let url = url.as_str().unwrap_or_default().to_owned();
-            result.result = QRCodeTicket {
-                ticket: ticket.to_owned(),
-                expire_seconds: expire_seconds as u32,
-                url: url.to_owned(),
-            }.into();
+    /// <pre>
+    /// 换取临时二维码ticket
+    /// 详情请见: <a href="https://mp.weixin.qq.com/wiki?action=doc&id=mp1443433542&t=0.9274944716856435">生成带参数的二维码</a>
+    /// </pre>
+    pub async fn create_temp_ticket_sceneid<D: Serialize>(&self, scene_id: i32, expire_seconds: u64) -> LabradorResult<QRCodeTicket> {
+        if scene_id == 0 {
+            return Err(LabraError::RequestError("临时二维码场景值不能为0！".to_string()));
         }
-        Ok(result)
+        self.create_qrcode(QR_SCENE, None, scene_id.into(), expire_seconds.into()).await
     }
 
+    /// <pre>
+    /// 换取临时二维码ticket
+    /// 详情请见: <a href="https://mp.weixin.qq.com/wiki?action=doc&id=mp1443433542&t=0.9274944716856435">生成带参数的二维码</a>
+    /// </pre>
+    pub async fn create_temp_ticket_scenestr<D: Serialize>(&self, scene_str: &str, expire_seconds: u64) -> LabradorResult<QRCodeTicket> {
+        if scene_str.is_empty() {
+            return Err(LabraError::RequestError("临时二维码场景值不能为空！".to_string()));
+        }
+        self.create_qrcode(QR_SCENE, scene_str.into(), None, expire_seconds.into()).await
+    }
 
-    /// 获取二维码
-    pub async fn get_unlimited(&mut self, scene: &str, page: &str) -> LabradorResult<Bytes> {
-        let mini_qr_code = MiniQRCodeRequest {
-            scene: scene.to_owned(),
-            page: page.to_owned(),
-        };
-        let res = self.client.post(WechatMpMethod::QrCode(QrCodeMethod::GetWxaCodeUnlimit), &mini_qr_code, RequestType::Json).await?;
-        let bytes = res.bytes().await?;
-        let res_str = String::from_utf8(bytes.to_owned().to_vec()).unwrap_or_default();
-        match serde_json::from_str::<Value>(res_str.as_str()) {
-            Ok(r) => {
-                let errcode = &r["errcode"].as_i64().unwrap_or_default().to_owned();
-                let errmsg = &r["errmsg"].as_str().unwrap_or_default().to_owned();
-                return Err(LabraError::ClientError { errcode: errcode.to_string(), errmsg: errmsg.to_owned()})
+    async fn create_qrcode(&self, action_name: &str, scene_str: Option<&str>, scene_id: Option<i32>, mut expire_seconds: Option<u64>) -> LabradorResult<QRCodeTicket> {
+        //expireSeconds 该二维码有效时间，以秒为单位。 最大不超过2592000（即30天），此字段如果不填，则默认有效期为30秒。
+        if expire_seconds.is_some() && expire_seconds.unwrap_or_default() > 2592000 {
+            return Err(LabraError::RequestError("临时二维码有效时间最大不能超过2592000（即30天）！".to_string()));
+        }
+        if expire_seconds.is_none() {
+            expire_seconds = Some(30);
+        }
+
+        self.get_qrcode_ticket(action_name, scene_str, scene_id, expire_seconds).await
+    }
+
+    async fn get_qrcode_ticket(&self, action_name: &str, scene_str: Option<&str>, scene_id: Option<i32>, mut expire_seconds: Option<u64>) -> LabradorResult<QRCodeTicket> {
+
+        let mut scene = if let Some(scene_str) = scene_str {
+            json!({"scene_str":scene_str})
+        } else {
+            if let Some(scene_id) = scene_id {
+                json!({"scene_id": scene_id})
+            } else {
+                Value::Null
             }
-            Err(err) => {  }
         };
-        Ok(bytes)
+        let mut req = json!({
+            "action_name": action_name,
+            "action_info": {
+                "scene": scene
+            }
+        });
+        if let Some(expire_seconds) = expire_seconds {
+            req["expire_seconds"] = expire_seconds.into();
+        }
+        let v = self.client.post(WechatMpMethod::QrCode(MpQrCodeMethod::Create), vec![], req, RequestType::Json).await?.json::<serde_json::Value>()?;
+        WechatCommonResponse::parse::<QRCodeTicket>(v)
     }
 
+    /// <pre>
+    /// 换取永久二维码ticket
+    /// 详情请见: <a href="https://mp.weixin.qq.com/wiki?action=doc&id=mp1443433542&t=0.9274944716856435">生成带参数的二维码</a>
+    /// </pre>
+    pub async fn get_unlimited_scenestr(&self, scene_str: &str) -> LabradorResult<QRCodeTicket> {
+        self.get_qrcode_ticket(QR_LIMIT_SCENE, scene_str.into(), None, None).await
+    }
+
+    /// <pre>
+    /// 换取永久二维码ticket
+    /// 详情请见: <a href="https://mp.weixin.qq.com/wiki?action=doc&id=mp1443433542&t=0.9274944716856435">生成带参数的二维码</a>
+    /// </pre>
+    pub async fn get_unlimited_sceneid(&self, scene_id: i32) -> LabradorResult<QRCodeTicket> {
+        self.get_qrcode_ticket(QR_LIMIT_SCENE, None, scene_id.into(), None).await
+    }
+
+    /// <pre>
+    /// 换取二维码图片url地址
+    /// 详情请见: <a href="https://mp.weixin.qq.com/wiki?action=doc&id=mp1443433542&t=0.9274944716856435">生成带参数的二维码</a>
+    /// </pre>
     pub fn get_url_with_ticket(&self, ticket: &str) -> String {
-        format!("{}?ticket={}", QrCodeMethod::ShowQrCode.get_method(), ticket)
+        format!("{}?ticket={}", MpQrCodeMethod::ShowQrCode.get_method(), ticket)
     }
 
+    /// <pre>
+    /// 换取二维码图片url地址（可以选择是否生成压缩的网址）
+    /// 详情请见: <a href="https://mp.weixin.qq.com/wiki?action=doc&id=mp1443433542&t=0.9274944716856435">生成带参数的二维码</a>
+    /// </pre>
     pub fn get_url(&self, qrcode_ticket: &QRCodeTicket) -> String {
         let ticket = &qrcode_ticket.ticket;
         self.get_url_with_ticket(ticket)
@@ -77,7 +116,7 @@ impl<'a, T: SessionStore> WeChatQRCode<'a, T> {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct QRCodeTicket {
     pub ticket: String,
-    pub expire_seconds: u32,
+    pub expire_seconds: i32,
     pub url: String,
 }
 

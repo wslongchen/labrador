@@ -9,6 +9,8 @@ pub enum WechatPayMethod {
     EntPay(EntPayMethod),
     /// 证书下载
     Certificate,
+    /// 自定义方法
+    Custom(String)
 }
 
 #[allow(unused)]
@@ -60,7 +62,8 @@ impl RequestMethod for WechatPayMethod {
             WechatPayMethod::EntPay(_) => {
                 String::default()
             }
-            WechatPayMethod::Certificate => String::from("/v3/certificates")
+            WechatPayMethod::Certificate => String::from("/v3/certificates"),
+            WechatPayMethod::Custom(v) => v.to_string()
         }
     }
 }

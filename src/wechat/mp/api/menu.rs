@@ -22,65 +22,94 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{session::SessionStore, request::{RequestType}, errors::LabraError, WechatCommonResponse, WeChatMpClient, LabradorResult};
-use crate::wechat::mp::method::{MenuMethod, WechatMpMethod};
+use crate::wechat::mp::method::{MpMenuMethod, WechatMpMethod};
 
 
 #[derive(Debug, Clone)]
-pub struct WeChatMenu<'a, T: SessionStore> {
+pub struct WeChatMpMenu<'a, T: SessionStore> {
     client: &'a WeChatMpClient<T>,
 }
 
 #[allow(unused)]
-impl<'a, T: SessionStore> WeChatMenu<'a, T> {
+impl<'a, T: SessionStore> WeChatMpMenu<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMpClient<T>) -> WeChatMenu<T> {
-        WeChatMenu {
+    pub fn new(client: &WeChatMpClient<T>) -> WeChatMpMenu<T> {
+        WeChatMpMenu {
             client,
         }
     }
 
-    /// 创建菜单
-    pub async fn create_menu<D: Serialize>(&self, data: D) -> LabradorResult<WechatCommonResponse<String>> {
-        let v = self.client.post(WechatMpMethod::Menu(MenuMethod::Create), data, RequestType::Json).await?.json::<serde_json::Value>().await?;
-        serde_json::from_value::<WechatCommonResponse<_>>(v).map_err(LabraError::from)
+    /// <pre>
+    /// 自定义菜单创建接口
+    /// 详情请见：https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421141013&token=&lang=zh_CN
+    /// 如果要创建个性化菜单，请设置matchrule属性
+    /// 详情请见：https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1455782296&token=&lang=zh_CN
+    /// </pre>
+    pub async fn create_menu<D: Serialize>(&self, data: D) -> LabradorResult<WechatCommonResponse> {
+        self.client.post(WechatMpMethod::Menu(MpMenuMethod::Create), vec![], data, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
 
-    /// 创建自定义菜单
-    pub async fn create_custom_menu(&self, buttons: MenuButtonsRequest) -> LabradorResult<WechatCommonResponse<String>> {
+    /// <pre>
+    /// 自定义菜单创建接口
+    /// 详情请见：https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421141013&token=&lang=zh_CN
+    /// 如果要创建个性化菜单，请设置matchrule属性
+    /// 详情请见：https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1455782296&token=&lang=zh_CN
+    /// </pre>
+    pub async fn create_custom_menu(&self, buttons: MenuButtonsRequest) -> LabradorResult<WechatCommonResponse> {
         self.create_menu::<MenuButtonsRequest>(buttons).await
     }
 
-    /// 创建自建菜单信息
-    pub async fn get_current_selfmenu_info(&self) -> LabradorResult<WechatCommonResponse<SelfMenuInfoResponse>> {
+    /// <pre>
+    /// 获取自定义菜单配置接口
+    /// 本接口将会提供公众号当前使用的自定义菜单的配置，如果公众号是通过API调用设置的菜单，则返回菜单的开发配置，而如果公众号是在公众平台官网通过网站功能发布菜单，则本接口返回运营者设置的菜单配置。
+    /// 请注意：
+    /// 1、第三方平台开发者可以通过本接口，在旗下公众号将业务授权给你后，立即通过本接口检测公众号的自定义菜单配置，并通过接口再次给公众号设置好自动回复规则，以提升公众号运营者的业务体验。
+    /// 2、本接口与自定义菜单查询接口的不同之处在于，本接口无论公众号的接口是如何设置的，都能查询到接口，而自定义菜单查询接口则仅能查询到使用API设置的菜单配置。
+    /// 3、认证/未认证的服务号/订阅号，以及接口测试号，均拥有该接口权限。
+    /// 4、从第三方平台的公众号登录授权机制上来说，该接口从属于消息与菜单权限集。
+    /// 5、本接口中返回的图片/语音/视频为临时素材（临时素材每次获取都不同，3天内有效，通过素材管理-获取临时素材接口来获取这些素材），本接口返回的图文消息为永久素材素材（通过素材管理-获取永久素材接口来获取这些素材）。
+    ///  接口调用请求说明:
+    /// http请求方式: GET（请使用https协议）
+    /// https://api.weixin.qq.com/cgi-bin/get_current_selfmenu_info?access_token=ACCESS_TOKEN
+    /// </pre>
+    pub async fn get_current_selfmenu_info(&self) -> LabradorResult<SelfMenuInfoResponse> {
         
-        let v = self.client.get(WechatMpMethod::Menu(MenuMethod::GetCurrentMenuInfo), vec![], RequestType::Json).await?.json::<serde_json::Value>().await?;
-        let mut result = serde_json::from_value::<WechatCommonResponse<_>>(v.to_owned())?;
+        let v = self.client.get(WechatMpMethod::Menu(MpMenuMethod::GetCurrentMenuInfo), vec![], RequestType::Json).await?.json::<serde_json::Value>()?;
+        let mut result = WechatCommonResponse::from_value(v.clone())?;
         if result.is_success() {
-            result.result = serde_json::from_value::<SelfMenuInfoResponse>(v)?.into();
+            Ok(serde_json::from_value::<SelfMenuInfoResponse>(v)?)
+        } else {
+            Err(LabraError::ClientError {errcode: result.errcode.to_owned().unwrap_or_default().to_string(), errmsg: result.errmsg.to_owned().unwrap_or_default()})
         }
-        Ok(result)
     }
 
+    /// 自定义菜单查询接口
+    /// 详情请见： https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421141014&token=&lang=zh_CN
     /// 获取菜单信息
-    pub async fn get_menu(&self) -> LabradorResult<WechatCommonResponse<MenuButtonResponse>> {
-        let response = self.client.get(WechatMpMethod::Menu(MenuMethod::Get), vec![], RequestType::Json).await?.json::<serde_json::Value>().await?;
-        let mut result = serde_json::from_value::<WechatCommonResponse<_>>(response.to_owned())?;
+    pub async fn get_menu(&self) -> LabradorResult<MenuButtonResponse> {
+        let v = self.client.get(WechatMpMethod::Menu(MpMenuMethod::Get), vec![], RequestType::Json).await?.json::<serde_json::Value>()?;
+        let mut result = WechatCommonResponse::from_value(v.clone())?;
         if result.is_success() {
-            result.result = serde_json::from_value::<MenuButtonResponse>(response)?.into();
+            Ok(serde_json::from_value::<MenuButtonResponse>(v)?)
+        } else {
+            Err(LabraError::ClientError {errcode: result.errcode.to_owned().unwrap_or_default().to_string(), errmsg: result.errmsg.to_owned().unwrap_or_default()})
         }
-        Ok(result)
     }
 
-    /// 删除菜单
-    pub async fn delete_menu(&self) -> LabradorResult<WechatCommonResponse<MenuButtonResponse>> {
-        let response = self.client.get(WechatMpMethod::Menu(MenuMethod::Delete), vec![], RequestType::Json).await?.json::<serde_json::Value>().await?;
-        let mut result = serde_json::from_value::<WechatCommonResponse<_>>(response.to_owned())?;
+    /// <pre>
+    /// 删除个性化菜单接口
+    /// 详情请见: https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1455782296&token=&lang=zh_CN
+    /// </pre>
+    pub async fn delete_menu(&self) -> LabradorResult<MenuButtonResponse> {
+        let v = self.client.get(WechatMpMethod::Menu(MpMenuMethod::Delete), vec![], RequestType::Json).await?.json::<serde_json::Value>()?;
+        let mut result = WechatCommonResponse::from_value(v.clone())?;
         if result.is_success() {
-            result.result = serde_json::from_value::<MenuButtonResponse>(response)?.into();
+            Ok(serde_json::from_value::<MenuButtonResponse>(v)?)
+        } else {
+            Err(LabraError::ClientError {errcode: result.errcode.to_owned().unwrap_or_default().to_string(), errmsg: result.errmsg.to_owned().unwrap_or_default()})
         }
-        Ok(result)
     }
 }
 

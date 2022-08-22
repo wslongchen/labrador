@@ -14,6 +14,12 @@ pub enum JDMethod {
     OrderRecentQuery,
     /// 订单行查询
     OrderRawQuery,
+    /// 转链获取接口
+    PromotionCodeGet,
+    /// 社交媒体获取推广链接接口
+    PromotionBySubUnionIdGet,
+    /// 商羚商品查询接口
+    SellingGoodsQuery,
 }
 
 #[allow(unused,deprecated)]
@@ -25,7 +31,10 @@ impl RequestMethod for JDMethod {
             JDMethod::PromotionUrlGenerate => String::from("jd.union.open.promotion.common.get"),
             JDMethod::OrderRecentQuery => String::from("jd.union.open.order.query"),
             JDMethod::OrderRawQuery => String::from("jd.union.open.order.row.query"),
-           
+            JDMethod::PromotionCodeGet => String::from("jd.union.open.selling.promotion.get"),
+            JDMethod::PromotionBySubUnionIdGet => String::from("jd.union.open.promotion.bysubunionid.get"),
+            JDMethod::SellingGoodsQuery => String::from("jd.union.open.selling.goods.query"),
+
         }
     }
 
@@ -37,6 +46,9 @@ impl RequestMethod for JDMethod {
             JDMethod::PromotionUrlGenerate => String::from("jd_union_open_promotion_common_get_responce"),
             JDMethod::OrderRecentQuery => String::from("jd_union_open_order_query_responce"),
             JDMethod::OrderRawQuery => String::from("jd_union_open_order_row_query_responce"),
+            JDMethod::PromotionCodeGet => String::from("jd_union_open_selling_promotion_get_responce"),
+            JDMethod::PromotionBySubUnionIdGet => String::from("jd_union_open_promotion_bysubunionid_get_response"),
+            JDMethod::SellingGoodsQuery => String::from("jd_union_open_selling_goods_query_response"),
         }
     }
 }
