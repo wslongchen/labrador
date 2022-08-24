@@ -22,8 +22,8 @@ impl<'a, T: SessionStore> WeChatMpTemplateMessage<'a, T> {
 
     /// 设置所属行业
     /// 设置行业可在微信公众平台后台完成，每月可修改行业1次，帐号仅可使用所属行业中相关的模板，为方便第三方开发者，提供通过接口调用的方式来修改账号所属行业
-    /// [`industry_id1`] 公众号模板消息所属行业编号
-    /// [`industry_id2`] 公众号模板消息所属行业编号
+    /// `industry_id1` 公众号模板消息所属行业编号
+    /// `industry_id2` 公众号模板消息所属行业编号
     ///
     /// [地址](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html)
     pub async fn set_industry(&self, industry_id1: &str, industry_id2: &str) -> LabradorResult<WechatCommonResponse> {
@@ -51,7 +51,7 @@ impl<'a, T: SessionStore> WeChatMpTemplateMessage<'a, T> {
 
     /// 获得模板ID
     /// 从行业模板库选择模板到帐号后台，获得模板 ID 的过程可在微信公众平台后台完成。为方便第三方开发者，提供通过接口调用的方式来获取模板ID
-    /// [`template_id_short`] 模板库中模板的编号，有“TM**”和“OPENTMTM**”等形式
+    /// `template_id_short` 模板库中模板的编号，有“TM**”和“OPENTMTM**”等形式
     ///
     /// [地址](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html)
     pub async fn get_template_id(&self, template_id_short: &str) -> LabradorResult<String> {
@@ -72,7 +72,7 @@ impl<'a, T: SessionStore> WeChatMpTemplateMessage<'a, T> {
 
     /// 删除模板
     /// 删除模板可在微信公众平台后台完成，为方便第三方开发者，提供通过接口调用的方式来删除某帐号下的模板
-    /// [`template_id`]
+    /// `template_id` 模板编号
     ///
     /// [地址](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html)
     pub async fn delete_template(&self, template_id: &str) -> LabradorResult<WechatCommonResponse> {

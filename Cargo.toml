@@ -1,6 +1,6 @@
 [package]
 name = "labrador"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["mrpan <1049058427@qq.com>"]
 edition = "2018"
 description = "Labrador - Mini thidpart client for rust."
@@ -35,7 +35,7 @@ openssl = { version = "0.10.41", features = ["vendored"] }
 tracing = "0.1"
 dashmap = "5.3.4"
 json = {version = "0.12.4", optional= true }
-
+once_cell = "1.8"
 [dev-dependencies]
 tokio = { version = "1",  features=["full"] }
 

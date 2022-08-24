@@ -54,8 +54,8 @@ impl<T: SessionStore> APIClient<T> {
         }
     }
 
-    pub fn session(&self) -> T {
-        self.session.clone()
+    pub fn session(&self) -> &T {
+        &self.session
     }
 
     /// Request Http/Https

@@ -499,11 +499,3 @@ where
     let result = f(reqwest::blocking::Client::new()).send()?;
     Ok(LabraResponse::new(result.url().clone(), result.status(), result.remote_addr(), result.headers().clone(), result.bytes()?))
 }
-
-
-
-#[test]
-fn test() {
-    let s = LabradorRequest::new("http://www.baidu.com".parse().unwrap()).query("ss", "dd");
-    println!("{:?}", s.url.as_str());
-}

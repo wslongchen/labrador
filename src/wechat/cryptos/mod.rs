@@ -82,7 +82,7 @@ impl WeChatCrypto {
     /// timestamp 时间戳
     /// nonce 随机字符串
     /// encrypted 加密数据
-    fn get_signature(&self, timestamp: i64, nonce: &str, encrypted: &str, token: &str) -> LabradorResult<String> {
+    pub fn get_signature(&self, timestamp: i64, nonce: &str, encrypted: &str, token: &str) -> String {
         let mut data = vec![
             token.to_string(),
             timestamp.to_string(),
@@ -97,7 +97,19 @@ impl WeChatCrypto {
         // read hash digest
         let signature = hasher.finish();
         // let signature = hash::hash(MessageDigest::sha1(), data_str.as_bytes())?;
-        Ok(signature.to_hex())
+        signature.to_hex()
+    }
+
+    /// SHA1签名
+    pub fn get_sha1_sign(encrypt_str: &str) -> String {
+        // create a Sha1 object
+        let mut hasher = Sha1::new();
+        // write input message
+        hasher.update( encrypt_str.as_bytes());
+        // read hash digest
+        let signature = hasher.finish();
+        // let signature = hash::hash(MessageDigest::sha1(), data_str.as_bytes())?;
+        signature.to_hex()
     }
 
     pub fn create_hmac_sha256_sign(key: &str, message: &str) -> LabradorResult<String> {
@@ -122,7 +134,7 @@ impl WeChatCrypto {
     /// nonce 随机字符串
     /// echo_str 加密数据
     pub fn check_signature(&self, signature: &str, timestamp: i64, nonce: &str, echo_str: &str, id: &str, token: &str) -> LabradorResult<bool> {
-        let real_signature = self.get_signature(timestamp, nonce, echo_str, token)?;
+        let real_signature = self.get_signature(timestamp, nonce, echo_str, token);
         if signature != &real_signature {
             return Err(LabraError::InvalidSignature("Unmatched signature.".to_string()));
         }
@@ -139,7 +151,7 @@ impl WeChatCrypto {
     pub fn encrypt_message(&self, msg: &str, timestamp: i64, nonce: &str, token: &str, id: &str) -> LabradorResult<String> {
         let prp = PrpCrypto::new(self.key.to_owned());
         let encrypted_msg = prp.aes_128_cbc_encrypt_msg(msg, id)?;
-        let signature = self.get_signature(timestamp, nonce, &encrypted_msg, token)?;
+        let signature = self.get_signature(timestamp, nonce, &encrypted_msg, token);
         let msg = format!(
             "<xml>\n\
             <Encrypt><![CDATA[{encrypt}]]></Encrypt>\n\
@@ -166,7 +178,7 @@ impl WeChatCrypto {
         let package = xmlutil::parse(xml);
         let doc = package.as_document();
         let encrypted_msg = xmlutil::evaluate(&doc, "//xml/Encrypt/text()").string();
-        let real_signature = self.get_signature(timestamp, nonce, &encrypted_msg, token)?;
+        let real_signature = self.get_signature(timestamp, nonce, &encrypted_msg, token);
         if signature != &real_signature {
             return Err(LabraError::InvalidSignature("unmatched signature.".to_string()));
         }

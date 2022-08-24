@@ -56,7 +56,7 @@ impl JDRequest for JdJFGoodsRequest {
 #[serde(rename_all = "camelCase")]
 pub struct JdGoodsInfoQueryRequest {
     /// 京东skuID串，逗号分割，最多100个，开发示例如param_json={'skuIds':'5225346,7275691'}（
-    /// 非常重要 请大家关注：如果输入的sk串中某个skuID的商品不在推广中[就是没有佣金]，返回结果中不会包含这个商品的信息）
+    /// 非常重要 请大家关注：如果输入的sk串中某个skuID的商品不在推广中就是没有佣金，返回结果中不会包含这个商品的信息）
     pub sku_ids: String,
 }
 
@@ -92,9 +92,9 @@ pub struct JdPromotionUrlGenerateParam {
     /// 推广位id
     pub position_id: Option<u64>,
     /// 子渠道标识，您可自定义传入字母、数字或下划线，最多支持80个字符，该参数会在订单行查询接口中展示
-    /// （需申请权限，申请方法请见https://union.jd.com/helpcenter/13246-13247-46301）
+    /// （需申请权限，申请方法[请见](https://union.jd.com/helpcenter/13246-13247-46301)）
     pub sub_union_id: Option<String>,
-    /// 系统扩展参数（需申请权限，申请方法请见https://union.jd.com/helpcenter/13246-13247-46301）
+    /// 系统扩展参数（需申请权限，申请方法[请见](https://union.jd.com/helpcenter/13246-13247-46301)）
     /// 最多支持40字符，参数会在订单行查询接口中展示
     pub ext1: Option<String>,
     /// 联盟子推客身份标识（不能传入接口调用者自己的pid）

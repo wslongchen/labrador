@@ -19,12 +19,12 @@
 //! 4、需使用 https 调用本接口。
 use std::fs::File;
 use std::io::Read;
+use std::path::Path;
 use bytes::Bytes;
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
-use crate::{session::SessionStore, LabradorResult, RequestBody, RequestType, WeChatMpClient, WechatCommonResponse};
-use crate::wechat::miniapp::WechatRequest;
+use crate::{session::SessionStore, LabradorResult, RequestBody, RequestType, WeChatMpClient, WechatCommonResponse, WechatRequest, get_nonce_str, request};
 use crate::wechat::mp::constants::MATERIAL_TYPE_NEWS;
 use crate::wechat::mp::method::{MpMediaMethod, WechatMpMethod};
 
@@ -64,12 +64,15 @@ impl<'a, T: SessionStore> WechatMpMedia<'a, T> {
     /// 详情请见: <a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1444738726&token=&lang=zh_CN">新增临时素材</a>
     /// 接口url格式：https://api.weixin.qq.com/cgi-bin/media/upload?access_token=ACCESS_TOKEN&type=TYPE
     /// </pre>
-    pub async fn upload_media(&self, media_type: &str, data: Vec<u8>) -> LabradorResult<WechatMaMediaResponse> {
+    pub async fn upload_media(&self, media_type: &str, file_name: Option<&str>, data: Vec<u8>) -> LabradorResult<WechatMpMediaResponse> {
+        let default_file_name = format!("{}.png", get_nonce_str());
         let req = WechatMpMediaRequest {
             media_type: media_type.to_string(),
+            file_name: file_name.map(|v| v.to_string()).unwrap_or(default_file_name),
             media_data: data
         };
-        self.client.execute::<WechatMpMediaRequest, String>(req).await?.json::<WechatMaMediaResponse>()
+        let v = self.client.execute::<WechatMpMediaRequest, String>(req).await?.json::<Value>()?;
+        WechatCommonResponse::parse::<WechatMpMediaResponse>(v)
     }
 
     /// <pre>
@@ -79,10 +82,26 @@ impl<'a, T: SessionStore> WechatMpMedia<'a, T> {
     /// 详情请见: <a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1444738726&token=&lang=zh_CN">新增临时素材</a>
     /// 接口url格式：https://api.weixin.qq.com/cgi-bin/media/upload?access_token=ACCESS_TOKEN&type=TYPE
     /// </pre>
-    pub async fn upload_media_with_type(&self, media_type: &str, mut f: File) -> LabradorResult<WechatMaMediaResponse> {
-        let mut contents: Vec<u8> = Vec::new();
-        let _ = f.read_to_end(&mut contents)?;
-        self.upload_media(media_type, contents).await
+    pub async fn upload_media_with_file(&self, media_type: &str, file_path: &str) -> LabradorResult<WechatMpMediaResponse> {
+        let path = Path::new(file_path);
+        let file_name = path.file_name().map(|v| v.to_str().unwrap_or_default()).unwrap_or_default();
+        let mut f = File::open(path)?;
+        let mut content: Vec<u8> = Vec::new();
+        let _ = f.read_to_end(&mut content)?;
+        self.upload_media(media_type, file_name.into(),content).await
+    }
+
+    /// <pre>
+    /// 新增临时素材
+    /// 本接口即为原“上传多媒体文件”接口。
+    ///
+    /// 详情请见: <a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1444738726&token=&lang=zh_CN">新增临时素材</a>
+    /// 接口url格式：https://api.weixin.qq.com/cgi-bin/media/upload?access_token=ACCESS_TOKEN&type=TYPE
+    /// </pre>
+    pub async fn upload_media_with_url(&self, media_type: &str, url: &str) -> LabradorResult<WechatMpMediaResponse> {
+        let result = request(|client| client.get(url)).await?;
+        let content = result.bytes()?;
+        self.upload_media(media_type, None,content.to_vec()).await
     }
 
     /// <pre>
@@ -126,11 +145,13 @@ impl<'a, T: SessionStore> WechatMpMedia<'a, T> {
     /// 5、"上传图文消息内的图片获取URL"接口所上传的图片，不占用公众号的素材库中图片数量的100000个的限制，图片仅支持jpg/png格式，大小必须在1MB以下。
     /// 6、图文消息支持正文中插入自己帐号和其他公众号已群发文章链接的能力。
     /// </pre>
-    pub async fn upload_img_media(&self, data: Vec<u8>) -> LabradorResult<WechatMaMediaResponse> {
+    pub async fn upload_img_media(&self, file_name: &str, data: Vec<u8>) -> LabradorResult<WechatMpMediaResponse> {
         let req = WechatMpImageRequest {
-            media_data: data
+            media_data: data,
+            file_name: file_name.to_string(),
         };
-        self.client.execute::<WechatMpImageRequest, String>(req).await?.json::<WechatMaMediaResponse>()
+        let v = self.client.execute::<WechatMpImageRequest, String>(req).await?.json::<Value>()?;
+        WechatCommonResponse::parse::<WechatMpMediaResponse>(v)
     }
 
     /// <pre>
@@ -150,8 +171,9 @@ impl<'a, T: SessionStore> WechatMpMedia<'a, T> {
     /// 3、素材的格式大小等要求与公众平台官网一致。具体是，图片大小不超过2M，支持bmp/png/jpeg/jpg/gif格式，语音大小不超过5M，长度不超过60秒，支持mp3/wma/wav/amr格式
     /// 4、调用该接口需https协议
     /// </pre>
-    pub async fn upload_material(&self, media_type: &str, req: WechatMpMaterialRequest) -> LabradorResult<WechatMaMediaResponse> {
-        self.client.execute::<WechatMpMaterialRequest, String>(req).await?.json::<WechatMaMediaResponse>()
+    pub async fn upload_material(&self, media_type: &str, req: WechatMpMaterialRequest) -> LabradorResult<WechatMpMediaResponse> {
+        let v = self.client.execute::<WechatMpMaterialRequest, String>(req).await?.json::<Value>()?;
+        WechatCommonResponse::parse::<WechatMpMediaResponse>(v)
     }
 
     /// <pre>
@@ -171,9 +193,9 @@ impl<'a, T: SessionStore> WechatMpMedia<'a, T> {
     /// 详情请见: <a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1444738729&token=&lang=zh_CN">获取永久素材</a>
     /// 接口url格式：https://api.weixin.qq.com/cgi-bin/material/get_material?access_token=ACCESS_TOKEN
     /// </pre>
-    pub async fn get_material_video_info(&self, media_id: &str) -> LabradorResult<WechatMaMaterialVideoInfoResponse> {
+    pub async fn get_material_video_info(&self, media_id: &str) -> LabradorResult<WechatMpMaterialVideoInfoResponse> {
         let response = self.client.post(WechatMpMethod::Media(MpMediaMethod::GetMaterial), vec![("media_id".to_string(), media_id.to_string())], serde_json::Value::Null, RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<WechatMaMaterialVideoInfoResponse>(response)
+        WechatCommonResponse::parse::<WechatMpMaterialVideoInfoResponse>(response)
     }
 
     /// <pre>
@@ -182,9 +204,9 @@ impl<'a, T: SessionStore> WechatMpMedia<'a, T> {
     /// 详情请见: <a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1444738732&token=&lang=zh_CN">修改永久图文素材</a>
     /// 接口url格式：https://api.weixin.qq.com/cgi-bin/material/update_news?access_token=ACCESS_TOKEN
     /// </pre>
-    pub async fn get_material_news(&self, media_id: &str) -> LabradorResult<WechatMaMaterialNewsResponse> {
+    pub async fn get_material_news(&self, media_id: &str) -> LabradorResult<WechatMpMaterialNewsResponse> {
         let response = self.client.post(WechatMpMethod::Media(MpMediaMethod::GetMaterial), vec![("media_id".to_string(), media_id.to_string())], serde_json::Value::Null, RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<WechatMaMaterialNewsResponse>(response)
+        WechatCommonResponse::parse::<WechatMpMaterialNewsResponse>(response)
     }
 
     /// <pre>
@@ -212,9 +234,9 @@ impl<'a, T: SessionStore> WechatMpMedia<'a, T> {
     /// 详情请见: <a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1444738733&token=&lang=zh_CN">获取素材总数</a>
     /// 接口url格式：https://api.weixin.qq.com/cgi-bin/material/get_materialcount?access_token=ACCESS_TOKEN
     /// </pre>
-    pub async fn get_material_count(&self) -> LabradorResult<WechatMaMaterialCountResponse> {
+    pub async fn get_material_count(&self) -> LabradorResult<WechatMpMaterialCountResponse> {
         let v = self.client.post(WechatMpMethod::Media(MpMediaMethod::DeleteMaterial), vec![], Value::Null, RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<WechatMaMaterialCountResponse>(v)
+        WechatCommonResponse::parse::<WechatMpMaterialCountResponse>(v)
     }
 
     /// <pre>
@@ -223,14 +245,14 @@ impl<'a, T: SessionStore> WechatMpMedia<'a, T> {
     /// 详情请见: <a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1444738734&token=&lang=zh_CN">获取素材列表</a>
     /// 接口url格式：https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token=ACCESS_TOKEN
     /// </pre>
-    pub async fn get_material_news_batch(&self, offset: i32, count: i32) -> LabradorResult<WechatMaMaterialNewsBatchResponse> {
+    pub async fn get_material_news_batch(&self, offset: i32, count: i32) -> LabradorResult<WechatMpMaterialNewsBatchResponse> {
 
         let v = self.client.post(WechatMpMethod::Media(MpMediaMethod::GetMaterialList), vec![], json!({
             "type": MATERIAL_TYPE_NEWS,
             "offset": offset,
             "count": count
         }), RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<WechatMaMaterialNewsBatchResponse>(v)
+        WechatCommonResponse::parse::<WechatMpMaterialNewsBatchResponse>(v)
     }
 
     /// <pre>
@@ -239,13 +261,13 @@ impl<'a, T: SessionStore> WechatMpMedia<'a, T> {
     /// 详情请见: <a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1444738734&token=&lang=zh_CN">获取素材列表</a>
     /// 接口url格式：https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token=ACCESS_TOKEN
     /// </pre>
-    pub async fn get_material_batch(&self,material_type: &str, offset: i32, count: i32) -> LabradorResult<WechatMaMaterialBatchResponse> {
+    pub async fn get_material_batch(&self,material_type: &str, offset: i32, count: i32) -> LabradorResult<WechatMpMaterialBatchResponse> {
         let v = self.client.post(WechatMpMethod::Media(MpMediaMethod::GetMaterialList), vec![], json!({
             "type": material_type,
             "offset": offset,
             "count": count
         }), RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<WechatMaMaterialBatchResponse>(v)
+        WechatCommonResponse::parse::<WechatMpMaterialBatchResponse>(v)
     }
 
 
@@ -258,6 +280,7 @@ impl<'a, T: SessionStore> WechatMpMedia<'a, T> {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WechatMpMediaRequest {
     pub media_type: String,
+    pub file_name: String,
     pub media_data: Vec<u8>
 }
 
@@ -267,7 +290,7 @@ impl WechatRequest for WechatMpMediaRequest {
     }
 
     fn get_request_body<T: Serialize>(&self) -> RequestBody<T> {
-        let form = reqwest::multipart::Form::new().part("media", reqwest::multipart::Part::stream(self.media_data.to_vec()));
+        let form = reqwest::multipart::Form::new().part("media",    reqwest::multipart::Part::stream(self.media_data.to_owned()).file_name(self.file_name.to_string()));
         form.into()
     }
 }
@@ -275,6 +298,7 @@ impl WechatRequest for WechatMpMediaRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WechatMpImageRequest {
+    pub file_name: String,
     pub media_data: Vec<u8>
 }
 
@@ -284,14 +308,14 @@ impl WechatRequest for WechatMpImageRequest {
     }
 
     fn get_request_body<T: Serialize>(&self) -> RequestBody<T> {
-        let form = reqwest::multipart::Form::new().part("media", reqwest::multipart::Part::stream(self.media_data.to_vec()));
+        let form = reqwest::multipart::Form::new().part("media", reqwest::multipart::Part::stream(self.media_data.to_vec()).file_name(self.file_name.to_string()));
         form.into()
     }
 }
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WechatMaMediaResponse {
+pub struct WechatMpMediaResponse {
     pub url: Option<String>,
     pub media_id: Option<String>,
     #[serde(rename="type")]
@@ -305,6 +329,7 @@ pub struct WechatMaMediaResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WechatMpMaterialRequest {
     pub media_type: String,
+    pub filename: String,
     pub name: Option<String>,
     pub video_title: Option<String>,
     pub video_introduction: Option<String>,
@@ -317,7 +342,7 @@ impl WechatRequest for WechatMpMaterialRequest {
     }
 
     fn get_request_body<T: Serialize>(&self) -> RequestBody<T> {
-        let mut form = reqwest::multipart::Form::new().part("media", reqwest::multipart::Part::stream(self.media_data.to_vec()));
+        let mut form = reqwest::multipart::Form::new().part("media", reqwest::multipart::Part::stream(self.media_data.to_vec()).file_name(self.filename.to_string()));
         if let Some(video_title) = &self.video_title {
             form = form.text("title", video_title.to_string());
         }
@@ -330,7 +355,7 @@ impl WechatRequest for WechatMpMaterialRequest {
 
 /// 视频素材
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WechatMaMaterialVideoInfoResponse {
+pub struct WechatMpMaterialVideoInfoResponse {
     pub title: Option<String>,
     pub description: Option<String>,
     pub down_url: Option<String>,
@@ -338,7 +363,7 @@ pub struct WechatMaMaterialVideoInfoResponse {
 
 /// 图文素材
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WechatMaMaterialNewsResponse {
+pub struct WechatMpMaterialNewsResponse {
     pub create_time: Option<String>,
     pub update_time: Option<String>,
     pub articles: Vec<WechatMpNewsArticle>,
@@ -387,7 +412,7 @@ pub struct WechatMpNewsArticle {
 
 /// 素材数量
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WechatMaMaterialCountResponse {
+pub struct WechatMpMaterialCountResponse {
     pub voice_count: Option<i32>,
     pub video_count: Option<i32>,
     pub image_count: Option<i32>,
@@ -397,30 +422,30 @@ pub struct WechatMaMaterialCountResponse {
 
 /// 图文素材
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WechatMaMaterialNewsBatchResponse {
+pub struct WechatMpMaterialNewsBatchResponse {
     pub total_count: Option<i32>,
     pub item_count: Option<i32>,
-    pub items: Option<Vec<WechatMaMaterialNewsBatchItem>>,
+    pub items: Option<Vec<WechatMpMaterialNewsBatchItem>>,
 }
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WechatMaMaterialNewsBatchItem {
+pub struct WechatMpMaterialNewsBatchItem {
     pub media_id: Option<String>,
     pub update_time: Option<String>,
-    pub content: Option<WechatMaMaterialNewsResponse>,
+    pub content: Option<WechatMpMaterialNewsResponse>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WechatMaMaterialBatchResponse {
+pub struct WechatMpMaterialBatchResponse {
     pub total_count: Option<i32>,
     pub item_count: Option<i32>,
-    pub items: Option<Vec<WechatMaMaterialBatchItem>>,
+    pub items: Option<Vec<WechatMpMaterialBatchItem>>,
 }
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WechatMaMaterialBatchItem {
+pub struct WechatMpMaterialBatchItem {
     pub media_id: Option<String>,
     pub update_time: Option<String>,
     pub name: Option<String>,
