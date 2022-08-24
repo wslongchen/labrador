@@ -3,6 +3,7 @@ use std::io;
 use std::string::FromUtf8Error;
 use base64::DecodeError;
 use openssl::error::ErrorStack;
+use redis::RedisError;
 use reqwest::header::InvalidHeaderValue;
 use rustc_serialize::hex::FromHexError;
 use serde_json::{ error::Error as JsonError};
@@ -123,6 +124,17 @@ impl From<serde_urlencoded::de::Error> for LabraError {
 impl From<DecodeError> for LabraError {
     fn from(err: DecodeError) -> Self {
         LabraError::InvalidSignature(format!("字符编码出错：{}", err.to_string()))
+    }
+}
+impl From<r2d2::Error> for LabraError {
+    fn from(err: r2d2::Error) -> Self {
+        LabraError::RequestError(format!("redis连接错误：{}", err.to_string()))
+    }
+}
+
+impl From<RedisError> for LabraError {
+    fn from(err: RedisError) -> Self {
+        LabraError::RequestError(format!("redis错误：{}", err.to_string()))
     }
 }
 

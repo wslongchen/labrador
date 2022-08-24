@@ -1,8 +1,10 @@
+use std::collections::BTreeMap;
 use serde::{Serialize, Deserialize};
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 
 mod mp;
+mod cp;
 mod pay;
 mod cryptos;
 mod miniapp;
@@ -10,12 +12,45 @@ mod miniapp;
 mod constants;
 mod msg_parser;
 
+pub use cp::*;
 pub use mp::*;
 pub use pay::*;
 pub use cryptos::*;
 pub use msg_parser::*;
-use crate::{LabradorResult, LabraError};
+use crate::{LabradorResult, LabraError, Method, RequestBody, RequestType};
 
+
+pub trait WechatRequest {
+    ///
+    /// 获取TOP的API名称。
+    ///
+    /// @return API名称
+    fn get_api_method_name(&self) -> String;
+
+    /// 获取请求类型。
+    fn get_request_type(&self) -> RequestType {
+        RequestType::Json
+    }
+
+    /// 获取请求方法。
+    fn get_request_method(&self) -> Method {
+        Method::Post
+    }
+
+    fn get_query_params(&self) -> BTreeMap<String, String> {
+        BTreeMap::new()
+    }
+
+    fn get_request_body<T: Serialize>(&self) -> RequestBody<T> {
+        RequestBody::Null
+    }
+
+    /// 是否需要token
+    fn is_need_token(&self) -> bool {
+        true
+    }
+
+}
 
 #[allow(unused)]
 #[derive(Debug, Clone, Serialize, Deserialize)]

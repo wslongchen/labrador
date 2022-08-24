@@ -4,18 +4,21 @@ use dashmap::DashMap;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
 use crate::{APIClient, LabraCertificate, LabraError, LabraIdentity, LabraRequest, LabraResponse, Method, RequestType, SessionStore, RequestMethod, LabradorResult, SimpleStorage};
-use crate::util::{current_timestamp, get_nonce_str, get_timestamp};
+use crate::util::{get_nonce_str, get_timestamp};
 
 mod method;
 mod api;
 mod request;
 mod response;
+#[allow(unused)]
+mod constants;
 
 pub use request::*;
 pub use response::*;
 use tracing::info;
 use crate::wechat::cryptos::{SignatureHeader, WeChatCryptoV3};
 use crate::wechat::pay::api::WxPay;
+use crate::wechat::pay::constants::{ACCEPT, AUTHORIZATION, CONTENT_TYPE_JSON};
 use crate::wechat::pay::method::WechatPayMethod;
 
 const SCHEMA: &str = "WECHATPAY2-SHA256-RSA2048";
@@ -182,23 +185,6 @@ impl<T: SessionStore> WeChatPayClient<T> {
         LabraIdentity::from_pkcs12_der(buf.to_vec(), &password)
     }
 
-
-    #[inline]
-    pub fn access_token(&self) -> String {
-        let mut session = self.client.session();
-        let token_key = format!("{}_access_token", self.appid);
-        let expires_key = format!("{}_expires_at", self.appid);
-        let token: String = session.get(&token_key, Some("".to_owned())).unwrap_or_default();
-        let timestamp = current_timestamp();
-        let expires_at: i64 = session.get(&expires_key, Some(timestamp)).unwrap_or_default();
-        if expires_at <= timestamp {
-            "".to_owned()
-        } else {
-            token
-        }
-    }
-
-
     #[inline]
     pub fn token<F: Serialize>(&self, req: &LabraRequest<F>, mch_id: Option<String>) -> LabradorResult<String> {
         let api_path = self.client.api_path.to_owned();
@@ -228,10 +214,6 @@ impl<T: SessionStore> WeChatPayClient<T> {
     /// 发送POST请求
     async fn post<D: Serialize>(&self, method: WechatPayMethod, data: D, request_type: RequestType) -> LabradorResult<LabraResponse> {
         let mut querys = Vec::new();
-        let access_token = self.access_token();
-        if !access_token.is_empty() {
-            querys.push(("access_token".to_string(), access_token));
-        }
         let mut req = LabraRequest::new().url(method.get_method()).params(querys).method(Method::Post).json(data).req_type(request_type);
         if let Some(_) = &self.pkcs12_path {
             req = req.identity(self.get_identity(None)?);
@@ -250,7 +232,7 @@ impl<T: SessionStore> WeChatPayClient<T> {
         let mut req = LabraRequest::new().url(method.get_method()).params(querys).method(Method::Post).json(data).req_type(request_type);
         let auth = self.token(&req, mchid)?;
         self.auto_load_cert().await?;
-        let headers = vec![(String::from("Authorization"), auth),(String::from("Accept"), String::from("application/json"))];
+        let headers = vec![(String::from(AUTHORIZATION), auth),(String::from(ACCEPT), String::from(CONTENT_TYPE_JSON))];
         req = req.headers(headers);
         if let Some(cert) = self.certs.iter().take(1).next() {
             req = req.cert(cert.clone());
@@ -326,11 +308,7 @@ impl<T: SessionStore> WeChatPayClient<T> {
 
     /// 发送GET请求
     async fn get(&self, method: WechatPayMethod, params: Vec<(&str, &str)>, request_type: RequestType) -> LabradorResult<LabraResponse> {
-        let access_token = self.access_token();
         let mut querys = params.into_iter().map(|(k, v)| (k.to_string(), v.to_string())).collect::<Vec<(String,String)>>();
-        if !access_token.is_empty() {
-            querys.push(("access_token".to_string(), access_token));
-        }
         let mut req = LabraRequest::<String>::new().url(method.get_method()).params(querys).method(Method::Get).req_type(request_type);
         if let Some(_) = &self.pkcs12_path {
             req = req.identity(self.get_identity(None)?);
@@ -343,7 +321,7 @@ impl<T: SessionStore> WeChatPayClient<T> {
         let querys = params.into_iter().map(|(k, v)| (k.to_string(), v.to_string())).collect::<Vec<(String,String)>>();
         let mut req = LabraRequest::<String>::new().url(method.get_method()).params(querys).method(Method::Get).req_type(request_type);
         let auth = self.token(&req, None)?;
-        let headers = vec![(String::from("Authorization"), auth),(String::from("Accept"), String::from("application/json"))];
+        let headers = vec![(String::from(AUTHORIZATION), auth),(String::from(ACCEPT), String::from(CONTENT_TYPE_JSON))];
         req = req.headers(headers);
         self.client.request(req).await
     }

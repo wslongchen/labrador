@@ -1,11 +1,14 @@
 use std::{collections::BTreeMap, any::type_name, fmt, error, time::{SystemTime, UNIX_EPOCH}};
+use dashmap::DashMap;
+use once_cell::sync::Lazy;
 
 use redis::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+use crate::{get_timestamp, LabradorResult};
 
 pub trait SessionStore: Clone {
-    fn get<'a, K: AsRef<str>, T: FromStore>(&mut self, key: K, default: Option<T>) -> Option<T>;
-    fn set<'a, K: AsRef<str>, T: ToStore>(&mut self, key: K, value: T, ttl: Option<usize>);
+    fn get<'a, K: AsRef<str>, T: FromStore>(&self, key: K, default: Option<T>) -> LabradorResult<Option<T>>;
+    fn set<'a, K: AsRef<str>, T: ToStore>(&self, key: K, value: T, ttl: Option<usize>) -> LabradorResult<()>;
 }
 
 pub trait ToStore {
@@ -222,6 +225,11 @@ where T: ToStore {
         T::to_store(&self)
     }
 }
+impl ToStore for &str {
+    fn to_store(&self) -> Store {
+        Store::String(self.to_string())
+    }
+}
 
 impl <T> ToStore for Option<T> 
 where T: ToStore {
@@ -341,25 +349,31 @@ impl error::Error for StoreError {
     }
 }
 
+pub static SIMPLE_STORAGE: Lazy<DashMap<String, (Option<usize>, Store)>> = Lazy::new(|| {
+    DashMap::new()
+});
+
 #[derive(Debug, Clone)]
 pub struct SimpleStorage {
-    data: BTreeMap<String, (Option<usize>, Store)>
 }
 
 impl SimpleStorage {
     pub fn new() -> SimpleStorage {
-        SimpleStorage { data: BTreeMap::new() }
+        SimpleStorage {  }
     }
 }
 
 impl SessionStore for SimpleStorage {
-    fn get<'a, K: AsRef<str>, T: FromStore>(&mut self, key: K, default: Option<T>) -> Option<T> {
+    fn get<'a, K: AsRef<str>, T: FromStore>(&self, key: K, default: Option<T>) -> LabradorResult<Option<T>> {
+        let mut is_expire = false;
         let key = key.as_ref();
-        if let Some((ttl, value)) = self.data.get(&key.to_string()) {
-            if let Some(ttl) =  ttl.to_owned() {
-                let current_stamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as usize;
-                if current_stamp > ttl {
-                    self.data.remove(key);
+        let v = if let Some(v) = SIMPLE_STORAGE.get(&key.to_string()) {
+            let (ttl, value) = v.value();
+            if let Some(ttl) =  ttl {
+                let current_stamp = get_timestamp() as usize;
+                if current_stamp >= *ttl {
+                    // SIMPLE_STORAGE.remove(key);
+                    is_expire = true;
                     None
                 } else {
                     Some(T::from_store(&value))
@@ -369,10 +383,14 @@ impl SessionStore for SimpleStorage {
             }
         } else {
             default
+        };
+        if is_expire {
+            SIMPLE_STORAGE.remove(key);
         }
+        Ok(v)
     }
 
-    fn set<'a, K: AsRef<str>, T: ToStore>(&mut self, key: K, value: T, ttl: Option<usize>) {
+    fn set<'a, K: AsRef<str>, T: ToStore>(&self, key: K, value: T, ttl: Option<usize>) -> LabradorResult<()> {
         let key = key.as_ref();
         let ttl = if let Some(ttl) = ttl {
             let current_stamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
@@ -381,7 +399,8 @@ impl SessionStore for SimpleStorage {
         } else {
             None
         };
-        self.data.insert(key.to_string(), (ttl, T::to_store(&value)));
+        SIMPLE_STORAGE.insert(key.to_string(), (ttl, T::to_store(&value)));
+        Ok(())
     }
 }
 
@@ -389,10 +408,9 @@ impl SessionStore for SimpleStorage {
 pub mod redis_store {
 
     pub type RedisPool = Pool<redis::Client>;
-    use std::ops::DerefMut;
-
     use r2d2::{Pool};
     use redis::{self, ToRedisArgs, ConnectionLike, Commands};
+    use crate::{LabradorResult, LabraError};
 
     use super::{SessionStore, ToStore, FromStore, Store};
 
@@ -432,66 +450,78 @@ pub mod redis_store {
 
        
 
-        fn del<K: AsRef<str>>(&self, key: K) {
-            let mut client = self.client_pool.get().unwrap();
+        fn del<K: AsRef<str>>(&self, key: K) -> LabradorResult<()> {
+            let mut client = self.client_pool.get()?;
             if !client.check_connection() {
-                return;
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
             }
-            let conn = client.deref_mut();
-            let _: () = redis::pipe().del(key.as_ref()).ignore().query(conn).unwrap_or(());
+            let s = client.del(key.as_ref())?;
+            Ok(())
         }
 
-        fn zlcount<K: AsRef<str>, T: ToRedisArgs>(&self, key: K, min: T, max: T) -> Option<u32> {
-            let mut client = self.client_pool.get().unwrap();
+        fn zlcount<K: AsRef<str>, T: ToRedisArgs>(&self, key: K, min: T, max: T) -> LabradorResult<Option<u32>> {
+            let mut client = self.client_pool.get()?;
             if !client.check_connection() {
-                return 0.into();
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
             }
-            let conn = client.deref_mut();
-            redis::pipe().zlexcount(key.as_ref(), min, max).ignore().query::<u32>(conn).unwrap_or(0).into()
+            client.zcount(key.as_ref(), min, max).map_err(LabraError::from)
         }
 
-        fn zadd<K: AsRef<str>, T: ToRedisArgs>(&self, key: K, member: T, score: T) -> Option<u32> {
-            let mut client = self.client_pool.get().unwrap();
+        fn zadd<K: AsRef<str>, T: ToRedisArgs>(&self, key: K, member: T, score: T) -> LabradorResult<Option<u32>> {
+            let mut client = self.client_pool.get()?;
             if !client.check_connection() {
-                return 0.into();
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
             }
-            let conn = client.deref_mut();
-            redis::pipe().zadd(key.as_ref(), member, score).ignore().query::<u32>(conn).unwrap_or(0).into()
+            client.zadd(key.as_ref(), member, score).map_err(LabraError::from)
         }
     }
 
 
     impl SessionStore for RedisStorage {
         
-        fn get<'a, K: AsRef<str>, T: FromStore>(&mut self, key: K, default: Option<T>) -> Option<T> {
-            let mut client = self.client_pool.get().unwrap();
+        fn get<'a, K: AsRef<str>, T: FromStore>(&self, key: K, default: Option<T>) -> LabradorResult<Option<T>> {
+            let mut client = self.client_pool.get()?;
             if !client.check_connection() {
-                return default;
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
             }
             let data = client.get::<_, Store>(key.as_ref());
             if data.is_err() {
-                return default;
+                return Ok(default);
             }
-            if let Ok(value) = data {
-                
+            let v = if let Ok(value) = data {
                 Some(T::from_store(&value))
             } else {
                 default
-            }
+            };
+            Ok(v)
         }
 
-        fn set<'a, K: AsRef<str>, T: ToStore>(&mut self, key: K, value: T, ttl: Option<usize>) {
-            let mut client = self.client_pool.get().unwrap();
+        fn set<'a, K: AsRef<str>, T: ToStore>(&self, key: K, value: T, ttl: Option<usize>) -> LabradorResult<()> {
+            let mut client = self.client_pool.get()?;
             let key = key.as_ref();
             if !client.check_connection() {
-                return;
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
             }
-            let conn = client.deref_mut();
             if let Some(seconds) = ttl {
-                let _: () = redis::pipe().set_ex(key, value.to_store(), seconds).ignore().query(conn).unwrap();
+                let _ = client.set_ex(key, value.to_store(), seconds)?;
             } else {
-                let _: () = redis::pipe().set(key, value.to_store()).ignore().query(conn).unwrap();
+                let _ = client.set(key, value.to_store())?;
             }
+
+            Ok(())
         }
     }
+}
+
+
+#[test]
+fn test_simple() {
+    println!("ssssssss");
+    let session = SimpleStorage::new();
+    println!("000000");
+    let s  = session.set("a", "n", Some(0)).unwrap();
+    println!("1111");
+    let v = session.get::<&str, String>("a", None).unwrap();
+
+    println!("v:{}" , v.unwrap_or_default());
 }

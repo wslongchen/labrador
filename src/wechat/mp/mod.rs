@@ -1,4 +1,4 @@
-use crate::{session::SessionStore, client::APIClient, request::{Method, RequestType, LabraResponse, LabraRequest, RequestMethod},WeChatCrypto, util::current_timestamp, LabradorResult, SimpleStorage};
+use crate::{session::SessionStore, client::APIClient, request::{Method, RequestType, LabraResponse, LabraRequest, RequestMethod}, WeChatCrypto, util::current_timestamp, LabradorResult, SimpleStorage, WechatRequest};
 use serde::{Serialize, Deserialize};
 use crate::wechat::mp::method::WechatMpMethod;
 
@@ -8,10 +8,9 @@ pub mod events;
 pub mod messages;
 pub mod replies;
 #[allow(unused)]
-pub mod constants;
+mod constants;
 
 pub use api::*;
-use crate::wechat::miniapp::WechatRequest;
 use crate::wechat::mp::constants::{ACCESS_TOKEN, APPID, CLIENT_CREDENTIAL, GRANT_TYPE, SECRET};
 
 #[allow(unused)]
@@ -75,38 +74,33 @@ impl<T: SessionStore> WeChatMpClient<T> {
     }
 
     #[inline]
-    pub fn access_token(&self) -> String {
-        let mut session = self.client.session();
+    pub async fn access_token(&self, force_refresh: bool) -> LabradorResult<String> {
+        let session = self.client.session();
         let token_key = format!("{}_access_token", self.appid);
         let expires_key = format!("{}_expires_at", self.appid);
-        let token: String = session.get(&token_key, Some("".to_owned())).unwrap_or_default();
+        let token: String = session.get(&token_key, Some("".to_owned()))?.unwrap_or_default();
         let timestamp = current_timestamp();
-        let expires_at: i64 = session.get(&expires_key, Some(timestamp)).unwrap_or_default();
-        if expires_at <= timestamp {
-            "".to_owned()
+        let expires_at: i64 = session.get(&expires_key, Some(timestamp))?.unwrap_or_default();
+        if expires_at <= timestamp || force_refresh {
+            let mut req = LabraRequest::<String>::new().url(WechatMpMethod::AccessToken.get_method()).params(vec![
+                (GRANT_TYPE.to_string(), CLIENT_CREDENTIAL.to_string()),
+                (APPID.to_string(), self.client.app_key.to_string()),
+                (SECRET.to_string(), self.client.secret.to_string()),
+            ]).method(Method::Get).req_type(RequestType::Json);
+            let res = self.client.request(req).await?.json::<AccessTokenResponse>()?;
+            let token = res.access_token;
+            let expires_in = res.expires_in;
+            // 预留200秒的时间
+            let expires_at = current_timestamp() + expires_in - 200;
+            let token_key = format!("{}_access_token", self.appid);
+            let expires_key = format!("{}_expires_at", self.appid);
+            session.set(&token_key, token.to_owned(), Some(expires_in as usize));
+            session.set(&expires_key, expires_at, Some(expires_in as usize));
+            Ok(token)
         } else {
-            token
+            Ok(token)
         }
     }
-
-    async fn fetch_access_token(&self) -> LabradorResult<String> {
-        let mut session = self.client.session();
-        let mut req = LabraRequest::<String>::new().url(WechatMpMethod::AccessToken.get_method()).params(vec![
-            (GRANT_TYPE.to_string(), CLIENT_CREDENTIAL.to_string()),
-            (APPID.to_string(), self.client.app_key.to_string()),
-            (SECRET.to_string(), self.client.secret.to_string()),
-        ]).method(Method::Get).req_type(RequestType::Json);
-        let res = self.client.request(req).await?.json::<AccessTokenResponse>()?;
-        let token = res.access_token;
-        let expires_in = res.expires_in;
-        let expires_at = current_timestamp() + expires_in;
-        let token_key = format!("{}_access_token", self.appid);
-        let expires_key = format!("{}_expires_at", self.appid);
-        session.set(&token_key, token.to_owned(), Some(expires_in as usize));
-        session.set(&expires_key, expires_at, Some(expires_in as usize));
-        Ok(token.to_owned())
-    }
-
 
 
     ///
@@ -122,11 +116,8 @@ impl<T: SessionStore> WeChatMpClient<T> {
 
     /// 发送POST请求
     async fn post<D: Serialize>(&self, method: WechatMpMethod, mut querys: Vec<(String, String)>, data: D, request_type: RequestType) -> LabradorResult<LabraResponse> {
-        let mut access_token = self.access_token();
-        if access_token.is_empty() && method.need_token() {
-            access_token = self.fetch_access_token().await.unwrap_or_default();
-        }
-        if !access_token.is_empty() {
+        let access_token = self.access_token(false).await?;
+        if !access_token.is_empty() && method.need_token() {
             querys.push((ACCESS_TOKEN.to_string(), access_token));
         }
         let mut req = LabraRequest::new().url(method.get_method()).params(querys).method(Method::Post).json(data).req_type(request_type);
@@ -138,29 +129,24 @@ impl<T: SessionStore> WeChatMpClient<T> {
     /// 比 get 和 post 方法更灵活，可以自己构造用来处理不同的参数和不同的返回类型。
     /// </pre>
     async fn execute<D: WechatRequest, B: Serialize>(&self, request: D) -> LabradorResult<LabraResponse> {
-        let mut querys = Vec::new();
+        let mut querys = request.get_query_params();
         if request.is_need_token() {
-            let mut access_token = self.access_token();
-            if access_token.is_empty() {
-                access_token = self.fetch_access_token().await.unwrap_or_default();
-            }
+            let access_token = self.access_token(false).await?;
             if !access_token.is_empty() {
-                querys.push((ACCESS_TOKEN.to_string(), access_token));
+                querys.insert(ACCESS_TOKEN.to_string(), access_token);
             }
         }
+        let params = querys.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect::<Vec<(String, String)>>();
         let mut req = LabraRequest::<B>::new().url(request.get_api_method_name())
-            .params(querys).method(request.get_request_method()).req_type(request.get_request_type()).body(request.get_request_body::<B>());
+            .params(params).method(request.get_request_method()).req_type(request.get_request_type()).body(request.get_request_body::<B>());
         self.client.request(req).await
     }
 
     /// 发送GET请求
     async fn get(&self, method: WechatMpMethod, params: Vec<(&str, &str)>, request_type: RequestType) -> LabradorResult<LabraResponse> {
-        let mut access_token = self.access_token();
-        if access_token.is_empty() && method.need_token() {
-            access_token = self.fetch_access_token().await?;
-        }
+        let access_token = self.access_token(false).await?;
         let mut querys = params.into_iter().map(|(k, v)| (k.to_string(), v.to_string())).collect::<Vec<(String,String)>>();
-        if !access_token.is_empty() {
+        if !access_token.is_empty() && method.need_token() {
             querys.push((ACCESS_TOKEN.to_string(), access_token));
         }
         let mut req = LabraRequest::<String>::new().url(method.get_method()).params(querys).method(Method::Get).req_type(request_type);
@@ -173,8 +159,8 @@ impl<T: SessionStore> WeChatMpClient<T> {
     }
 
     /// Oauth2授权相关服务
-    pub fn oauth2(&self) -> Oauth2<T> {
-        Oauth2::new(self)
+    pub fn oauth2(&self) -> WechatMpOauth2<T> {
+        WechatMpOauth2::new(self)
     }
 
     /// qrcode相关服务
