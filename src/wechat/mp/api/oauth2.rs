@@ -90,7 +90,7 @@ pub struct WechatMpOauth2AccessTokenResponse{
 }
 
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct WechatMpOauth2UserInfo {
     pub openid: String,
     pub nickname: String,

@@ -6,6 +6,8 @@ mod oauth2;
 mod media;
 mod template_msg;
 mod subscribe_msg;
+mod wifi;
+mod ocr;
 
 pub use self::oauth2::*;
 pub use self::qrcode::*;
@@ -15,5 +17,7 @@ pub use self::template_msg::*;
 pub use self::subscribe_msg::*;
 pub use self::media::*;
 pub use self::menu::*;
+pub use self::wifi::*;
+pub use self::ocr::*;
 
 

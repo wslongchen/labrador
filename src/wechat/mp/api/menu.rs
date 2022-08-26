@@ -115,14 +115,14 @@ impl<'a, T: SessionStore> WeChatMpMenu<'a, T> {
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct MenuButtonsRequest {
     /// 一级菜单数组，个数应为1~3个
     pub button: Vec<MenuButton>,
 }
 
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct MenuButton {
     #[serde(rename = "type")]
     pub button_type: String,
@@ -146,7 +146,7 @@ pub struct MenuButton {
 }
 
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct SelfMenuInfoResponse {
     /// 菜单是否开启，0代表未开启，1代表开启
     pub is_menu_open: Option<u8>,
@@ -154,14 +154,14 @@ pub struct SelfMenuInfoResponse {
     pub selfmenu_info: Option<SelfMenuInfo>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct SelfMenuInfo {
     /// 菜单是否开启，0代表未开启，1代表开启
     pub button: Option<Vec<SelfMenuButton>>,
 }
 
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct SelfMenuButton {
     #[serde(rename = "type")]
     pub button_type: Option<String>,
@@ -186,17 +186,17 @@ pub struct SelfMenuButton {
 
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct SelfMenuSubButton {
     pub list: Option<Vec<SelfMenuButton>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct SelfMenuNewsButton {
     pub list: Option<Vec<SelfMenuNewsInfo>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct SelfMenuNewsInfo {
     /// 图文消息的标题
     pub title: Option<String>,
@@ -215,14 +215,14 @@ pub struct SelfMenuNewsInfo {
 }
 
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct MenuButtonResponse {
     pub menu: Option<MenuButtonsInner>,
     pub conditionalmenu: Option<MenuButtonsInner>,
 }
 
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct MenuButtonsInner {
     /// 一级菜单数组，个数应为1~3个
     pub button: Option<Vec<MenuButton>>,

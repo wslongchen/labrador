@@ -1,5 +1,6 @@
-use crate::{session::SessionStore, client::APIClient, request::{Method, RequestType, LabraResponse, LabraRequest, RequestMethod}, WeChatCrypto, util::current_timestamp, LabradorResult, SimpleStorage, WechatRequest};
+use crate::{session::SessionStore, client::APIClient, request::{Method, RequestType, LabraResponse, LabraRequest, RequestMethod}, WeChatCrypto, util::current_timestamp, LabradorResult, SimpleStorage, WechatRequest, WechatCommonResponse, JsapiSignature, get_timestamp, get_nonce_str};
 use serde::{Serialize, Deserialize};
+use serde_json::{json, Value};
 use crate::wechat::mp::method::WechatMpMethod;
 
 mod api;
@@ -11,7 +12,8 @@ pub mod replies;
 mod constants;
 
 pub use api::*;
-use crate::wechat::mp::constants::{ACCESS_TOKEN, APPID, CLIENT_CREDENTIAL, GRANT_TYPE, SECRET};
+use crate::wechat::mp::constants::{ACCESS_TOKEN, APPID, CLIENT_CREDENTIAL, GRANT_TYPE, SECRET, TICKET_TYPE, TICKET_TYPE_JSAPI, TICKET_TYPE_SDK, TICKET_TYPE_WXCARD};
+use crate::wechat::mp::method::WechatMpMethod::QrConnectUrl;
 
 #[allow(unused)]
 #[derive(Debug, Clone)]
@@ -30,6 +32,36 @@ pub struct WeChatMpClient<T: SessionStore> {
 pub struct AccessTokenResponse{
     pub access_token: String,
     pub expires_in: i64,
+}
+
+#[allow(unused)]
+#[derive(Serialize, Deserialize)]
+pub struct WechatMpShortKeyResponse{
+    /// 长信息
+    pub long_data: Option<String>,
+    /// 创建的时间戳
+    pub create_time: Option<i64>,
+    /// 剩余的过期秒数
+    pub expire_seconds: Option<i64>,
+}
+
+pub enum TicketType {
+    /// jsapi
+    JSAPI,
+    /// sdk
+    SDK,
+    /// 微信卡券
+    WxCard
+}
+
+impl ToString for TicketType {
+    fn to_string(&self) -> String {
+        match self {
+            TicketType::JSAPI => TICKET_TYPE_JSAPI.to_string(),
+            TicketType::SDK => TICKET_TYPE_SDK.to_string(),
+            TicketType::WxCard => TICKET_TYPE_WXCARD.to_string(),
+        }
+    }
 }
 
 #[allow(unused)]
@@ -92,8 +124,6 @@ impl<T: SessionStore> WeChatMpClient<T> {
             let expires_in = res.expires_in;
             // 预留200秒的时间
             let expires_at = current_timestamp() + expires_in - 200;
-            let token_key = format!("{}_access_token", self.appid);
-            let expires_key = format!("{}_expires_at", self.appid);
             session.set(&token_key, token.to_owned(), Some(expires_in as usize));
             session.set(&expires_key, expires_at, Some(expires_in as usize));
             Ok(token)
@@ -101,6 +131,121 @@ impl<T: SessionStore> WeChatMpClient<T> {
             Ok(token)
         }
     }
+
+    /// <pre>
+    /// 短key托管 类似于短链API.
+    /// 详情请见: https://developers.weixin.qq.com/doc/offiaccount/Account_Management/KEY_Shortener.html
+    /// </pre>
+    #[inline]
+    pub async fn gen_shorten(&self, long_data: &str, expire_seconds: u64) -> LabradorResult<String> {
+        let res = self.post(WechatMpMethod::GenShortenUrl, vec![], json!({"long_data": long_data, "expire_seconds": expire_seconds}), RequestType::Json).await?.json::<Value>()?;
+        let v = WechatCommonResponse::parse::<Value>(res)?;
+        let short_key = v["short_key"].as_str().unwrap_or_default();
+        Ok(short_key.to_string())
+    }
+
+    /// <pre>
+    /// 短key解析 将短key还原为长信息。
+    /// 详情请见: https://developers.weixin.qq.com/doc/offiaccount/Account_Management/KEY_Shortener.html
+    /// </pre>
+    #[inline]
+    pub async fn fetch_shorten(&self, short_key: &str) -> LabradorResult<WechatMpShortKeyResponse> {
+        let res = self.post(WechatMpMethod::GenShortenUrl, vec![], json!({"short_key": short_key}), RequestType::Json).await?.json::<Value>()?;
+        WechatCommonResponse::parse::<WechatMpShortKeyResponse>(res)
+    }
+
+    /// <pre>
+    /// 获得ticket,不强制刷新ticket.
+    /// <a href="https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/JS-SDK.html#63">链接</a>
+    /// </pre>
+    #[inline]
+    pub async fn get_ticket(&self, ticket_type: TicketType) -> LabradorResult<String> {
+        self.get_ticket_force(ticket_type, false).await
+    }
+
+    /// <pre>
+    /// 获得ticket.
+    /// 获得时会检查 Token是否过期，如果过期了，那么就刷新一下，否则就什么都不干
+    /// <a href="https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/JS-SDK.html#63">链接</a>
+    /// </pre>
+    #[inline]
+    pub async fn get_ticket_force(&self, ticket_type: TicketType, force_refresh: bool) -> LabradorResult<String> {
+        let session = self.client.session();
+        let key = format!("{}_{}_ticket", self.appid, &ticket_type.to_string());
+        let expires_key = format!("{}_{}_ticket_expires_at", self.appid, &ticket_type.to_string());
+        let ticket: String = session.get(&key, Some("".to_owned()))?.unwrap_or_default();
+        let timestamp = current_timestamp();
+        let expires_at: i64 = session.get(&expires_key, Some(timestamp))?.unwrap_or_default();
+        if expires_at <= timestamp || force_refresh {
+            let res = self.get(WechatMpMethod::GetTicket, vec![(TICKET_TYPE, ticket_type.to_string().as_str())], RequestType::Json).await?.json::<Value>()?;
+            let v = WechatCommonResponse::parse::<Value>(res)?;
+            let ticket = v["ticket"].as_str().unwrap_or_default();
+            let expires_in = v["expires_in"].as_i64().unwrap_or_default();
+            // 预留200秒的时间
+            let expires_at = current_timestamp() + expires_in - 200;
+            session.set(&key, ticket.to_string(), Some(expires_in as usize));
+            session.set(&expires_key, expires_at, Some(expires_in as usize));
+            Ok(ticket.to_string())
+        } else {
+            Ok(ticket)
+        }
+    }
+
+    ///
+    /// <pre>
+    /// 创建调用jsapi时所需要的签名.
+    ///
+    /// 详情请见：<a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421141115&token=&lang=zh_CN">链接</a>
+    /// </pre>
+    pub async fn create_jsapi_signature(&self, url: &str) -> LabradorResult<JsapiSignature> {
+        let timestamp = get_timestamp() / 1000;
+        let noncestr = get_nonce_str();
+        let jsapi_ticket = self.get_jsapi_ticket(false).await?;
+        let signature = WeChatCrypto::get_sha1_sign(&vec!["jsapi_ticket=".to_string() + &jsapi_ticket,
+                                                          "noncestr=".to_string() + &noncestr,
+                                                          "timestamp=".to_string() + &timestamp.to_string(),"url=".to_string() + &url].join("&"));
+        Ok(JsapiSignature{
+            app_id: self.appid.to_string(),
+            nonce_str: noncestr,
+            url: url.to_string(),
+            signature,
+            timestamp,
+        })
+    }
+
+    ///
+    /// <pre>
+    /// 构造第三方使用网站应用授权登录的url.
+    /// 详情请见: <a href="https://open.weixin.qq.com/cgi-bin/showdocument?action=dir_list&t=resource/res_list&verify=1&id=open1419316505&token=&lang=zh_CN">网站应用微信登录开发指南</a>
+    /// URL格式为https://open.weixin.qq.com/connect/qrconnect?appid=APPID&redirect_uri=REDIRECT_URI&response_type=code&scope=SCOPE&state=STATE#wechat_redirect
+    /// </pre>
+    pub async fn build_qr_connect_url(&self, redirect_url: &str, scope: &str, state: &str, ) -> LabradorResult<String> {
+        Ok(format!("{}?appid={}&redirect_uri={}&response_type=code&scope={}&state={}#wechat_redirect", QrConnectUrl.get_method(), self.appid.to_string(), urlencoding::encode(redirect_url), scope, state))
+    }
+
+    ///
+    /// <pre>
+    /// 获取微信服务器的ip段
+    /// [文档](http://mp.weixin.qq.com/wiki/0/2ad4b6bfd29f30f71d39616c2a0fcedc.html)
+    /// </pre>
+    pub async fn get_callback_ip(&self, force_refresh: bool) -> LabradorResult<Vec<String>> {
+        let v = self.get(WechatMpMethod::GetCallbackIp, vec![], RequestType::Json).await?.json::<Value>()?;
+        let v = WechatCommonResponse::parse::<Value>(v)?;
+        let ip_list = v["ip_list"].as_array().unwrap_or(&vec![]).iter().map(|v| v.as_str().unwrap_or_default().to_string()).collect::<Vec<String>>();
+        Ok(ip_list)
+    }
+
+    ///
+    /// <pre>
+    /// 获得jsapi_ticket.
+    /// 获得时会检查jsapiToken是否过期，如果过期了，那么就刷新一下，否则就什么都不干
+    ///
+    /// 详情请见：<a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421141115&token=&lang=zh_CN">链接</a>
+    /// </pre>
+    pub async fn get_jsapi_ticket(&self, force_refresh: bool) -> LabradorResult<String> {
+        self.get_ticket_force(TicketType::JSAPI, force_refresh).await
+    }
+
 
 
     ///
@@ -191,6 +336,16 @@ impl<T: SessionStore> WeChatMpClient<T> {
     /// 订阅消息服务
     pub fn subscribe_msg(&self) -> WeChatMpSubscribeMessage<T> {
         WeChatMpSubscribeMessage::new(self)
+    }
+
+    /// Wifi服务
+    pub fn wifi(&self) -> WeChatMpWifi<T> {
+        WeChatMpWifi::new(self)
+    }
+
+    /// OCR服务
+    pub fn ocr(&self) -> WeChatMpOcr<T> {
+        WeChatMpOcr::new(self)
     }
 
 }

@@ -1,9 +1,9 @@
 [package]
 name = "labrador"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["mrpan <1049058427@qq.com>"]
 edition = "2018"
-description = "Labrador - Mini thidpart client for rust."
+description = "Labrador - Mini thirdpart client for rust."
 readme = "README.md"
 keywords = ["alipay", "wechat", "jd", "taobao", "pdd"]
 categories = ["api-bindings"]
