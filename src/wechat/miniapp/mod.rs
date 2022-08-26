@@ -81,8 +81,6 @@ impl<T: SessionStore> WeChatMaClient<T> {
             let expires_in = res.expires_in;
             // 预留200秒的时间
             let expires_at = current_timestamp() + expires_in - 200;
-            let token_key = format!("{}_access_token", self.appid);
-            let expires_key = format!("{}_expires_at", self.appid);
             session.set(&token_key, token.to_owned(), Some(expires_in as usize));
             session.set(&expires_key, expires_at, Some(expires_in as usize));
             Ok(token)

@@ -83,7 +83,7 @@ impl<'a, T: SessionStore> WeChatMpTemplateMessage<'a, T> {
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-#[derive(Debug, Clone, PartialEq, Eq,Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TemplateMessage {
     pub touser: Option<String>,
     pub template_id: String,
@@ -94,7 +94,7 @@ pub struct TemplateMessage {
 
 
 /// 行业信息
-#[derive(Debug, Clone, PartialEq, Eq,Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IndustryResponse {
     primary_industry: Option<IndustryClass>,
     secondary_industry: Option<IndustryClass>,
@@ -102,7 +102,7 @@ pub struct IndustryResponse {
 
 
 
-#[derive(Debug, Clone, PartialEq, Eq,Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IndustryClass {
     first_class: Option<String>,
     second_class: Option<String>,
@@ -110,7 +110,7 @@ pub struct IndustryClass {
 
 
 /// 模版信息
-#[derive(Debug, Clone, PartialEq, Eq,Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TemplateMessageInfo {
     /// 模板ID
     template_id: Option<String>,

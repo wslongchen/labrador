@@ -3,18 +3,36 @@ use crate::RequestMethod;
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum WechatMpMethod {
+    /// 获取access_token
     AccessToken,
+    /// 短key托管(生成短key的url)
+    GenShortenUrl,
+    GetCallbackIp,
+    QrConnectUrl,
+    /// 获得各种类型的ticket
+    GetTicket,
+    /// 短key解析(解析短key的url)
+    FetchShortenUrl,
     Oauth2(Oauth2Method),
     /// codesession
     CodeSession,
     /// 客户服务
     CustomService(MpCustomServiceMethod),
+    /// ocr
+    Ocr(MpOcrMethod),
+    /// wifi服务
+    Wifi(MpWifiMethod),
+    /// 用户服务
     User(MpUserMethod),
+    /// 菜单服务
     Menu(MpMenuMethod),
-    Message(MpMessageMethod),
+    /// 订阅消息
     SubscribeMessage(MpSubscribeMessageMethod),
+    /// 模板消息
     TemplateMessage(MpTemplateMessageMethod),
+    /// 二维码
     QrCode(MpQrCodeMethod),
+    /// 媒体文件
     Media(MpMediaMethod),
     /// 自定义方法
     Custom(String)
@@ -110,17 +128,6 @@ pub enum MpQrCodeMethod {
     ShowQrCode,
 }
 
-
-
-#[allow(unused)]
-#[derive(Debug, PartialEq, Clone)]
-pub enum MpMessageMethod {
-
-
-}
-
-
-
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum MpTemplateMessageMethod {
@@ -147,6 +154,56 @@ impl MpTemplateMessageMethod {
             MpTemplateMessageMethod::GetTemplateId => String::from("/cgi-bin/template/api_add_template"),
             MpTemplateMessageMethod::GetTemplateList => String::from("/cgi-bin/template/get_all_private_template"),
             MpTemplateMessageMethod::DeleteTemplate => String::from("/cgi-bin/template/del_private_template"),
+        }
+    }
+}
+
+
+#[allow(unused)]
+#[derive(Debug, PartialEq, Clone)]
+pub enum MpWifiMethod {
+    ShopList,
+    GetShop,
+    UpdateShop,
+}
+
+#[allow(unused)]
+impl MpWifiMethod {
+    pub fn get_method(&self) -> String {
+        match *self {
+            MpWifiMethod::ShopList => String::from("/bizwifi/shop/list"),
+            MpWifiMethod::GetShop => String::from("/bizwifi/shop/get"),
+            MpWifiMethod::UpdateShop => String::from("/bizwifi/shop/update"),
+        }
+    }
+}
+
+
+
+
+
+
+#[allow(unused)]
+#[derive(Debug, PartialEq, Clone)]
+pub enum MpOcrMethod {
+    IdCard,
+    BankCard,
+    Driving,
+    DrivingLicense,
+    BizLicense,
+    Comm
+}
+
+#[allow(unused)]
+impl MpOcrMethod {
+    pub fn get_method(&self) -> String {
+        match *self {
+            MpOcrMethod::IdCard => String::from("/cv/ocr/idcard"),
+            MpOcrMethod::BankCard => String::from("/cv/ocr/bankcard"),
+            MpOcrMethod::Driving => String::from("/cv/ocr/driving"),
+            MpOcrMethod::DrivingLicense => String::from("/cv/ocr/drivinglicense"),
+            MpOcrMethod::BizLicense => String::from("/cv/ocr/bizlicense"),
+            MpOcrMethod::Comm => String::from("/cv/ocr/comm"),
         }
     }
 }
@@ -201,16 +258,22 @@ impl RequestMethod for WechatMpMethod {
         match self {
             WechatMpMethod::CodeSession => String::from("/sns/jscode2session"),
             WechatMpMethod::AccessToken => String::from("/cgi-bin/token"),
+            WechatMpMethod::GenShortenUrl => String::from("/cgi-bin/shorten/gen"),
+            WechatMpMethod::FetchShortenUrl => String::from("/cgi-bin/shorten/fetch"),
+            WechatMpMethod::GetTicket => String::from("/cgi-bin/ticket/getticket"),
+            WechatMpMethod::GetCallbackIp => String::from("/cgi-bin/getcallbackip"),
+            WechatMpMethod::QrConnectUrl => String::from("/connect/qrconnect"),
             WechatMpMethod::Oauth2(v) => v.get_method(),
             WechatMpMethod::CustomService(v) => v.get_method(),
             WechatMpMethod::User(v) => v.get_method(),
             WechatMpMethod::Menu(v) => v.get_method(),
-            WechatMpMethod::Message(v) => v.get_method(),
+            WechatMpMethod::Wifi(v) => v.get_method(),
             WechatMpMethod::TemplateMessage(v) => v.get_method(),
             WechatMpMethod::QrCode(v) => v.get_method(),
             WechatMpMethod::Media(v) => v.get_method(),
             WechatMpMethod::Custom(v) => v.to_string(),
             WechatMpMethod::SubscribeMessage(v) => v.get_method(),
+            WechatMpMethod::Ocr(v) => v.get_method()
         }
     }
 }
@@ -282,15 +345,6 @@ impl MpMenuMethod {
     }
 }
 
-
-#[allow(unused)]
-impl MpMessageMethod {
-    pub fn get_method(&self) -> String {
-        match *self {
-
-        }
-    }
-}
 
 #[allow(unused)]
 impl MpQrCodeMethod {

@@ -106,33 +106,33 @@ impl<'a, T: SessionStore> WeChatMpQRCode<'a, T> {
     /// 详情请见: <a href="https://mp.weixin.qq.com/wiki?action=doc&id=mp1443433542&t=0.9274944716856435">生成带参数的二维码</a>
     /// </pre>
     pub fn get_url(&self, qrcode_ticket: &QRCodeTicket) -> String {
-        let ticket = &qrcode_ticket.ticket;
+        let ticket = &qrcode_ticket.ticket.to_owned().unwrap_or_default();
         self.get_url_with_ticket(ticket)
     }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct QRCodeTicket {
-    pub ticket: String,
-    pub expire_seconds: i32,
-    pub url: String,
+    pub ticket: Option<String>,
+    pub expire_seconds: Option<i32>,
+    pub url: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct TempQRCodeRequest {
     scene_id: Option<u64>,
     scene_str: Option<String>,
     expire_seconds: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct PermQRCodeRequest {
     scene_str: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct MiniQRCodeRequest {
     scene: String,
     page: String,

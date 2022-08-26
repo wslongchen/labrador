@@ -171,7 +171,7 @@ impl<'a, T: SessionStore> WeChatMpCustomService<'a, T> {
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-#[derive(Debug, Clone, PartialEq, Eq,Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KFAccount {
     pub id: String,
     pub nick: String,
@@ -179,7 +179,7 @@ pub struct KFAccount {
     pub avatar: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq,Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OnlineKFAccount {
     pub id: String,
     pub account: String,
@@ -280,7 +280,7 @@ impl SendImageRequest {
 }
 
 
-#[derive(Debug, Clone, PartialEq, Eq,Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SendTextRequest {
     openid: String,
     account: Option<String>,

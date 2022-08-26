@@ -281,7 +281,7 @@ impl<'a, T: SessionStore> WeChatMpUser<'a, T> {
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct WechatUser {
     pub subscribe: bool,
     pub openid: String,
@@ -299,7 +299,7 @@ pub struct WechatUser {
 }
 
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone,  Serialize, Deserialize)]
 pub struct Followers {
     pub total: u64,
     pub count: u64,
