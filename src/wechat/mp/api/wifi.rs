@@ -76,7 +76,7 @@ impl<'a, T: SessionStore> WeChatMpWifi<'a, T> {
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-#[derive(Debug, Clone, PartialEq, Eq,Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WechatMpWifiShopDataResponse {
     /// 门店名称
     pub shop_name: Option<String>,
@@ -106,7 +106,7 @@ pub struct WechatMpWifiShopDataResponse {
     pub poi_id: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq,Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SsidPassword {
     /// 无线网络设备的ssid
     pub ssid: Option<String>,

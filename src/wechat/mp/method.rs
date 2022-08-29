@@ -22,6 +22,10 @@ pub enum WechatMpMethod {
     Ocr(MpOcrMethod),
     /// wifi服务
     Wifi(MpWifiMethod),
+    /// 会员卡服务
+    MemberCard(MpMemeberCardMethod),
+    /// 卡券服务
+    Card(MpCardMethod),
     /// 用户服务
     User(MpUserMethod),
     /// 菜单服务
@@ -182,6 +186,130 @@ impl MpWifiMethod {
 
 
 
+#[allow(unused)]
+#[derive(Debug, PartialEq, Clone)]
+pub enum MpMemeberCardMethod {
+    Create,
+    Activate,
+    GetUserInfo,
+    UpdateUser,
+    /// 会员卡激活之微信开卡接口(wx_activate=true情况调用).
+    ActivateSetUser,
+    /// 获取会员卡开卡插件参数
+    ActivateGetUrl,
+    /// 会员卡信息更新
+    Update,
+    /// 跳转型会员卡开卡字段.
+    /// 获取用户提交资料(wx_activate=true情况调用),开发者根据activate_ticket获取到用户填写的信息
+    GetActivateTempInfo,
+}
+
+#[allow(unused)]
+impl MpMemeberCardMethod {
+    pub fn get_method(&self) -> String {
+        match *self {
+            MpMemeberCardMethod::Create => String::from("/card/create"),
+            MpMemeberCardMethod::Activate => String::from("/card/membercard/activate"),
+            MpMemeberCardMethod::GetUserInfo => String::from("/card/membercard/userinfo/get"),
+            MpMemeberCardMethod::UpdateUser => String::from("/card/membercard/updateuser"),
+            MpMemeberCardMethod::ActivateSetUser => String::from("/card/membercard/activateuserform/set"),
+            MpMemeberCardMethod::ActivateSetUser => String::from("/card/membercard/activateuserform/set"),
+            MpMemeberCardMethod::ActivateGetUrl => String::from("/card/membercard/activate/geturl"),
+            MpMemeberCardMethod::Update => String::from("/card/update"),
+            MpMemeberCardMethod::GetActivateTempInfo => String::from("/card/membercard/activatetempinfo/get"),
+        }
+    }
+}
+
+
+
+
+
+#[allow(unused)]
+#[derive(Debug, PartialEq, Clone)]
+pub enum MpCardMethod {
+    Create,
+    Get,
+    Update,
+    CodeDecrypt,
+    CodeGet,
+    CodeMark,
+    SetWhiteList,
+    CreateQrcode,
+    CodeConsume,
+    CreateLandingpage,
+    /// 将用户的卡券设置为失效状态
+    UnavailabeCode,
+    Delete,
+    /// 导入code接口
+    CodeDeposit,
+    /// 查询导入code数目接口
+    GetDepositCount,
+    /// 核查code接口
+    CheckCode,
+    /// 图文消息群发卡券
+    GetHtml,
+    /// 修改库存接口
+    ModifyStock,
+    /// 更改Code接口
+    UpdateCode,
+    /// 设置买单接口
+    SetPayCell,
+    /// 设置自助核销接口
+    SetSelfConsumerCell,
+    /// 获取用户已领取卡券接口
+    GetUserCardList,
+    /// 创建子商户
+    SubmitSubmerchant,
+    /// 卡券开放类目查询接口
+    GetApplyProtocol,
+    /// 修改子商户
+    UpdateSubmerchant,
+    /// 拉取单个子商户信息接口
+    GetSubmerchant,
+    /// 批量拉取子商户信息接口
+    BatchGetSubmerchant,
+}
+
+#[allow(unused)]
+impl MpCardMethod {
+    pub fn get_method(&self) -> String {
+        match *self {
+            MpCardMethod::Create => String::from("/card/create"),
+            MpCardMethod::Get => String::from("/card/get"),
+            MpCardMethod::Update => String::from("/card/update"),
+            MpCardMethod::CodeDecrypt => String::from("/card/code/decrypt"),
+            MpCardMethod::CodeGet => String::from("/card/code/get"),
+            MpCardMethod::CodeConsume => String::from("/card/code/consume"),
+            MpCardMethod::CodeMark => String::from("/card/code/mark"),
+            MpCardMethod::SetWhiteList => String::from("/card/testwhitelist/set"),
+            MpCardMethod::CreateQrcode => String::from("/card/qrcode/create"),
+            MpCardMethod::CreateLandingpage => String::from("/card/landingpage/create"),
+            MpCardMethod::UnavailabeCode => String::from("/card/code/unavailable"),
+            MpCardMethod::Delete => String::from("/card/delete"),
+            MpCardMethod::CodeDeposit => String::from("/card/code/deposit"),
+            MpCardMethod::GetDepositCount => String::from("/card/code/getdepositcount"),
+            MpCardMethod::CheckCode => String::from("/card/code/checkcode"),
+            MpCardMethod::GetHtml => String::from("/card/mpnews/gethtml"),
+            MpCardMethod::ModifyStock => String::from("/card/modifystock"),
+            MpCardMethod::UpdateCode => String::from("/card/code/update"),
+            MpCardMethod::SetPayCell => String::from("/card/paycell/set"),
+            MpCardMethod::SetSelfConsumerCell => String::from("/card/selfconsumecell/set"),
+            MpCardMethod::GetUserCardList => String::from("/card/user/getcardlist"),
+            MpCardMethod::SubmitSubmerchant => String::from("/card/submerchant/submit"),
+            MpCardMethod::UpdateSubmerchant => String::from("/card/submerchant/update"),
+            MpCardMethod::GetApplyProtocol => String::from("/card/getapplyprotocol"),
+            MpCardMethod::GetSubmerchant => String::from("/card/submerchant/get"),
+            MpCardMethod::BatchGetSubmerchant => String::from("/card/submerchant/batchget"),
+            MpCardMethod::BatchGetSubmerchant => String::from("/card/submerchant/batchget"),
+        }
+    }
+}
+
+
+
+
+
 
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
@@ -267,13 +395,15 @@ impl RequestMethod for WechatMpMethod {
             WechatMpMethod::CustomService(v) => v.get_method(),
             WechatMpMethod::User(v) => v.get_method(),
             WechatMpMethod::Menu(v) => v.get_method(),
+            WechatMpMethod::MemberCard(v) => v.get_method(),
             WechatMpMethod::Wifi(v) => v.get_method(),
             WechatMpMethod::TemplateMessage(v) => v.get_method(),
             WechatMpMethod::QrCode(v) => v.get_method(),
             WechatMpMethod::Media(v) => v.get_method(),
             WechatMpMethod::Custom(v) => v.to_string(),
             WechatMpMethod::SubscribeMessage(v) => v.get_method(),
-            WechatMpMethod::Ocr(v) => v.get_method()
+            WechatMpMethod::Ocr(v) => v.get_method(),
+            WechatMpMethod::Card(v) => v.get_method(),
         }
     }
 }
