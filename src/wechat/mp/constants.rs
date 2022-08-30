@@ -18,6 +18,7 @@ pub static REFRESH_TOKEN: &str = "refresh_token";
 
 
 pub static QR_SCENE: &str = "QR_SCENE";
+pub static QR_CODE: &str = "QR_CODE";
 pub static QR_LIMIT_SCENE: &str = "QR_LIMIT_SCENE";
 pub static IMG_URL: &str = "img_url";
 
@@ -26,5 +27,6 @@ pub static TICKET_TYPE_JSAPI: &str = "jsapi";
 pub static TICKET_TYPE: &str = "type";
 pub static TICKET_TYPE_SDK: &str = "2";
 pub static TICKET_TYPE_WXCARD: &str = "wx_card";
+pub static MEMBER_CARD: &str = "MEMBER_CARD";
 
 
