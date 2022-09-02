@@ -198,7 +198,7 @@ pub use session::*;
 pub use util::*;
 pub use client::APIClient;
 pub use request::*;
-pub use reqwest::multipart::Form;
+pub use reqwest::multipart::{Form, Part};
 
 pub use bytes;
 pub use serde_urlencoded;
