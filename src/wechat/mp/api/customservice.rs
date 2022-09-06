@@ -3,22 +3,22 @@ use std::vec;
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
-use crate::{session::SessionStore, request::{RequestType}, errors::LabraError, WechatCommonResponse, WeChatMpClient, LabradorResult};
+use crate::{session::SessionStore, request::{RequestType}, errors::LabraError, WechatCommonResponse, WechatMpClient, LabradorResult};
 use crate::util::md5::md5;
 use crate::wechat::mp::method::{MpCustomServiceMethod, WechatMpMethod};
 
 /// 客服接口.
 #[derive(Debug, Clone)]
-pub struct WeChatMpCustomService<'a, T: SessionStore> {
-    client: &'a WeChatMpClient<T>,
+pub struct WechatMpCustomService<'a, T: SessionStore> {
+    client: &'a WechatMpClient<T>,
 }
 
 #[allow(unused)]
-impl<'a, T: SessionStore> WeChatMpCustomService<'a, T> {
+impl<'a, T: SessionStore> WechatMpCustomService<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMpClient<T>) -> WeChatMpCustomService<T> {
-        WeChatMpCustomService {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpCustomService<T> {
+        WechatMpCustomService {
             client,
         }
     }

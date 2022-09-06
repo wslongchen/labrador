@@ -15,7 +15,7 @@ pub struct UnknownMessage {
 }
 
 impl MessageParser for UnknownMessage {
-    type WeChatMessage = UnknownMessage;
+    type WechatMessage = UnknownMessage;
 
     #[inline]
     fn from_xml(xml: &str) -> UnknownMessage {

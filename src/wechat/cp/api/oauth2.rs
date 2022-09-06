@@ -1,21 +1,21 @@
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
-use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WeChatCpClient};
+use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCpClient};
 use crate::wechat::cp::constants::{AGENTID, CODE, SNSAPI_BASE, SNSAPI_PRIVATEINFO, SNSAPI_USERINFO};
 use crate::wechat::cp::method::{CpOauth2Method, WechatCpMethod};
 
 
 #[derive(Debug, Clone)]
 pub struct WechatCpOauth2<'a, T: SessionStore> {
-    client: &'a WeChatCpClient<T>,
+    client: &'a WechatCpClient<T>,
 }
 
 #[allow(unused)]
 impl<'a, T: SessionStore> WechatCpOauth2<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatCpClient<T>) -> WechatCpOauth2<T> {
+    pub fn new(client: &WechatCpClient<T>) -> WechatCpOauth2<T> {
         WechatCpOauth2 {
             client,
         }

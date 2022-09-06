@@ -7,19 +7,19 @@ use serde_json::Value;
 
 use crate::{session::SessionStore, LabradorResult, RequestBody, RequestType, WechatCommonResponse, request, get_nonce_str};
 use crate::wechat::miniapp::method::{MaMediaMethod, WechatMaMethod};
-use crate::wechat::miniapp::{WeChatMaClient, WechatRequest};
+use crate::wechat::miniapp::{WechatMaClient, WechatRequest};
 
 
 #[derive(Debug, Clone)]
 pub struct WechatMaMedia<'a, T: SessionStore> {
-    client: &'a WeChatMaClient<T>,
+    client: &'a WechatMaClient<T>,
 }
 
 #[allow(unused)]
 impl<'a, T: SessionStore> WechatMaMedia<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMaClient<T>) -> WechatMaMedia<T> {
+    pub fn new(client: &WechatMaClient<T>) -> WechatMaMedia<T> {
         WechatMaMedia {
             client,
         }

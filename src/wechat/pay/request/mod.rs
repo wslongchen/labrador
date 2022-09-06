@@ -11,7 +11,7 @@ use crate::wechat::pay::TradeType;
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatPayRequest {
+pub struct WechatPayRequest {
     pub appid: Option<String>,
     /// 交易类型
     pub trade_type: TradeType,
@@ -49,7 +49,7 @@ pub struct WeChatPayRequest {
 
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct WeChatPayRequestV3 {
+pub struct WechatPayRequestV3 {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub appid: Option<String>,
     /// 直连商户号
@@ -84,7 +84,7 @@ pub struct WeChatPayRequestV3 {
 
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct IsvWeChatPayRequestV3 {
+pub struct IsvWechatPayRequestV3 {
     /// 由微信生成的应用ID，全局唯一。请求基础下单接口时请注意APPID的应用属性，例如公众号场景下，需使用应用属性为公众号的服务号APPID
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sp_appid: Option<String>,
@@ -239,7 +239,7 @@ pub struct GoodsDetail {
 
 
 #[allow(unused)]
-impl WeChatPayRequest {
+impl WechatPayRequest {
     pub fn parse_xml(&self) -> String {
         let msg = format!(
             "<xml>\n\
@@ -329,7 +329,7 @@ impl WeChatPayRequest {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatCloseOrderRequest {
+pub struct WechatCloseOrderRequest {
     pub appid: Option<String>,
     /// 商户号
     pub mch_id: String,
@@ -343,7 +343,7 @@ pub struct WeChatCloseOrderRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatCloseOrderRequestV3 {
+pub struct WechatCloseOrderRequestV3 {
     /// 商户号
     pub mchid: String,
     /// 商户订单号
@@ -352,7 +352,7 @@ pub struct WeChatCloseOrderRequestV3 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatQueryOrderRequest {
+pub struct WechatQueryOrderRequest {
     /// 微信支付订单号 二选一 微信的订单号，优先使用
     pub transaction_id: Option<String>,
     /// 商户订单号。商户系统内部的订单号，当没提供transaction_id时需要传这个。
@@ -368,7 +368,7 @@ pub struct WeChatQueryOrderRequest {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatQueryOrderRequestV3 {
+pub struct WechatQueryOrderRequestV3 {
     /// 商户号
     pub mchid: String,
     /// 微信支付订单号
@@ -381,7 +381,7 @@ pub struct WeChatQueryOrderRequestV3 {
 
 
 #[allow(unused)]
-impl WeChatCloseOrderRequest {
+impl WechatCloseOrderRequest {
     pub fn parse_xml(&self) -> String {
         let msg = format!(
             "<xml>\n\
@@ -415,7 +415,7 @@ impl WeChatCloseOrderRequest {
 }
 
 #[allow(unused)]
-impl WeChatQueryOrderRequest {
+impl WechatQueryOrderRequest {
     pub fn parse_xml(&self) -> String {
         let msg = format!(
             "<xml>\n\
@@ -472,7 +472,7 @@ pub struct RefundAmount {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatRefundRequestV3 {
+pub struct WechatRefundRequestV3 {
     /// 交易编号 原支付交易对应的微信订单号。 与out_order_no二选一
     #[serde(skip_serializing_if = "Option::is_none")]
     pub transaction_id: Option<String>,
@@ -497,7 +497,7 @@ pub struct WeChatRefundRequestV3 {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatRefundRequest {
+pub struct WechatRefundRequest {
     pub appid: Option<String>,
     /// 商户号
     pub mch_id: String,
@@ -522,7 +522,7 @@ pub struct WeChatRefundRequest {
 
 /// 撤销订单请求类
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatOrderReverseRequest {
+pub struct WechatOrderReverseRequest {
     pub appid: Option<String>,
     /// 商户号
     pub mch_id: String,
@@ -552,7 +552,7 @@ pub struct WeChatOrderReverseRequest {
 /// </xml>
 ///
 #[allow(unused)]
-impl WeChatRefundRequest {
+impl WechatRefundRequest {
     pub fn parse_xml(&self) -> String {
         let msg = format!(
             "<xml>\n\
@@ -605,7 +605,7 @@ impl WeChatRefundRequest {
 
 
 #[allow(unused)]
-impl WeChatOrderReverseRequest {
+impl WechatOrderReverseRequest {
     pub fn parse_xml(&self) -> String {
         let msg = format!(
             "<xml>\n\
@@ -642,7 +642,7 @@ impl WeChatOrderReverseRequest {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatQueryRefundOrderRequest {
+pub struct WechatQueryRefundOrderRequest {
     pub appid: Option<String>,
     /// 商户号
     pub mch_id: String,
@@ -664,7 +664,7 @@ pub struct WeChatQueryRefundOrderRequest {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatQueryRefundOrderRequestV3 {
+pub struct WechatQueryRefundOrderRequestV3 {
     /// 退款订单号
     /// 商户系统内部的退款单号，商户系统内部唯一，只能是数字、大小写字母_-|*@ ，同一退款单号多次请求只退一笔。
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -672,7 +672,7 @@ pub struct WeChatQueryRefundOrderRequestV3 {
 }
 
 #[allow(unused)]
-impl WeChatQueryRefundOrderRequest {
+impl WechatQueryRefundOrderRequest {
     pub fn parse_xml(&self) -> String {
         let msg = format!(
             "<xml>\n\

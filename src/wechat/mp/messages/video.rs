@@ -17,7 +17,7 @@ pub struct VideoMessage {
 }
 
 impl MessageParser for VideoMessage {
-    type WeChatMessage = VideoMessage;
+    type WechatMessage = VideoMessage;
 
     #[inline]
     fn from_xml(xml: &str) -> VideoMessage {

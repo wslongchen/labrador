@@ -16,7 +16,7 @@ pub struct ClickEvent {
 }
 
 impl MessageParser for ClickEvent {
-    type WeChatMessage = ClickEvent;
+    type WechatMessage = ClickEvent;
 
     #[inline]
     fn from_xml(xml: &str) -> ClickEvent {

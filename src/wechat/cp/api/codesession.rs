@@ -1,20 +1,20 @@
 use serde::{Serialize, Deserialize};
 
-use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WeChatCpClient};
+use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCpClient};
 use crate::wechat::cp::constants::{AUTHORIZATION_CODE, GRANT_TYPE, JS_CODE};
 use crate::wechat::cp::method::WechatCpMethod;
 
 
 #[derive(Debug, Clone)]
 pub struct WechatCpCodeSession<'a, T: SessionStore> {
-    client: &'a WeChatCpClient<T>,
+    client: &'a WechatCpClient<T>,
 }
 
 #[allow(unused)]
 impl<'a, T: SessionStore> WechatCpCodeSession<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatCpClient<T>) -> WechatCpCodeSession<T> {
+    pub fn new(client: &WechatCpClient<T>) -> WechatCpCodeSession<T> {
         WechatCpCodeSession {
             client,
         }

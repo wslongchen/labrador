@@ -1,20 +1,20 @@
 use serde_json::Value;
-use crate::{DecryptNotifyResult, DecryptRefundNotifyResult, IsvWeChatPayRequestV3, LabradorResult, LabraError, OriginNotifyResponse, RequestType, SessionStore, WeChatCloseOrderRequest, WeChatCloseOrderRequestV3, WeChatCloseOrderResponse, WeChatDecryptRefundNotifyResponse, WeChatOrderReverseRequest, WeChatOrderReverseResponse, WeChatPayClient, WeChatPayNotifyResponse, WeChatPayNotifyResponseV3, WeChatPayRequestV3, WeChatPayResponse, WeChatPayResponseV3, WeChatQueryOrderRequest, WeChatQueryOrderRequestV3, WeChatQueryOrderResponse, WeChatQueryOrderResponseV3, WeChatQueryRefundOrderRequest, WeChatQueryRefundResponse, WeChatQueryRefundResponseV3, WeChatRefundNotifyResponse, WeChatRefundNotifyResponseV3, WeChatRefundRequest, WeChatRefundRequestV3, WeChatRefundResponse, WeChatRefundResponseV3, WxPayShorturlRequest, WxPayShortUrlResponse, WxScanPayNotifyResponse};
-use crate::wechat::cryptos::{SignatureHeader, WeChatCryptoV3};
+use crate::{DecryptNotifyResult, DecryptRefundNotifyResult, IsvWechatPayRequestV3, LabradorResult, LabraError, OriginNotifyResponse, RequestType, SessionStore, WechatCloseOrderRequest, WechatCloseOrderRequestV3, WechatCloseOrderResponse, WechatDecryptRefundNotifyResponse, WechatOrderReverseRequest, WechatOrderReverseResponse, WechatPayClient, WechatPayNotifyResponse, WechatPayNotifyResponseV3, WechatPayRequestV3, WechatPayResponse, WechatPayResponseV3, WechatQueryOrderRequest, WechatQueryOrderRequestV3, WechatQueryOrderResponse, WechatQueryOrderResponseV3, WechatQueryRefundOrderRequest, WechatQueryRefundResponse, WechatQueryRefundResponseV3, WechatRefundNotifyResponse, WechatRefundNotifyResponseV3, WechatRefundRequest, WechatRefundRequestV3, WechatRefundResponse, WechatRefundResponseV3, WxPayShorturlRequest, WxPayShortUrlResponse, WxScanPayNotifyResponse};
+use crate::wechat::cryptos::{SignatureHeader, WechatCryptoV3};
 use crate::wechat::pay::method::{WechatPayMethod, WxPayMethod};
 use crate::wechat::pay::{TradeType};
-use crate::wechat::pay::request::WeChatPayRequest;
+use crate::wechat::pay::request::WechatPayRequest;
 
 #[derive(Debug, Clone)]
 pub struct WxPay<'a, T: SessionStore> {
-    client: &'a WeChatPayClient<T>,
+    client: &'a WechatPayClient<T>,
 }
 
 #[allow(unused)]
 impl<'a, T: SessionStore> WxPay<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatPayClient<T>) -> WxPay<T> {
+    pub fn new(client: &WechatPayClient<T>) -> WxPay<T> {
         WxPay {
             client,
         }
@@ -34,12 +34,12 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     /// ```no_run
     ///
     /// # use labrador::SimpleStorage;
-    /// # use labrador::WeChatPayClient;
-    /// # use labrador::WeChatPayRequest;
+    /// # use labrador::WechatPayClient;
+    /// # use labrador::WechatPayRequest;
     /// # use labrador::TradeType;
     /// # async fn main() {
-    /// let client = WeChatPayClient::new("appid","secret", SimpleStorage::new()).wxpay();
-    /// let param = WeChatPayRequest {
+    /// let client = WechatPayClient::new("appid","secret").wxpay();
+    /// let param = WechatPayRequest {
     ///     appid: None,
     ///     trade_type: TradeType::Micro,
     ///     mch_id: "".to_string(),
@@ -65,7 +65,7 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     ///
     /// ```
     ///
-    pub async fn unified_order(&self, mut params: WeChatPayRequest) -> LabradorResult<WeChatPayResponse> {
+    pub async fn unified_order(&self, mut params: WechatPayRequest) -> LabradorResult<WechatPayResponse> {
         params.check_params()?;
         let method = if params.trade_type == TradeType::Micro { WxPayMethod::MicroPay } else { WxPayMethod::UnifiedOrder };
         params.appid = self.client.appid.to_owned().into();
@@ -75,7 +75,7 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
         }
         params.get_sign(&self.client.secret);
         let res = self.client.post(WechatPayMethod::WxPay(method), &params.parse_xml(), RequestType::Xml).await?.text()?;
-        WeChatPayResponse::parse_xml(res)
+        WechatPayResponse::parse_xml(res)
     }
 
     ///
@@ -91,15 +91,15 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     /// ```no_run
     ///
     /// # use labrador::SimpleStorage;
-    /// # use labrador::WeChatPayClient;
-    /// # use labrador::WeChatPayRequestV3;
+    /// # use labrador::WechatPayClient;
+    /// # use labrador::WechatPayRequestV3;
     /// # use labrador::TradeType;
     /// # use labrador::Amount;
     /// # use labrador::Payer;
     /// # use chrono::NaiveDateTime;
     /// # async fn main() {
-    /// let client = WeChatPayClient::new("appid","secret", SimpleStorage::new()).wxpay();
-    /// let param = WeChatPayRequestV3 {
+    /// let client = WechatPayClient::new("appid","secret").wxpay();
+    /// let param = WechatPayRequestV3 {
     ///     appid: None,
     ///     mch_id: "".to_string(),
     ///     notify_url: "".to_string(),
@@ -120,7 +120,7 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     ///
     /// ```
     ///
-    pub async fn unified_order_v3(&self, trade_type: TradeType, mut params: WeChatPayRequestV3) -> LabradorResult<WeChatPayResponseV3> {
+    pub async fn unified_order_v3(&self, trade_type: TradeType, mut params: WechatPayRequestV3) -> LabradorResult<WechatPayResponseV3> {
         if params.mch_id.is_empty() {
             params.mch_id = self.client.mch_id.to_owned().unwrap_or_default();
         }
@@ -128,22 +128,22 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
             params.appid = self.client.appid.to_owned().into();
         }
         let res = self.client.post_v3(params.mch_id.to_owned().into(), WechatPayMethod::WxPay(WxPayMethod::UnifiedOrderV3(trade_type)), vec![],&params, RequestType::Json).await?.json::<serde_json::Value>()?;
-        serde_json::from_value::<WeChatPayResponseV3>(res).map_err(LabraError::from)
+        serde_json::from_value::<WechatPayResponseV3>(res).map_err(LabraError::from)
     }
 
-    pub async fn isv_unified_order_v3(&self, trade_type: TradeType, mut params: IsvWeChatPayRequestV3) -> LabradorResult<WeChatPayResponseV3> {
+    pub async fn isv_unified_order_v3(&self, trade_type: TradeType, mut params: IsvWechatPayRequestV3) -> LabradorResult<WechatPayResponseV3> {
         let res = self.client.post_v3(None, WechatPayMethod::WxPay(WxPayMethod::IsvUnifiedOrderV3(trade_type)), vec![],&params, RequestType::Json).await?.json::<serde_json::Value>()?;
-        serde_json::from_value::<WeChatPayResponseV3>(res).map_err(LabraError::from)
+        serde_json::from_value::<WechatPayResponseV3>(res).map_err(LabraError::from)
     }
 
     /// 调用统一下单接口，并组装生成支付所需参数对象.
-    pub async fn create_order_v3(&self, trade_type: TradeType, params: WeChatPayRequestV3) -> LabradorResult<Value> {
+    pub async fn create_order_v3(&self, trade_type: TradeType, params: WechatPayRequestV3) -> LabradorResult<Value> {
         let result = self.unified_order_v3(trade_type.to_owned(), params.to_owned()).await?;
         result.get_pay_info(trade_type, params.appid, params.mch_id, self.client.private_key.to_owned())
     }
 
     /// 服务商调用统一下单接口，并组装生成支付所需参数对象.
-    pub async fn isv_create_order_v3(&self, trade_type: TradeType, params: IsvWeChatPayRequestV3) -> LabradorResult<Value> {
+    pub async fn isv_create_order_v3(&self, trade_type: TradeType, params: IsvWechatPayRequestV3) -> LabradorResult<Value> {
         let result = self.isv_unified_order_v3(trade_type.to_owned(), params.to_owned()).await?;
         result.get_pay_info(trade_type, params.sub_appid.to_owned(), params.sub_mchid.to_owned().unwrap_or_default(), self.client.private_key.to_owned())
     }
@@ -164,11 +164,11 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     /// ```no_run
     ///
     /// # use labrador::SimpleStorage;
-    /// # use labrador::WeChatPayClient;
-    /// # use labrador::WeChatCloseOrderRequest;
+    /// # use labrador::WechatPayClient;
+    /// # use labrador::WechatCloseOrderRequest;
     /// # async fn main() {
-    /// let client = WeChatPayClient::new("appid","secret", SimpleStorage::new()).wxpay();
-    /// let param = WeChatCloseOrderRequest {
+    /// let client = WechatPayClient::new("appid","secret").wxpay();
+    /// let param = WechatCloseOrderRequest {
     ///     appid: None,
     ///     mch_id: "".to_string(),
     ///     out_trade_no: "".to_string(),
@@ -184,11 +184,11 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     /// ```
     ///
     pub async fn close_order(&self,
-                             mut params: WeChatCloseOrderRequest) -> LabradorResult<WeChatCloseOrderResponse> {
+                             mut params: WechatCloseOrderRequest) -> LabradorResult<WechatCloseOrderResponse> {
         params.appid = self.client.appid.to_owned().into();
         params.get_sign(&self.client.api_key.to_owned().unwrap_or_default());
         let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::CloseOrder), &params.parse_xml(), RequestType::Xml).await?.text()?;
-        WeChatCloseOrderResponse::parse_xml(res)
+        WechatCloseOrderResponse::parse_xml(res)
     }
 
     ///
@@ -207,11 +207,11 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     /// ```no_run
     ///
     /// # use labrador::SimpleStorage;
-    /// # use labrador::WeChatPayClient;
-    /// # use labrador::WeChatCloseOrderRequestV3;
+    /// # use labrador::WechatPayClient;
+    /// # use labrador::WechatCloseOrderRequestV3;
     /// # async fn main() {
-    /// let client = WeChatPayClient::new("appid","secret", SimpleStorage::new()).wxpay();
-    /// let param = WeChatCloseOrderRequestV3 {
+    /// let client = WechatPayClient::new("appid","secret").wxpay();
+    /// let param = WechatCloseOrderRequestV3 {
     ///     mchid: "".to_string(),
     ///     out_trade_no: None,
     /// };
@@ -223,7 +223,7 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     ///
     /// ```
     ///
-    pub async fn close_order_v3(&self, mut params: WeChatCloseOrderRequestV3) -> LabradorResult<()> {
+    pub async fn close_order_v3(&self, mut params: WechatCloseOrderRequestV3) -> LabradorResult<()> {
         let out_trade_no = params.out_trade_no.to_owned().unwrap_or_default();
         params.out_trade_no = None;
         let res = self.client.post_v3(params.mchid.to_owned().into(), WechatPayMethod::WxPay(WxPayMethod::CloseOrderV3(out_trade_no)), vec![], &params, RequestType::Json).await?;
@@ -251,11 +251,11 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     /// ```no_run
     ///
     /// # use labrador::SimpleStorage;
-    /// # use labrador::WeChatPayClient;
-    /// # use labrador::WeChatQueryOrderRequest;
+    /// # use labrador::WechatPayClient;
+    /// # use labrador::WechatQueryOrderRequest;
     /// # async fn main() {
-    /// let client = WeChatPayClient::new("appid","secret", SimpleStorage::new()).wxpay();
-    /// let param = WeChatQueryOrderRequest {
+    /// let client = WechatPayClient::new("appid","secret").wxpay();
+    /// let param = WechatQueryOrderRequest {
     ///     transaction_id: None,
     ///     out_trade_no: None,
     ///     appid: None,
@@ -271,10 +271,10 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     ///
     /// ```
     ///
-    pub async fn query_order(&self, mut params: WeChatQueryOrderRequest) -> LabradorResult<WeChatQueryOrderResponse> {
+    pub async fn query_order(&self, mut params: WechatQueryOrderRequest) -> LabradorResult<WechatQueryOrderResponse> {
         let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::QueryOrder), &params, RequestType::Xml).await?;
         let result = res.text()?;
-        WeChatQueryOrderResponse::parse_xml(result)
+        WechatQueryOrderResponse::parse_xml(result)
     }
 
     ///
@@ -299,11 +299,11 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     /// ```no_run
     ///
     /// # use labrador::SimpleStorage;
-    /// # use labrador::WeChatPayClient;
-    /// # use labrador::WeChatQueryOrderRequestV3;
+    /// # use labrador::WechatPayClient;
+    /// # use labrador::WechatQueryOrderRequestV3;
     /// # async fn main() {
-    /// let client = WeChatPayClient::new("appid","secret", SimpleStorage::new()).wxpay();
-    /// let param = WeChatQueryOrderRequestV3 {
+    /// let client = WechatPayClient::new("appid","secret").wxpay();
+    /// let param = WechatQueryOrderRequestV3 {
     ///     mchid: "".to_string(),
     ///     transaction_id: None,
     ///     out_trade_no: None,
@@ -316,9 +316,9 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     ///
     /// ```
     ///
-    pub async fn query_order_v3(&self, params: WeChatQueryOrderRequestV3) -> LabradorResult<WeChatQueryOrderResponseV3> {
+    pub async fn query_order_v3(&self, params: WechatQueryOrderRequestV3) -> LabradorResult<WechatQueryOrderResponseV3> {
         self.client.post_v3(params.mchid.to_owned().into(), WechatPayMethod::WxPay(WxPayMethod::QueryOrderV3((params.out_trade_no.to_owned(), params.out_trade_no.to_owned()))), vec![], "", RequestType::Json)
-            .await?.json::<WeChatQueryOrderResponseV3>()
+            .await?.json::<WechatQueryOrderResponseV3>()
     }
 
 
@@ -335,12 +335,12 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     ///
     /// 接口链接：https://api.mch.weixin.qq.com/pay/refundquery
     /// </pre>
-    pub async fn query_refund_order(&self, mut params: WeChatQueryRefundOrderRequest) -> LabradorResult<WeChatQueryRefundResponse> {
+    pub async fn query_refund_order(&self, mut params: WechatQueryRefundOrderRequest) -> LabradorResult<WechatQueryRefundResponse> {
         params.appid = self.client.appid.to_owned().into();
         params.get_sign(&self.client.api_key.to_owned().unwrap_or_default());
         let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::QueryRefundOrder), params, RequestType::Xml)
             .await?.text()?;
-        WeChatQueryRefundResponse::parse_xml(res)
+        WechatQueryRefundResponse::parse_xml(res)
     }
 
 
@@ -362,10 +362,10 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     /// https://api2.mch.weixin.qq.com/pay/refundqueryv2(备用域名)见跨城冗灾方案
     ///
     /// </pre>
-    pub async fn query_refund_order_v2(&self, params: WeChatQueryRefundOrderRequest) -> LabradorResult<WeChatQueryRefundResponse> {
+    pub async fn query_refund_order_v2(&self, params: WechatQueryRefundOrderRequest) -> LabradorResult<WechatQueryRefundResponse> {
         let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::QueryRefundOrderV2), params, RequestType::Json)
             .await?.text()?;
-        WeChatQueryRefundResponse::parse_xml(res)
+        WechatQueryRefundResponse::parse_xml(res)
     }
 
     /// 
@@ -378,25 +378,25 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     ///
     /// 接口链接：https://api.mch.weixin.qq.com/v3/refund/domestic/refunds/{out_refund_no}
     /// </pre>
-    pub async fn query_refund_order_v3(&self, out_refund_no: String) -> LabradorResult<WeChatQueryRefundResponseV3> {
+    pub async fn query_refund_order_v3(&self, out_refund_no: String) -> LabradorResult<WechatQueryRefundResponseV3> {
         self.client.post_v3(None, WechatPayMethod::WxPay(WxPayMethod::QueryRefundOrderV3(out_refund_no)), vec![], "", RequestType::Json)
-            .await?.json::<WeChatQueryRefundResponseV3>()
+            .await?.json::<WechatQueryRefundResponseV3>()
     }
 
-    pub async fn isv_query_refund_order_v3(&self, out_refund_no: String, sub_mch_id: String) -> LabradorResult<WeChatQueryRefundResponseV3> {
+    pub async fn isv_query_refund_order_v3(&self, out_refund_no: String, sub_mch_id: String) -> LabradorResult<WechatQueryRefundResponseV3> {
         self.client.post_v3(None, WechatPayMethod::WxPay(WxPayMethod::QueryRefundOrderV3(out_refund_no)), vec![("sub_mchid".to_string(), sub_mch_id)], "", RequestType::Json)
-            .await?.json::<WeChatQueryRefundResponseV3>()
+            .await?.json::<WechatQueryRefundResponseV3>()
     }
 
     /// # 解析支付结果通知.
     /// 详见 [文档](https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_7)
-    pub fn parse_order_notify(&self, xml: &str) -> LabradorResult<WeChatPayNotifyResponse> {
-        WeChatPayNotifyResponse::parse_xml(xml.to_string())
+    pub fn parse_order_notify(&self, xml: &str) -> LabradorResult<WechatPayNotifyResponse> {
+        WechatPayNotifyResponse::parse_xml(xml.to_string())
     }
 
     /// # 解析支付结果通知. - v3
     /// 详见 [文档](https://pay.weixin.qq.com/wiki/doc/apiv3/apis/chapter3_1_5.shtml)
-    pub async fn parse_order_notify_v3(&self, notify_data: &str, header: Option<SignatureHeader>) -> LabradorResult<WeChatPayNotifyResponseV3> {
+    pub async fn parse_order_notify_v3(&self, notify_data: &str, header: Option<SignatureHeader>) -> LabradorResult<WechatPayNotifyResponseV3> {
 
         if header.is_none() {
             return Err(LabraError::RequestError("非法请求，头部信息为空".to_string()));
@@ -408,10 +408,10 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
         let origin = serde_json::from_str::<OriginNotifyResponse>(notify_data)?;
         let resource = origin.resource.to_owned();
         let v3_key = self.client.api_key_v3.to_owned().unwrap_or_default();
-        let crypto = WeChatCryptoV3::new(&v3_key);
+        let crypto = WechatCryptoV3::new(&v3_key);
         let decrypted = crypto.decrypt_data_v3(&resource)?;
         let decrypt_notify_result = serde_json::from_slice::<DecryptNotifyResult>(&decrypted)?;
-        Ok(WeChatPayNotifyResponseV3 {
+        Ok(WechatPayNotifyResponseV3 {
             raw_data: origin.into(),
             result: decrypt_notify_result.into()
         })
@@ -419,13 +419,13 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
 
     /// # 解析退款结果通知.
     /// 详见 [文档](https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_16&index=9)
-    pub fn parse_refund_notify(&self, xml: &str) -> LabradorResult<WeChatDecryptRefundNotifyResponse> {
-        WeChatRefundNotifyResponse::parse_xml(xml.to_string(), &self.client.appid)
+    pub fn parse_refund_notify(&self, xml: &str) -> LabradorResult<WechatDecryptRefundNotifyResponse> {
+        WechatRefundNotifyResponse::parse_xml(xml.to_string(), &self.client.appid)
     }
 
     /// # 解析退款结果通知 - V3.
     /// 详见 [文档](https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_16&index=9)
-    pub async fn parse_refund_notify_v3(&self, notify_data: &str, header: &Option<SignatureHeader>) -> LabradorResult<WeChatRefundNotifyResponseV3> {
+    pub async fn parse_refund_notify_v3(&self, notify_data: &str, header: &Option<SignatureHeader>) -> LabradorResult<WechatRefundNotifyResponseV3> {
         if header.is_none() {
             return Err(LabraError::RequestError("非法请求，头部信息验证为空".to_string()));
         }
@@ -436,10 +436,10 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
         let origin = serde_json::from_str::<OriginNotifyResponse>(notify_data)?;
         let resource = origin.resource.to_owned();
         let v3_key = self.client.api_key_v3.to_owned().unwrap_or_default();
-        let crypto = WeChatCryptoV3::new(&v3_key);
+        let crypto = WechatCryptoV3::new(&v3_key);
         let decrypted = crypto.decrypt_data_v3(&resource)?;
         let decrypt_notify_result = serde_json::from_slice::<DecryptRefundNotifyResult>(&decrypted)?;
-        Ok(WeChatRefundNotifyResponseV3 {
+        Ok(WechatRefundNotifyResponseV3 {
             raw_data: origin.into(),
             result: decrypt_notify_result.into()
         })
@@ -455,8 +455,8 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     /// 支付
     pub async fn micro_pay(
         &self,
-        mut pay_params: WeChatPayRequest
-    ) -> LabradorResult<WeChatPayResponse> {
+        mut pay_params: WechatPayRequest
+    ) -> LabradorResult<WechatPayResponse> {
         pay_params.trade_type = TradeType::Micro;
         self.unified_order(pay_params).await
     }
@@ -464,8 +464,8 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     /// JSAPI支付
     pub async fn jsapi_pay(
         &self,
-        mut pay_params: WeChatPayRequest
-    ) -> LabradorResult<WeChatPayResponse> {
+        mut pay_params: WechatPayRequest
+    ) -> LabradorResult<WechatPayResponse> {
         pay_params.trade_type = TradeType::Jsapi;
         self.unified_order(pay_params).await
     }
@@ -473,8 +473,8 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     /// APP支付
     pub async fn app_pay(
         &self,
-        mut pay_params: WeChatPayRequest
-    ) -> LabradorResult<WeChatPayResponse> {
+        mut pay_params: WechatPayRequest
+    ) -> LabradorResult<WechatPayResponse> {
         pay_params.trade_type = TradeType::App;
         self.unified_order(pay_params).await
     }
@@ -502,13 +502,13 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     ///
     pub async fn refund(
         &self,
-        mut params: WeChatRefundRequest
-    ) -> LabradorResult<WeChatRefundResponse> {
+        mut params: WechatRefundRequest
+    ) -> LabradorResult<WechatRefundResponse> {
         params.appid = self.client.appid.to_owned().into();
         let mch_id = params.mch_id.as_str();
         params.get_sign(&self.client.api_key.to_owned().unwrap_or_default());
         let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::Refund), &params.parse_xml(), RequestType::Xml).await?.text()?;
-        WeChatRefundResponse::parse_xml(res)
+        WechatRefundResponse::parse_xml(res)
     }
 
     ///
@@ -528,12 +528,12 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     ///
     pub async fn reverse_order(
         &self,
-        mut params: WeChatOrderReverseRequest
-    ) -> LabradorResult<WeChatOrderReverseResponse> {
+        mut params: WechatOrderReverseRequest
+    ) -> LabradorResult<WechatOrderReverseResponse> {
         params.appid = self.client.appid.to_owned().into();
         let mch_id = params.mch_id.as_str();
         let res = self.client.post(WechatPayMethod::WxPay(WxPayMethod::ReverseOrder), &params.parse_xml(), RequestType::Xml).await?.text()?;
-        WeChatOrderReverseResponse::parse_xml(res)
+        WechatOrderReverseResponse::parse_xml(res)
     }
 
     ///
@@ -580,10 +580,10 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     ///
     pub async fn refund_v3(
         &self,
-        mut params: WeChatRefundRequestV3
-    ) -> LabradorResult<WeChatRefundResponseV3> {
+        mut params: WechatRefundRequestV3
+    ) -> LabradorResult<WechatRefundResponseV3> {
        self.client.post_v3(None, WechatPayMethod::WxPay(WxPayMethod::RefundV3), vec![],params, RequestType::Json).await?
-            .json::<WeChatRefundResponseV3>()
+            .json::<WechatRefundResponseV3>()
     }
 }
 
@@ -596,7 +596,7 @@ mod tests {
     use std::io::Read;
     use std::ops::Add;
     use chrono::{DateTime, Local, NaiveDateTime, SecondsFormat};
-    use crate::{Amount, Payer, request, SimpleStorage, TradeType, WeChatCloseOrderRequestV3, WeChatPayClient, WeChatPayRequestV3};
+    use crate::{Amount, Payer, request, SimpleStorage, TradeType, WechatCloseOrderRequestV3, WechatPayClient, WechatPayRequestV3};
 
     #[test]
     fn test_close_order_v3() {
@@ -604,9 +604,9 @@ mod tests {
         let mut private_key = Vec::new();
         File::open("src/wechat/pay/sec/apiclient_key.pem").unwrap().read_to_end(&mut private_key).unwrap();
         let r = rt.spawn(async {
-            let c =  WeChatPayClient::new("appid", "secret", SimpleStorage::new());
+            let c =  WechatPayClient::new("appid", "secret");
             let mut client =c.wxpay();
-            let result = client.close_order_v3(WeChatCloseOrderRequestV3 {
+            let result = client.close_order_v3(WechatCloseOrderRequestV3 {
                 mchid: "mchid".to_string(),
                 out_trade_no: "23234234234".to_string().into()
             });
@@ -630,7 +630,7 @@ mod tests {
         let mut private_key = Vec::new();
         File::open("src/wechat/pay/sec/apiclient_key.pem").unwrap().read_to_end(&mut private_key).unwrap();
         let r = rt.spawn(async {
-            let c =  WeChatPayClient::new("appid", "secret", SimpleStorage::new());
+            let c =  WechatPayClient::new("appid", "secret");
             let mut client =c.wxpay();
             // .cert(MchCert {
             //     mch_id: "1602920235".to_string().into(),
@@ -641,7 +641,7 @@ mod tests {
             //     pkcs12_path: None
             // }).key_v3("364ae33e57cf4989b8aefaa66ddc7ca7".to_string())
             let date = Local::now().to_rfc3339_opts(SecondsFormat::Secs, false);
-            /*let result = client.unified_order_v3(TradeType::Jsapi, WeChatPayRequestV3 {
+            /*let result = client.unified_order_v3(TradeType::Jsapi, WechatPayRequestV3 {
                 appid: "wx7959501b424a9e93".to_string().into(),
                 mch_id: "1602920235".to_string(),
                 description: "测试商品支付".to_string(),
@@ -660,7 +660,7 @@ mod tests {
                 scene_info: None,
                 settle_info: None
             });*/
-            let result = client.close_order_v3(WeChatCloseOrderRequestV3 {
+            let result = client.close_order_v3(WechatCloseOrderRequestV3 {
                 mchid: "mchid".to_string(),
                 out_trade_no: "23234234234".to_string().into()
             });
@@ -682,10 +682,10 @@ mod tests {
         let mut private_key = Vec::new();
         File::open("src/wechat/pay/sec/apiclient_key.pem").unwrap().read_to_end(&mut private_key).unwrap();
         let r = rt.spawn(async {
-            let c =  WeChatPayClient::new("appid", "secret", SimpleStorage::new());
+            let c =  WechatPayClient::new("appid", "secret");
             let mut client =c.wxpay();
             let date = Local::now().to_rfc3339_opts(SecondsFormat::Secs, false);
-            let result = client.unified_order_v3(TradeType::Jsapi, WeChatPayRequestV3 {
+            let result = client.unified_order_v3(TradeType::Jsapi, WechatPayRequestV3 {
                 appid: "appid".to_string().into(),
                 mch_id: "mchid".to_string(),
                 description: "测试商品支付".to_string(),

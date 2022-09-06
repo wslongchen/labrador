@@ -51,9 +51,9 @@ impl ToRedisArgs for Store {
     fn write_redis_args<W>(&self, out: &mut W)
     where
         W: ?Sized + redis::RedisWrite {
-        // let encoded: Vec<u8> = bincode::serialize(&self).unwrap();
-        let encoded = serde_json::to_string(&self).unwrap_or_default();
-        out.write_arg(encoded.as_bytes())
+        let encoded: Vec<u8> = bincode::serialize(&self).unwrap();
+        // let encoded = serde_json::to_string(&self).unwrap_or_default();
+        out.write_arg(&encoded[..])
     }
 }
 
@@ -61,14 +61,8 @@ impl FromRedisValue for Store {
     fn from_redis_value(v: &redis::Value) -> redis::RedisResult<Self> {
         match *v {
             redis::Value::Data(ref bytes) => {
-                let data = String::from_utf8(bytes.to_vec()).unwrap_or_default();
-                match serde_json::from_str::<Store>(&data) {
-                    Ok(decoded) => Ok(decoded),
-                    Err(_err) => {
-                        // 出错了则直接返回该字符串
-                        Ok(Store::String(data))
-                    }
-                }
+                let data = bincode::deserialize::<Store>(bytes).unwrap_or(Store::Null);
+                Ok(data)
             },
             redis::Value::Okay => Ok(Store::Null),
             _ => Err(redis::RedisError::from((
@@ -450,7 +444,7 @@ pub mod redis_store {
 
        
 
-        fn del<K: AsRef<str>>(&self, key: K) -> LabradorResult<()> {
+        pub fn del<K: AsRef<str>>(&self, key: K) -> LabradorResult<()> {
             let mut client = self.client_pool.get()?;
             if !client.check_connection() {
                 return Err(LabraError::ApiError("error to get redis connection".to_string()))
@@ -459,7 +453,7 @@ pub mod redis_store {
             Ok(())
         }
 
-        fn zlcount<K: AsRef<str>, T: ToRedisArgs>(&self, key: K, min: T, max: T) -> LabradorResult<Option<u32>> {
+        pub fn zlcount<K: AsRef<str>, T: ToRedisArgs>(&self, key: K, min: T, max: T) -> LabradorResult<Option<u32>> {
             let mut client = self.client_pool.get()?;
             if !client.check_connection() {
                 return Err(LabraError::ApiError("error to get redis connection".to_string()))
@@ -467,7 +461,7 @@ pub mod redis_store {
             client.zcount(key.as_ref(), min, max).map_err(LabraError::from)
         }
 
-        fn zadd<K: AsRef<str>, T: ToRedisArgs>(&self, key: K, member: T, score: T) -> LabradorResult<Option<u32>> {
+        pub fn zadd<K: AsRef<str>, T: ToRedisArgs>(&self, key: K, member: T, score: T) -> LabradorResult<Option<u32>> {
             let mut client = self.client_pool.get()?;
             if !client.check_connection() {
                 return Err(LabraError::ApiError("error to get redis connection".to_string()))
@@ -489,7 +483,10 @@ pub mod redis_store {
                 return Ok(default);
             }
             let v = if let Ok(value) = data {
-                Some(T::from_store(&value))
+                match T::from_store_opt(&value) {
+                    Ok(store) =>Some(store),
+                    Err(_err) => None
+                }
             } else {
                 default
             };
@@ -517,11 +514,14 @@ pub mod redis_store {
 #[test]
 fn test_simple() {
     println!("ssssssss");
-    let session = SimpleStorage::new();
-    println!("000000");
-    let s  = session.set("a", "n", Some(0)).unwrap();
-    println!("1111");
-    let v = session.get::<&str, String>("a", None).unwrap();
-
-    println!("v:{}" , v.unwrap_or_default());
+    let encoded: Vec<u8> = bincode::serialize(&Store::String("234".to_string())).unwrap();
+    let decode = bincode::deserialize::<Store>(&encoded).unwrap();
+    println!("decode:{:?}", decode);
+    // let session = SimpleStorage::new();
+    // println!("000000");
+    // let s  = session.set("a", "n", Some(0)).unwrap();
+    // println!("1111");
+    // let v = session.get::<&str, String>("a", None).unwrap();
+    //
+    // println!("v:{}" , v.unwrap_or_default());
 }

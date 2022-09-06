@@ -2,19 +2,19 @@ use serde::{Serialize, Deserialize};
 
 use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult};
 use crate::wechat::miniapp::method::WechatMaMethod;
-use crate::wechat::miniapp::WeChatMaClient;
+use crate::wechat::miniapp::WechatMaClient;
 
 
 #[derive(Debug, Clone)]
 pub struct WechatMaCodeSession<'a, T: SessionStore> {
-    client: &'a WeChatMaClient<T>,
+    client: &'a WechatMaClient<T>,
 }
 
 #[allow(unused)]
 impl<'a, T: SessionStore> WechatMaCodeSession<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMaClient<T>) -> WechatMaCodeSession<T> {
+    pub fn new(client: &WechatMaClient<T>) -> WechatMaCodeSession<T> {
         WechatMaCodeSession {
             client,
         }

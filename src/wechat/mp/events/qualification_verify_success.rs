@@ -16,7 +16,7 @@ pub struct QualificationVerifySuccessEvent {
 }
 
 impl MessageParser for QualificationVerifySuccessEvent {
-    type WeChatMessage = QualificationVerifySuccessEvent;
+    type WechatMessage = QualificationVerifySuccessEvent;
 
     #[inline]
     fn from_xml(xml: &str) -> QualificationVerifySuccessEvent {

@@ -3,21 +3,21 @@ use serde_json::{json, Value};
 
 use serde::{Serialize, Deserialize};
 
-use crate::{session::SessionStore, errors::LabraError, wechat::{cryptos::WeChatCrypto}, request::RequestType, WechatCommonResponse, WeChatMpClient, LabradorResult};
+use crate::{session::SessionStore, errors::LabraError, wechat::{cryptos::WechatCrypto}, request::RequestType, WechatCommonResponse, WechatMpClient, LabradorResult};
 use crate::wechat::mp::method::{MpUserMethod, WechatMpMethod};
 
 
 #[derive(Debug, Clone)]
-pub struct WeChatMpUser<'a, T: SessionStore> {
-    client: &'a WeChatMpClient<T>,
+pub struct WechatMpUser<'a, T: SessionStore> {
+    client: &'a WechatMpClient<T>,
 }
 
 #[allow(unused)]
-impl<'a, T: SessionStore> WeChatMpUser<'a, T> {
+impl<'a, T: SessionStore> WechatMpUser<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMpClient<T>) -> WeChatMpUser<T> {
-        WeChatMpUser {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpUser<T> {
+        WechatMpUser {
             client,
         }
     }
@@ -50,7 +50,7 @@ impl<'a, T: SessionStore> WeChatMpUser<'a, T> {
 
     /// 解密用户信息
     pub fn decrypt_user_info(&self, session_key: &str, encrypted_data: &str, iv: &str) -> LabradorResult<WechatUser> {
-        let res = WeChatCrypto::decrypt_data(session_key, encrypted_data, iv)?;
+        let res = WechatCrypto::decrypt_data(session_key, encrypted_data, iv)?;
         match serde_json::from_str::<Value>(res.as_str()) {
             Ok(data) => {
                 let openid = &data["openId"];

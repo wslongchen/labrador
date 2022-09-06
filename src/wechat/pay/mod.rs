@@ -16,7 +16,7 @@ mod constants;
 pub use request::*;
 pub use response::*;
 use tracing::info;
-use crate::wechat::cryptos::{SignatureHeader, WeChatCryptoV3};
+use crate::wechat::cryptos::{SignatureHeader, WechatCryptoV3};
 use crate::wechat::pay::api::WxPay;
 use crate::wechat::pay::constants::{ACCEPT, AUTHORIZATION, CONTENT_TYPE_JSON};
 use crate::wechat::pay::method::WechatPayMethod;
@@ -65,7 +65,7 @@ impl TradeType {
 
 #[allow(unused)]
 #[derive(Debug, Clone)]
-pub struct WeChatPayClient<T: SessionStore> {
+pub struct WechatPayClient<T: SessionStore> {
     pub appid: String,
     secret: String,
     /// 私钥 V3
@@ -87,10 +87,10 @@ pub struct WeChatPayClient<T: SessionStore> {
 
 
 #[allow(unused)]
-impl<T: SessionStore> WeChatPayClient<T> {
+impl<T: SessionStore> WechatPayClient<T> {
 
-    fn from_client(client: APIClient<T>) -> WeChatPayClient<T> {
-        WeChatPayClient {
+    fn from_client(client: APIClient<T>) -> WechatPayClient<T> {
+        WechatPayClient {
             appid: client.app_key.to_owned(),
             secret: client.secret.to_owned(),
             api_key_v3: None,
@@ -105,13 +105,13 @@ impl<T: SessionStore> WeChatPayClient<T> {
     }
 
     /// get the wechat client
-    pub fn new<S: Into<String>>(appid: S, secret: S) -> WeChatPayClient<SimpleStorage> {
+    pub fn new<S: Into<String>>(appid: S, secret: S) -> WechatPayClient<SimpleStorage> {
         let client = APIClient::<SimpleStorage>::from_session(appid.into(), secret.into(),"https://api.mch.weixin.qq.com", SimpleStorage::new());
-        WeChatPayClient::<SimpleStorage>::from_client(client)
+        WechatPayClient::<SimpleStorage>::from_client(client)
     }
 
     /// get the wechat client
-    pub fn from_session<S: Into<String>>(appid: S, secret: S, session: T) -> WeChatPayClient<T> {
+    pub fn from_session<S: Into<String>>(appid: S, secret: S, session: T) -> WechatPayClient<T> {
         let client = APIClient::from_session(appid.into(), secret.into(), "https://api.mch.weixin.qq.com", session);
         Self::from_client(client)
     }
@@ -205,7 +205,7 @@ impl<T: SessionStore> WeChatPayClient<T> {
         let nonce_str = get_nonce_str().to_uppercase();
 
         let timestamp = get_timestamp() / 1000;
-        let signature = WeChatCryptoV3::signature_v3(&method, url, timestamp, &nonce_str, &body, &private_key)?;
+        let signature = WechatCryptoV3::signature_v3(&method, url, timestamp, &nonce_str, &body, &private_key)?;
         let token = format!("{} mchid=\"{}\",nonce_str=\"{}\",signature=\"{}\",timestamp=\"{}\",serial_no=\"{}\"",
                             SCHEMA, mch_id, nonce_str, signature, timestamp, serial_no);
         Ok(token)
@@ -261,7 +261,7 @@ impl<T: SessionStore> WeChatPayClient<T> {
         // V3  验证签名
         let verify = if let Some(cert) = self.certs.get(&serial_no) {
             let content = String::from_utf8_lossy(&cert.public_key).to_string();
-            WeChatCryptoV3::verify(&before_sign, &header.signature, &content).unwrap_or(false)
+            WechatCryptoV3::verify(&before_sign, &header.signature, &content).unwrap_or(false)
         } else {
             false
         };
@@ -272,7 +272,7 @@ impl<T: SessionStore> WeChatPayClient<T> {
     pub async fn verify(&self, serial_number: &str, message: &str, signature: &str) -> bool {
         if let Some(cert) = self.certs.get(serial_number) {
             let content = String::from_utf8_lossy(&cert.content).to_string();
-            WeChatCryptoV3::verify(message, signature, &content).unwrap_or(false)
+            WechatCryptoV3::verify(message, signature, &content).unwrap_or(false)
         } else {
             false
         }
@@ -290,7 +290,7 @@ impl<T: SessionStore> WeChatPayClient<T> {
                 let bodys = serde_json::from_value::<Vec<PlatformCertificateResponse>>(body["data"].to_owned())?;
                 for body in bodys {
                     let data =body.encrypt_certificate;
-                    let crypto = WeChatCryptoV3::new(&self.api_key_v3.to_owned().unwrap_or_default());
+                    let crypto = WechatCryptoV3::new(&self.api_key_v3.to_owned().unwrap_or_default());
                     let res = crypto.decrypt_data_v3(&data)?;
                     let mut cert = LabraCertificate::from_pem(res)?;
                     let serial_no = body.serial_no;

@@ -17,7 +17,7 @@ pub struct ScanEvent {
 }
 
 impl MessageParser for ScanEvent {
-    type WeChatMessage = ScanEvent;
+    type WechatMessage = ScanEvent;
 
     #[inline]
     fn from_xml(xml: &str) -> ScanEvent {

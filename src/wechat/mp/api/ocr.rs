@@ -6,22 +6,22 @@ use std::vec;
 use serde::{Serialize, Deserialize};
 use serde_json::{Value};
 
-use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, WeChatMpClient, LabradorResult, WechatRequest, RequestBody};
+use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, WechatMpClient, LabradorResult, WechatRequest, RequestBody};
 use crate::wechat::mp::constants::IMG_URL;
 use crate::wechat::mp::method::{MpOcrMethod, WechatMpMethod};
 
 /// 微信连接WI-FI接口.
 #[derive(Debug, Clone)]
-pub struct WeChatMpOcr<'a, T: SessionStore> {
-    client: &'a WeChatMpClient<T>,
+pub struct WechatMpOcr<'a, T: SessionStore> {
+    client: &'a WechatMpClient<T>,
 }
 
 #[allow(unused)]
-impl<'a, T: SessionStore> WeChatMpOcr<'a, T> {
+impl<'a, T: SessionStore> WechatMpOcr<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMpClient<T>) -> WeChatMpOcr<T> {
-        WeChatMpOcr {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpOcr<T> {
+        WechatMpOcr {
             client,
         }
     }

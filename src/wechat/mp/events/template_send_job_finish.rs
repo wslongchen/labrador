@@ -15,7 +15,7 @@ pub struct TemplateSendJobFinishEvent {
 }
 
 impl MessageParser for TemplateSendJobFinishEvent {
-    type WeChatMessage = TemplateSendJobFinishEvent;
+    type WechatMessage = TemplateSendJobFinishEvent;
 
     #[inline]
     fn from_xml(xml: &str) -> TemplateSendJobFinishEvent {

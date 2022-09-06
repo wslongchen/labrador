@@ -15,7 +15,7 @@ pub struct UnsubscribeEvent {
 }
 
 impl MessageParser for UnsubscribeEvent {
-    type WeChatMessage = UnsubscribeEvent;
+    type WechatMessage = UnsubscribeEvent;
 
     #[inline]
     fn from_xml(xml: &str) -> UnsubscribeEvent {

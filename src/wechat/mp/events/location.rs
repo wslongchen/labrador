@@ -18,7 +18,7 @@ pub struct LocationEvent {
 }
 
 impl MessageParser for LocationEvent {
-    type WeChatMessage = LocationEvent;
+    type WechatMessage = LocationEvent;
 
     #[inline]
     fn from_xml(xml: &str) -> LocationEvent {

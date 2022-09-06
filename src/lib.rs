@@ -35,15 +35,15 @@
 //! ### With Wechat（微信开放平台、包含微信支付）
 //!
 //!  ```rust
-//! use labrador::{WeChatPayClient, SimpleStorage, TradeType, WeChatPayRequestV3, Amount, Payer};
+//! use labrador::{WechatPayClient, SimpleStorage, TradeType, WechatPayRequestV3, Amount, Payer};
 //! use chrono::{Local, SecondsFormat};
 //!
 //!  #[tokio::main]
 //!  async fn main() {
-//!      let c =  WeChatPayClient::new("appid", "secret", SimpleStorage::new());
+//!      let c =  WechatPayClient::new("appid", "secret", SimpleStorage::new());
 //!      let mut client =c.wxpay();
 //!      let date = Local::now().to_rfc3339_opts(SecondsFormat::Secs, false);
-//!      let result = client.unified_order_v3(TradeType::Jsapi, WeChatPayRequestV3 {
+//!      let result = client.unified_order_v3(TradeType::Jsapi, WechatPayRequestV3 {
 //!          appid: "appid".to_string().into(),
 //!          mch_id: "mchid".to_string(),
 //!          description: "测试商品支付".to_string(),
@@ -198,7 +198,7 @@ pub use session::*;
 pub use util::*;
 pub use client::APIClient;
 pub use request::*;
-pub use reqwest::multipart::Form;
+pub use reqwest::multipart::{Form, Part};
 
 pub use bytes;
 pub use serde_urlencoded;

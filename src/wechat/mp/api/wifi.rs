@@ -3,21 +3,21 @@ use std::vec;
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
-use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, WeChatMpClient, LabradorResult};
+use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, WechatMpClient, LabradorResult};
 use crate::wechat::mp::method::{MpWifiMethod, WechatMpMethod};
 
 /// 微信连接WI-FI接口.
 #[derive(Debug, Clone)]
-pub struct WeChatMpWifi<'a, T: SessionStore> {
-    client: &'a WeChatMpClient<T>,
+pub struct WechatMpWifi<'a, T: SessionStore> {
+    client: &'a WechatMpClient<T>,
 }
 
 #[allow(unused)]
-impl<'a, T: SessionStore> WeChatMpWifi<'a, T> {
+impl<'a, T: SessionStore> WechatMpWifi<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMpClient<T>) -> WeChatMpWifi<T> {
-        WeChatMpWifi {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpWifi<T> {
+        WechatMpWifi {
             client,
         }
     }

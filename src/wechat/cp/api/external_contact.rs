@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
-use crate::{session::SessionStore, LabradorResult, RequestType, WeChatCpClient, LabraError, WechatCommonResponse};
+use crate::{session::SessionStore, LabradorResult, RequestType, WechatCpClient, LabraError, WechatCommonResponse};
 use crate::wechat::cp::constants::{CURSOR, EXTERNAL_USERID, USERID, WELCOME_MSG_TYPE_FILE, WELCOME_MSG_TYPE_IMAGE, WELCOME_MSG_TYPE_LINK, WELCOME_MSG_TYPE_MINIPROGRAM, WELCOME_MSG_TYPE_VIDEO};
 use crate::wechat::cp::method::{CpExternalContactMethod, WechatCpMethod};
 
@@ -9,13 +9,13 @@ use crate::wechat::cp::method::{CpExternalContactMethod, WechatCpMethod};
 /// 外部联系人管理接口
 #[derive(Debug, Clone)]
 pub struct WechatCpExternalContact<'a, T: SessionStore> {
-    client: &'a WeChatCpClient<T>,
+    client: &'a WechatCpClient<T>,
 }
 
 #[allow(unused)]
 impl<'a, T: SessionStore> WechatCpExternalContact<'a, T> {
     #[inline]
-    pub fn new(client: &WeChatCpClient<T>) -> WechatCpExternalContact<T> {
+    pub fn new(client: &WechatCpClient<T>) -> WechatCpExternalContact<T> {
         WechatCpExternalContact {
             client,
         }
