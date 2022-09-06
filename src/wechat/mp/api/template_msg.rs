@@ -1,21 +1,21 @@
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
-use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, WeChatMpClient, LabradorResult};
+use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, WechatMpClient, LabradorResult};
 use crate::wechat::mp::method::{MpTemplateMessageMethod, WechatMpMethod};
 
 
 #[derive(Debug, Clone)]
-pub struct WeChatMpTemplateMessage<'a, T: SessionStore> {
-    client: &'a WeChatMpClient<T>,
+pub struct WechatMpTemplateMessage<'a, T: SessionStore> {
+    client: &'a WechatMpClient<T>,
 }
 
 #[allow(unused)]
-impl<'a, T: SessionStore> WeChatMpTemplateMessage<'a, T> {
+impl<'a, T: SessionStore> WechatMpTemplateMessage<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMpClient<T>) -> WeChatMpTemplateMessage<T> {
-        WeChatMpTemplateMessage {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpTemplateMessage<T> {
+        WechatMpTemplateMessage {
             client,
         }
     }

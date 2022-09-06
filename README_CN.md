@@ -7,45 +7,40 @@
 [labrador: rustc 1.13+]: https://img.shields.io/badge/labrador-rustc__1.31%2B-lightgrey
 [Rust 1.13]: https://blog.rust-lang.org/2016/11/10/Rust-1.13.html
 [Rust 1.31]: https://blog.rust-lang.org/2018/12/06/Rust-1.31-and-rust-2018.html
-[docs-image]: https://img.shields.io/badge/文档-中文-blue.svg
-[docs-url]: https://github.com/wslongchen/labrador/blob/master/README_CN.md
-```Labrador - Mini client for rust ```
+[docs-image]: https://img.shields.io/badge/文档-英文-blue.svg
+[docs-url]: https://github.com/wslongchen/labrador/blob/master/README.md
+```Labrador - 一个迷你的便捷的第三方服务客户端SDK ```
 
-
-# This create offers:
-
-*   A convenient mainstream third-party service client
-*   Convenient and quick use of corresponding services in rust
 
 Features:
 
-*   ```taobao``` - Taobao customer related services
-*   ```alipay``` - Alipay related services
-*   ```pdd``` - Pinduoduo related services
-*   ```jd``` - Jingdong related services
-*   ```wechat``` - Wechat related services
+*   ```taobao``` - 淘宝客
+*   ```alipay``` - 支付宝
+*   ```pdd``` - 拼多多
+*   ```jd``` - 京东
+*   ```wechat``` - 微信
 
 ### Supported Platform
 
-| Platform                                                                  | is supported |
-|---------------------------------------------------------------------------|--------------|
-| Wechat:mp(微信公众号),cp(企业微信),miniapp(微信小程序),pay(微信支付)             | √            | 
-| Alipay(支付宝)                                                             | √            |  
-| Taobao(淘宝客)                                                              | √            |
-| JD(京东联盟)                                                                | √            |  
-| PDD(拼多多-多多客)                                                          | √            |
+| 平台                                                 | 是否支持 |
+|----------------------------------------------------|------|
+| Wechat:mp(微信公众号),cp(企业微信),miniapp(微信小程序),pay(微信支付) | √    | 
+| Alipay(支付宝)                                        | √    |  
+| Taobao(淘宝客)                                        | √    |
+| JD(京东联盟)                                           | √    |  
+| PDD(拼多多-多多客)                                       | √    |
 
 
 ---
 
-You may be looking for:
+如下:
 
 - [An overview of Labrador](https://crates.io/crates/labrador)
 - [Examples](https://github.com/wslongchen/labrador/blob/0.1.0/example/simple.rs)
 - [API documentation](https://docs.rs/labrador/0.1.0/labrador/)
 - [Release notes](https://github.com/wslongchen/labrador/releases)
 
-## Labrador in action
+## 使用
 
 <details>
 <summary>
@@ -64,11 +59,11 @@ labrador = { version = "0.1.0", features = ["wechat", "alipay"] }
 </details>
 <p></p>
 
-## API Documentation
+## 文档
 
-## Example
+## 示例
 
-### With Wechat（微信开放平台、包含微信支付）
+### 微信开放平台、包含微信支付
 
  ```rust
 use labrador::{WechatPayClient, SimpleStorage, TradeType, WechatPayRequestV3, Amount, Payer};
@@ -107,7 +102,7 @@ use chrono::{Local, SecondsFormat};
  }
  ```
 
-### With Alipay（支付宝）
+### 支付宝
 
  ```rust
 use labrador::{AlipayTradeWapPayRequest, AlipayClient};
@@ -127,7 +122,7 @@ use labrador::{AlipayTradeWapPayRequest, AlipayClient};
  }
  ```
 
-### With Taobao（淘宝客相关）
+### 淘宝客相关
 
  ```rust
 use labrador::{TbItemDetailRequest, TaobaoClient};
@@ -151,7 +146,7 @@ use labrador::{TbItemDetailRequest, TaobaoClient};
  ```
 
 
-### With JD（京东，目前暂时只支持联盟相关）
+### 京东，目前暂时只支持联盟相关
 
  ```rust
 use labrador::{JDClient, JdOrderRawQueryParam};
@@ -180,34 +175,37 @@ use chrono::{Local, SecondsFormat};
  }
  ```
 
-### With Custom Request
+### 自定义请求
 
 You can implement this trait and then use the custom request
 
-+ AlipayRequest - For Alipay(支付宝)
-+ JDRequest - For jingdong(京东)
-+ TaobaoRequest - For taobao(淘宝)
++ AlipayRequest - 支付宝
++ JDRequest - 京东
++ TaobaoRequest - 淘宝
 
 
-## Feature
+## 未来
 
-We will gradually improve the corresponding API
+我们将逐步完善相应的API
+1. 首先非常欢迎和感谢对本项目发起 `Pull Request` 的热心小伙伴们。
+1. **特别提示：请务必在 `develop` 分支提交 `PR`，`release` 分支目前仅是正式版的代码，即发布正式版本后才会从 `develop` 分支进行合并。**
+1. 本项目代码风格为使用2个空格代表一个Tab，因此在提交代码时请注意一下，否则很容易在IDE格式化代码后与原代码产生大量diff，这样会给其他人阅读代码带来极大的困扰。
+1. **提交代码前，请检查代码是否已经格式化，并且保证新增加或者修改的方法都有完整的参数说明，而pub方法必须拥有相应的单元测试并通过测试。**
 
-
-## Developing
+## 开发
 
 To setup the development envrionment run `cargo run`.
 
-## Contributers
+## 贡献者
 
 	MrPan <1049058427@qq.com>
 
 ## Getting help
 
-Labrador is a personal project. At the beginning, I just like Labrador dog because of my hobbies.
-I hope this project will grow more and more lovely. Many practical database functions will
-be added in the future. I hope you can actively help this project grow and put forward suggestions.
-I believe the future will be better and better.
+拉布拉多是个人项目。一开始，我只是喜欢拉布拉多犬，因为我的爱好。
+我希望这个项目会变得越来越可爱。许多实用的其他函数将
+将在将来添加。我希望你能积极帮助这个项目成长并提出建议。
+我相信未来会越来越好。
 
 [#general]: https://discord.com/channels/273534239310479360/274215136414400513
 [#beginners]: https://discord.com/channels/273534239310479360/273541522815713281

@@ -3,7 +3,7 @@ use serde_json::{Value};
 
 use crate::{Amount, errors::LabraError, GoodsDetail, LabradorResult, Payer, RefundAmount, SceneInfo, TradeType};
 use crate::util::{get_nonce_str, get_timestamp, xmlutil};
-use crate::wechat::cryptos::{EncryptV3, WeChatCrypto, WeChatCryptoV3};
+use crate::wechat::cryptos::{EncryptV3, WechatCrypto, WechatCryptoV3};
 
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -12,7 +12,7 @@ use crate::wechat::cryptos::{EncryptV3, WeChatCrypto, WeChatCryptoV3};
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatPayResponse {
+pub struct WechatPayResponse {
     pub appid: Option<String>,
     /// 交易类型
     pub trade_type: String,
@@ -54,7 +54,7 @@ pub struct PlatformCertificateResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatPayResponseV3 {
+pub struct WechatPayResponseV3 {
     pub prepay_id: Option<String>,
     /// 支付跳转链接（H5支付 会返回）
     pub h5_url: Option<String>,
@@ -62,7 +62,7 @@ pub struct WeChatPayResponseV3 {
     pub code_url: Option<String>,
 }
 
-impl WeChatPayResponseV3 {
+impl WechatPayResponseV3 {
     pub fn get_pay_info(&self, trade_type: TradeType, appid: Option<String>, mchid: String, private_key: Option<String>) -> LabradorResult<Value> {
         let timpstamp = get_timestamp() / 1000;
         let nonce_str = get_nonce_str();
@@ -82,7 +82,7 @@ impl WeChatPayResponseV3 {
                     sign_type: "RSA".to_string(), //签名类型，默认为RSA，仅支持RSA。
                     pay_sign: String::default()
                 };
-                result.pay_sign = WeChatCryptoV3::sign(&result.get_sign_str(), &private_key)?;
+                result.pay_sign = WechatCryptoV3::sign(&result.get_sign_str(), &private_key)?;
                 Ok(serde_json::to_value(result)?)
             }
             TradeType::Native => {
@@ -98,7 +98,7 @@ impl WeChatPayResponseV3 {
                     prepay_id: self.prepay_id.to_owned().unwrap_or_default(),
                     sign: "".to_string()
                 };
-                result.sign = WeChatCryptoV3::sign(&result.get_sign_str(), &private_key)?;
+                result.sign = WechatCryptoV3::sign(&result.get_sign_str(), &private_key)?;
                 Ok(serde_json::to_value(result)?)
             }
             _ => Err(LabraError::RequestError("不支持的支付类型".to_string()))
@@ -144,7 +144,7 @@ impl AppResult {
 
 
 #[allow(unused)]
-impl WeChatPayResponse {
+impl WechatPayResponse {
     pub(crate) fn parse_xml(xml: String) -> LabradorResult<Self> {
 
         let package = xmlutil::parse(xml.to_owned());
@@ -165,7 +165,7 @@ impl WeChatPayResponse {
             let mweb_url = xmlutil::evaluate(&doc, "//xml/mweb_url/text()").string();
             let transaction_id = xmlutil::evaluate(&doc, "//xml/transaction_id/text()").string();
             let sign = xmlutil::evaluate(&doc, "//xml/sign/text()").string();
-            Ok(WeChatPayResponse {
+            Ok(WechatPayResponse {
                 appid: appid.into(),
                 trade_type,
                 mch_id,
@@ -191,7 +191,7 @@ impl WeChatPayResponse {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatCloseOrderResponse {
+pub struct WechatCloseOrderResponse {
     pub appid: Option<String>,
     /// 商户号
     pub mch_id: String,
@@ -223,7 +223,7 @@ pub struct WeChatCloseOrderResponse {
 /// <result_msg><![CDATA[OK]]></result_msg>
 /// </xml>
 ///
-impl WeChatCloseOrderResponse {
+impl WechatCloseOrderResponse {
 
     pub fn parse_xml(xml: String) -> LabradorResult<Self> {
         let package = xmlutil::parse(xml.to_owned());
@@ -238,7 +238,7 @@ impl WeChatCloseOrderResponse {
             let sign = xmlutil::evaluate(&doc, "//xml/sign/text()").string();
             let err_code = xmlutil::evaluate(&doc, "//xml/err_code/text()").string();
             let err_code_des = xmlutil::evaluate(&doc, "//xml/err_code_des/text()").string();
-            Ok(WeChatCloseOrderResponse {
+            Ok(WechatCloseOrderResponse {
                 appid: appid.into(),
                 nonce_str: nonce_str.into(),
                 mch_id,
@@ -304,7 +304,7 @@ pub struct RefundPromotionDetail {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatQueryOrderResponseV3 {
+pub struct WechatQueryOrderResponseV3 {
     pub appid: String,
     /// 商户号
     pub mch_id: String,
@@ -355,7 +355,7 @@ pub struct WeChatQueryOrderResponseV3 {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatQueryOrderResponse {
+pub struct WechatQueryOrderResponse {
     pub appid: Option<String>,
     /// 商户号
     pub mch_id: String,
@@ -419,7 +419,7 @@ pub struct WeChatQueryOrderResponse {
 ///
 /// 查询订单返回
 ///
-impl WeChatQueryOrderResponse {
+impl WechatQueryOrderResponse {
     pub fn parse_xml(xml: String) -> LabradorResult<Self> {
         let package = xmlutil::parse(xml.to_owned());
         let doc = package.as_document();
@@ -454,7 +454,7 @@ impl WeChatQueryOrderResponse {
             let coupon_count = xmlutil::evaluate(&doc, "//xml/coupon_count/text()").string();
             let cash_fee = xmlutil::evaluate(&doc, "//xml/cash_fee/text()").string();
             let cash_fee_type = xmlutil::evaluate(&doc, "//xml/cash_fee_type/text()").string();
-            Ok(WeChatQueryOrderResponse {
+            Ok(WechatQueryOrderResponse {
                 appid: appid.into(),
                 nonce_str: nonce_str.into(),
                 mch_id,
@@ -499,7 +499,7 @@ impl WeChatQueryOrderResponse {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatRefundResponseV3 {
+pub struct WechatRefundResponseV3 {
     /// 退款编号
     pub refund_id: String,
     /// 商户订单编号
@@ -552,7 +552,7 @@ pub struct WeChatRefundResponseV3 {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatRefundResponse {
+pub struct WechatRefundResponse {
     pub appid: Option<String>,
     /// 商户号
     pub mch_id: String,
@@ -586,7 +586,7 @@ pub struct WeChatRefundResponse {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatOrderReverseResponse {
+pub struct WechatOrderReverseResponse {
     pub appid: Option<String>,
     /// 商户号
     pub mch_id: String,
@@ -607,7 +607,7 @@ pub struct WeChatOrderReverseResponse {
 }
 
 
-impl WeChatOrderReverseResponse {
+impl WechatOrderReverseResponse {
 
     pub fn parse_xml(xml: String) -> LabradorResult<Self> {
         let package = xmlutil::parse(xml.to_owned());
@@ -624,7 +624,7 @@ impl WeChatOrderReverseResponse {
             let err_code = xmlutil::evaluate(&doc, "//xml/err_code/text()").string();
             let err_code_des = xmlutil::evaluate(&doc, "//xml/err_code_des/text()").string();
             if result_code.eq("SUCCESS") {
-                Ok(WeChatOrderReverseResponse {
+                Ok(WechatOrderReverseResponse {
                     appid: appid.into(),
                     nonce_str: nonce_str.into(),
                     mch_id,
@@ -664,7 +664,7 @@ impl WeChatOrderReverseResponse {
 ///    <refund_fee>1</refund_fee>
 /// </xml>
 ///
-impl WeChatRefundResponse {
+impl WechatRefundResponse {
     pub fn parse_xml(xml: String) -> LabradorResult<Self> {
         let package = xmlutil::parse(xml.to_owned());
         let doc = package.as_document();
@@ -685,7 +685,7 @@ impl WeChatRefundResponse {
             let err_code = xmlutil::evaluate(&doc, "//xml/err_code/text()").string();
             let err_code_des = xmlutil::evaluate(&doc, "//xml/err_code_des/text()").string();
             if result_code.eq("SUCCESS") {
-                Ok(WeChatRefundResponse {
+                Ok(WechatRefundResponse {
                     appid: appid.into(),
                     nonce_str: nonce_str.into(),
                     mch_id,
@@ -718,7 +718,7 @@ impl WeChatRefundResponse {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatQueryRefundResponse {
+pub struct WechatQueryRefundResponse {
     pub appid: Option<String>,
     /// 商户号
     pub mch_id: String,
@@ -755,7 +755,7 @@ pub struct WeChatQueryRefundResponse {
 }
 
 
-impl WeChatQueryRefundResponse {
+impl WechatQueryRefundResponse {
     pub fn parse_xml(xml: String) -> LabradorResult<Self> {
         let package = xmlutil::parse(xml.to_owned());
         let doc = package.as_document();
@@ -777,7 +777,7 @@ impl WeChatQueryRefundResponse {
             let fee_type = xmlutil::evaluate(&doc, "//xml/fee_type/text()").string();
             let cash_fee = xmlutil::evaluate(&doc, "//xml/cash_fee/text()").string();
             if result_code.eq("SUCCESS") {
-                Ok(WeChatQueryRefundResponse {
+                Ok(WechatQueryRefundResponse {
                     appid: appid.into(),
                     nonce_str: nonce_str.into(),
                     mch_id,
@@ -815,7 +815,7 @@ impl WeChatQueryRefundResponse {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatQueryRefundResponseV3 {
+pub struct WechatQueryRefundResponseV3 {
     /// 微信支付退款号
     pub refund_id: String,
     /// 微信交易编号
@@ -873,7 +873,7 @@ pub struct WeChatQueryRefundResponseV3 {
 
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct WeChatPayNotifyResponse {
+pub struct WechatPayNotifyResponse {
     pub appid: Option<String>,
     /// 交易类型
     pub trade_type: String,
@@ -924,14 +924,14 @@ pub struct WeChatPayNotifyResponse {
 
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct WeChatPayNotifyResponseV3 {
+pub struct WechatPayNotifyResponseV3 {
     /// 源数据
     pub raw_data: Option<OriginNotifyResponse>,
     /// 解密后的数据
     pub result: Option<DecryptNotifyResult>,
 }
 
-impl WeChatPayNotifyResponseV3 {
+impl WechatPayNotifyResponseV3 {
     pub fn decrypt_result(&self) -> DecryptNotifyResult {
         if let Some(res) = self.result.to_owned() {
             res
@@ -956,14 +956,14 @@ impl WeChatPayNotifyResponseV3 {
 
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct WeChatRefundNotifyResponseV3 {
+pub struct WechatRefundNotifyResponseV3 {
     /// 源数据
     pub raw_data: Option<OriginNotifyResponse>,
     /// 解密后的数据
     pub result: Option<DecryptRefundNotifyResult>,
 }
 
-impl WeChatRefundNotifyResponseV3 {
+impl WechatRefundNotifyResponseV3 {
     pub fn decrypt_result(&self) -> DecryptRefundNotifyResult {
         if let Some(res) = self.result.to_owned() {
             res
@@ -1162,7 +1162,7 @@ pub struct OriginNotifyResponse {
 }
 
 #[allow(unused)]
-impl WeChatPayNotifyResponse {
+impl WechatPayNotifyResponse {
     pub fn parse_xml(xml: String) -> LabradorResult<Self> {
         let package = xmlutil::parse(xml.to_owned());
         let doc = package.as_document();
@@ -1191,7 +1191,7 @@ impl WeChatPayNotifyResponse {
             let attach = xmlutil::evaluate(&doc, "//xml/attach/text()").string();
             let err_code = xmlutil::evaluate(&doc, "//xml/err_code/text()").string();
             let err_code_des = xmlutil::evaluate(&doc, "//xml/err_code_des/text()").string();
-            Ok(WeChatPayNotifyResponse {
+            Ok(WechatPayNotifyResponse {
                 appid: appid.into(),
                 trade_type,
                 bank_type: bank_type.into(),
@@ -1237,7 +1237,7 @@ impl WeChatPayNotifyResponse {
 /// </xml>
 ///
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WeChatRefundNotifyResponse {
+pub struct WechatRefundNotifyResponse {
     pub appid: Option<String>,
     /// 加密字符串
     pub nonce_str: Option<String>,
@@ -1271,7 +1271,7 @@ pub struct WeChatRefundNotifyResponse {
 /// </root>
 ///
 #[derive(Debug, Serialize, Deserialize,Clone)]
-pub struct WeChatDecryptRefundNotifyResponse {
+pub struct WechatDecryptRefundNotifyResponse {
     /// 退款编号
     pub out_refund_no: String,
     /// 退款商户订单号
@@ -1301,8 +1301,8 @@ pub struct WeChatDecryptRefundNotifyResponse {
 }
 
 #[allow(unused)]
-impl WeChatRefundNotifyResponse {
-    pub fn parse_xml(xml: String, appkey: &str) -> LabradorResult<WeChatDecryptRefundNotifyResponse> {
+impl WechatRefundNotifyResponse {
+    pub fn parse_xml(xml: String, appkey: &str) -> LabradorResult<WechatDecryptRefundNotifyResponse> {
         let package = xmlutil::parse(xml.to_owned());
         let doc = package.as_document();
         let return_code = xmlutil::evaluate(&doc, "//xml/return_code/text()").string();
@@ -1312,7 +1312,7 @@ impl WeChatRefundNotifyResponse {
             let _result_code = xmlutil::evaluate(&doc, "//xml/result_code/text()").string();
             let _return_msg = xmlutil::evaluate(&doc, "//xml/return_msg/text()").string();
             let req_info = xmlutil::evaluate(&doc, "//xml/req_info/text()").string();
-            let _refund_msg = WeChatCrypto::decrypt_data_refund(appkey,req_info.as_str())?;
+            let _refund_msg = WechatCrypto::decrypt_data_refund(appkey,req_info.as_str())?;
             let refund_package = xmlutil::parse(_refund_msg.to_owned());
             let refund_doc = refund_package.as_document();
             let out_refund_no = xmlutil::evaluate(&refund_doc, "//root/out_refund_no/text()").string();
@@ -1328,7 +1328,7 @@ impl WeChatRefundNotifyResponse {
             let success_time = xmlutil::evaluate(&refund_doc, "//root/success_time/text()").string();
             let total_fee = xmlutil::evaluate(&refund_doc, "//root/total_fee/text()").string();
             let transaction_id = xmlutil::evaluate(&refund_doc, "//root/transaction_id/text()").string();
-            Ok(WeChatDecryptRefundNotifyResponse {
+            Ok(WechatDecryptRefundNotifyResponse {
                 out_refund_no,
                 out_trade_no,
                 refund_account,

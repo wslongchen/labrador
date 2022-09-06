@@ -3,22 +3,22 @@ use std::vec;
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
-use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, WeChatMpClient, LabradorResult, LabraError, get_timestamp};
+use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, WechatMpClient, LabradorResult, LabraError, get_timestamp};
 use crate::wechat::mp::constants::MEMBER_CARD;
 use crate::wechat::mp::method::{MpMemeberCardMethod, WechatMpMethod};
 
 /// 会员卡相关.
 #[derive(Debug, Clone)]
-pub struct WeChatMpMember<'a, T: SessionStore> {
-    client: &'a WeChatMpClient<T>,
+pub struct WechatMpMember<'a, T: SessionStore> {
+    client: &'a WechatMpClient<T>,
 }
 
 #[allow(unused)]
-impl<'a, T: SessionStore> WeChatMpMember<'a, T> {
+impl<'a, T: SessionStore> WechatMpMember<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMpClient<T>) -> WeChatMpMember<T> {
-        WeChatMpMember {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpMember<T> {
+        WechatMpMember {
             client,
         }
     }

@@ -1,20 +1,20 @@
-use crate::{session::SessionStore, errors::LabraError, request::{RequestType}, WechatCommonResponse, WeChatMpClient, LabradorResult};
+use crate::{session::SessionStore, errors::LabraError, request::{RequestType}, WechatCommonResponse, WechatMpClient, LabradorResult};
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 use crate::wechat::mp::constants::{QR_LIMIT_SCENE, QR_SCENE};
 use crate::wechat::mp::method::{MpQrCodeMethod, WechatMpMethod};
 
 #[derive(Debug, Clone)]
-pub struct WeChatMpQRCode<'a, T: SessionStore> {
-    client: &'a WeChatMpClient<T>,
+pub struct WechatMpQRCode<'a, T: SessionStore> {
+    client: &'a WechatMpClient<T>,
 }
 
 #[allow(unused)]
-impl<'a, T: SessionStore> WeChatMpQRCode<'a, T> {
+impl<'a, T: SessionStore> WechatMpQRCode<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMpClient<T>) -> WeChatMpQRCode<T> {
-        WeChatMpQRCode {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpQRCode<T> {
+        WechatMpQRCode {
             client,
         }
     }

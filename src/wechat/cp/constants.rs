@@ -13,12 +13,17 @@ pub static LANG: &str = "lang";
 pub static ZH_CN: &str = "zh_CN";
 pub static SECRET: &str = "secret";
 pub static ACCESS_TOKEN: &str = "access_token";
+pub static PROVIDER_ACCESS_TOKEN: &str = "provider_access_token";
 pub static REFRESH_TOKEN: &str = "refresh_token";
 pub static EXTERNAL_USERID: &str = "external_userid";
 pub static CURSOR: &str = "cursor";
 pub static USERID: &str = "userid";
 pub static MEDIA_TYPE: &str = "media_type";
+pub static TYPE: &str = "type";
 pub static ATTACHMENT_TYPE: &str = "attachment_type";
+pub static AUTH_URL_INSTALL: &str = "https://open.work.weixin.qq.com/3rdapp/install";
+
+pub static ACCESS_TOKEN_KEY: &str = ":accessTokenKey:";
 
 /**
  * 不弹出授权页面，直接跳转，只能获取用户openid.
@@ -57,3 +62,29 @@ pub static WELCOME_MSG_TYPE_MINIPROGRAM: &str = "miniprogram";
  * 文件消息.
  */
 pub static WELCOME_MSG_TYPE_FILE: &str = "file";
+
+
+/**
+ * 文本消息.
+ */
+pub static GROUP_ROBOT_MSG_TEXT: &str = "text";
+
+/**
+ * 图片消息.
+ */
+pub static GROUP_ROBOT_MSG_IMAGE: &str = "image";
+
+/**
+ * markdown消息.
+ */
+pub static GROUP_ROBOT_MSG_MARKDOWN: &str = "markdown";
+
+/**
+ * 图文消息（点击跳转到外链）.
+ */
+pub static GROUP_ROBOT_MSG_NEWS: &str = "news";
+
+/**
+ * 文件类型消息.
+ */
+pub static GROUP_ROBOT_MSG_FILE: &str = "file";

@@ -1,20 +1,20 @@
 use serde::{Serialize, Deserialize};
 
-use crate::{session::SessionStore, request::{RequestType}, wechat::{mp::method::WechatMpMethod}, WechatCommonResponse, WeChatMpClient, LabradorResult, LabraError};
+use crate::{session::SessionStore, request::{RequestType}, wechat::{mp::method::WechatMpMethod}, WechatCommonResponse, WechatMpClient, LabradorResult, LabraError};
 use crate::wechat::mp::constants::{ACCESS_TOKEN, APPID, CODE, GRANT_TYPE, LANG, OPENID, REFRESH_TOKEN, SECRET, ZH_CN};
 use crate::wechat::mp::method::Oauth2Method;
 
 
 #[derive(Debug, Clone)]
 pub struct WechatMpOauth2<'a, T: SessionStore> {
-    client: &'a WeChatMpClient<T>,
+    client: &'a WechatMpClient<T>,
 }
 
 #[allow(unused)]
 impl<'a, T: SessionStore> WechatMpOauth2<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMpClient<T>) -> WechatMpOauth2<T> {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpOauth2<T> {
         WechatMpOauth2 {
             client,
         }

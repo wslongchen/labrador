@@ -21,21 +21,21 @@
 //! 
 use serde::{Deserialize, Serialize};
 
-use crate::{session::SessionStore, request::{RequestType}, errors::LabraError, WechatCommonResponse, WeChatMpClient, LabradorResult};
+use crate::{session::SessionStore, request::{RequestType}, errors::LabraError, WechatCommonResponse, WechatMpClient, LabradorResult};
 use crate::wechat::mp::method::{MpMenuMethod, WechatMpMethod};
 
 
 #[derive(Debug, Clone)]
-pub struct WeChatMpMenu<'a, T: SessionStore> {
-    client: &'a WeChatMpClient<T>,
+pub struct WechatMpMenu<'a, T: SessionStore> {
+    client: &'a WechatMpClient<T>,
 }
 
 #[allow(unused)]
-impl<'a, T: SessionStore> WeChatMpMenu<'a, T> {
+impl<'a, T: SessionStore> WechatMpMenu<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMpClient<T>) -> WeChatMpMenu<T> {
-        WeChatMpMenu {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpMenu<T> {
+        WechatMpMenu {
             client,
         }
     }

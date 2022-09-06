@@ -1,7 +1,7 @@
 pub trait MessageParser {
-    type WeChatMessage;
+    type WechatMessage;
 
-    fn from_xml(xml: &str) -> Self::WeChatMessage;
+    fn from_xml(xml: &str) -> Self::WechatMessage;
 }
 
 mod text;

@@ -16,7 +16,7 @@ pub struct TextMessage {
 }
 
 impl MessageParser for TextMessage {
-    type WeChatMessage = TextMessage;
+    type WechatMessage = TextMessage;
 
     #[inline]
     fn from_xml(xml: &str) -> TextMessage {

@@ -17,7 +17,7 @@ pub struct LinkMessage {
 }
 
 impl MessageParser for LinkMessage {
-    type WeChatMessage = LinkMessage;
+    type WechatMessage = LinkMessage;
 
     #[inline]
     fn from_xml(xml: &str) -> LinkMessage {

@@ -24,21 +24,21 @@ use bytes::Bytes;
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
-use crate::{session::SessionStore, LabradorResult, RequestBody, RequestType, WeChatMpClient, WechatCommonResponse, WechatRequest, get_nonce_str, request};
+use crate::{session::SessionStore, LabradorResult, RequestBody, RequestType, WechatMpClient, WechatCommonResponse, WechatRequest, get_nonce_str, request};
 use crate::wechat::mp::constants::MATERIAL_TYPE_NEWS;
 use crate::wechat::mp::method::{MpMediaMethod, WechatMpMethod};
 
 
 #[derive(Debug, Clone)]
 pub struct WechatMpMedia<'a, T: SessionStore> {
-    client: &'a WeChatMpClient<T>,
+    client: &'a WechatMpClient<T>,
 }
 
 #[allow(unused)]
 impl<'a, T: SessionStore> WechatMpMedia<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMpClient<T>) -> WechatMpMedia<T> {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpMedia<T> {
         WechatMpMedia {
             client,
         }

@@ -4,20 +4,20 @@ use serde_json::{ Value};
 use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult};
 use crate::wechat::constants::{KEFU_MSGTYPE_IMAGE, KEFU_MSGTYPE_MA_PAGE, KEFU_MSGTYPE_TEXT};
 use crate::wechat::miniapp::method::{MaMessageMethod, WechatMaMethod};
-use crate::wechat::miniapp::WeChatMaClient;
+use crate::wechat::miniapp::WechatMaClient;
 
 
 /// 消息发送接口.
 #[derive(Debug, Clone)]
 pub struct WechatMaMessage<'a, T: SessionStore> {
-    client: &'a WeChatMaClient<T>,
+    client: &'a WechatMaClient<T>,
 }
 
 #[allow(unused)]
 impl<'a, T: SessionStore> WechatMaMessage<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMaClient<T>) -> WechatMaMessage<T> {
+    pub fn new(client: &WechatMaClient<T>) -> WechatMaMessage<T> {
         WechatMaMessage {
             client,
         }

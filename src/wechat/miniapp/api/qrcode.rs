@@ -2,7 +2,7 @@ use crate::{session::SessionStore, errors::LabraError, request::{RequestType}, L
 use bytes::Bytes;
 use serde::{Serialize, Deserialize};
 use crate::wechat::miniapp::method::{MaQrCodeMethod, WechatMaMethod};
-use crate::wechat::miniapp::WeChatMaClient;
+use crate::wechat::miniapp::WechatMaClient;
 
 ///<pre>
 /// 二维码相关操作接口.
@@ -13,14 +13,14 @@ use crate::wechat::miniapp::WeChatMaClient;
 ///
 #[derive(Debug, Clone)]
 pub struct WechatMaQrcode<'a, T: SessionStore> {
-    client: &'a WeChatMaClient<T>,
+    client: &'a WechatMaClient<T>,
 }
 
 #[allow(unused)]
 impl<'a, T: SessionStore> WechatMaQrcode<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMaClient<T>) -> WechatMaQrcode<T> {
+    pub fn new(client: &WechatMaClient<T>) -> WechatMaQrcode<T> {
         WechatMaQrcode {
             client,
         }

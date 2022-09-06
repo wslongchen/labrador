@@ -6,21 +6,21 @@ use bytes::Bytes;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
 
-use crate::{session::SessionStore, LabradorResult, RequestBody, RequestType, WeChatCpClient, WechatRequest, WechatCommonResponse, request, get_nonce_str};
+use crate::{session::SessionStore, LabradorResult, RequestBody, RequestType, WechatCpClient, WechatRequest, WechatCommonResponse, request, get_nonce_str};
 use crate::wechat::cp::constants::{ATTACHMENT_TYPE, MEDIA_TYPE};
 use crate::wechat::cp::method::{CpMediaMethod, WechatCpMethod};
 
 
 #[derive(Debug, Clone)]
 pub struct WechatCpMedia<'a, T: SessionStore> {
-    client: &'a WeChatCpClient<T>,
+    client: &'a WechatCpClient<T>,
 }
 
 #[allow(unused)]
 impl<'a, T: SessionStore> WechatCpMedia<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatCpClient<T>) -> WechatCpMedia<T> {
+    pub fn new(client: &WechatCpClient<T>) -> WechatCpMedia<T> {
         WechatCpMedia {
             client,
         }

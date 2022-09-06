@@ -3,22 +3,22 @@ use std::vec;
 use serde::{Serialize, Deserialize, Serializer};
 use serde_json::{json, Value};
 
-use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, WeChatMpClient, LabradorResult, LabraError, get_timestamp, TicketType, get_nonce_str, WeChatCrypto, BaseInfo, AdvancedInfo};
+use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, WechatMpClient, LabradorResult, LabraError, get_timestamp, TicketType, get_nonce_str, WechatCrypto, BaseInfo, AdvancedInfo};
 use crate::wechat::mp::constants::{QR_CODE};
 use crate::wechat::mp::method::{MpCardMethod, WechatMpMethod};
 
 /// 卡券相关.
 #[derive(Debug, Clone)]
-pub struct WeChatMpCard<'a, T: SessionStore> {
-    client: &'a WeChatMpClient<T>,
+pub struct WechatMpCard<'a, T: SessionStore> {
+    client: &'a WechatMpClient<T>,
 }
 
 #[allow(unused)]
-impl<'a, T: SessionStore> WeChatMpCard<'a, T> {
+impl<'a, T: SessionStore> WechatMpCard<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMpClient<T>) -> WeChatMpCard<T> {
-        WeChatMpCard {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpCard<T> {
+        WechatMpCard {
             client,
         }
     }
@@ -49,7 +49,7 @@ impl<'a, T: SessionStore> WeChatMpCard<'a, T> {
         params.push(noncestr.to_string());
         params.push(api_ticket);
         params.sort();
-        let signature = WeChatCrypto::get_sha1_sign(&params.join(""));
+        let signature = WechatCrypto::get_sha1_sign(&params.join(""));
         Ok(WechatMpCardApiSignature{
             app_id: self.client.appid.to_string(),
             card_id: "".to_string(),
@@ -451,7 +451,7 @@ pub struct WechatMpCardApiSignature {
 #[allow(unused)]
 #[derive(Serialize, Deserialize)]
 pub struct WechatMpCardResponse {
-    pub card: WechatMpCard,
+    pub card: WechatMpCardInfo,
     pub user_card_status: Option<String>,
     pub can_consume: bool,
     pub out_str: Option<String>,
@@ -463,7 +463,7 @@ pub struct WechatMpCardResponse {
 /// 微信卡券
 #[allow(unused)]
 #[derive(Serialize, Deserialize)]
-pub struct WechatMpCard {
+pub struct WechatMpCardInfo {
     pub card_id: String,
     pub begin_time: i64,
     pub end_time: i64,

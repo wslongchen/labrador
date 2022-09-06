@@ -1,24 +1,27 @@
-use crate::{session::SessionStore, client::APIClient, request::{Method, RequestType, LabraResponse, LabraRequest, RequestMethod}, util::current_timestamp, LabradorResult, SimpleStorage, WeChatCrypto, WechatRequest, get_timestamp, get_nonce_str, WechatCommonResponse};
+use crate::{session::SessionStore, client::APIClient, request::{Method, RequestType, LabraResponse, LabraRequest, RequestMethod}, util::current_timestamp, LabradorResult, SimpleStorage, WechatCrypto, WechatRequest, get_timestamp, get_nonce_str, WechatCommonResponse};
 use serde::{Serialize, Deserialize};
-use serde_json::Value;
+use serde_json::{json, Value};
 
 mod method;
 mod api;
 #[allow(unused)]
 mod constants;
+mod tp;
 
 pub use api::*;
+pub use tp::*;
 use crate::wechat::cp::constants::{ACCESS_TOKEN, CORPID, CORPSECRET};
 use crate::wechat::cp::method::{WechatCpMethod};
 
 #[allow(unused)]
 #[derive(Debug, Clone)]
-pub struct WeChatCpClient<T: SessionStore> {
+pub struct WechatCpClient<T: SessionStore> {
     corp_id: String,
     corp_secret: String,
     token: Option<String>,
     aes_key: Option<String>,
     oauth2_redirect_uri: Option<String>,
+    webhook_url: Option<String>,
     agent_id: Option<i32>,
     client: APIClient<T>,
 }
@@ -59,16 +62,27 @@ pub struct AgentJsapiSignature {
     pub timestamp: i64,
 }
 
-#[allow(unused)]
-impl<T: SessionStore> WeChatCpClient<T> {
 
-    fn from_client(client: APIClient<T>) -> WeChatCpClient<T> {
-        WeChatCpClient {
+#[allow(unused)]
+#[derive(Serialize, Deserialize)]
+pub struct WechatCpProviderToken {
+    /// 服务商的access_token，最长为512字节。
+    pub provider_access_token: String,
+    /// provider_access_token有效期（秒）
+    pub expires_in: i64,
+}
+
+#[allow(unused)]
+impl<T: SessionStore> WechatCpClient<T> {
+
+    fn from_client(client: APIClient<T>) -> WechatCpClient<T> {
+        WechatCpClient {
             corp_id: client.app_key.to_owned(),
             corp_secret: client.secret.to_owned(),
             token: None,
             aes_key: None,
             oauth2_redirect_uri: None,
+            webhook_url: None,
             agent_id: None,
             client
         }
@@ -89,14 +103,19 @@ impl<T: SessionStore> WeChatCpClient<T> {
         self
     }
 
-    /// get the wechat client
-    pub fn new<S: Into<String>>(crop_id: S, crop_secret: S) -> WeChatCpClient<SimpleStorage> {
-        let client = APIClient::<SimpleStorage>::from_session(crop_id.into(), crop_secret.into(), "https://qyapi.weixin.qq.com", SimpleStorage::new());
-        WeChatCpClient::<SimpleStorage>::from_client(client)
+    pub fn webhook_url(mut self, webhook_url: &str) -> Self {
+        self.webhook_url = webhook_url.to_string().into();
+        self
     }
 
     /// get the wechat client
-    pub fn from_session<S: Into<String>>(crop_id: S, crop_secret: S, session: T) -> WeChatCpClient<T> {
+    pub fn new<S: Into<String>>(crop_id: S, crop_secret: S) -> WechatCpClient<SimpleStorage> {
+        let client = APIClient::<SimpleStorage>::from_session(crop_id.into(), crop_secret.into(), "https://qyapi.weixin.qq.com", SimpleStorage::new());
+        WechatCpClient::<SimpleStorage>::from_client(client)
+    }
+
+    /// get the wechat client
+    pub fn from_session<S: Into<String>>(crop_id: S, crop_secret: S, session: T) -> WechatCpClient<T> {
         let client = APIClient::from_session(crop_id.into(), crop_secret.into(), "https://qyapi.weixin.qq.com", session);
         Self::from_client(client)
     }
@@ -119,14 +138,28 @@ impl<T: SessionStore> WeChatCpClient<T> {
             let expires_in = res.expires_in;
             // 预留200秒的时间
             let expires_at = current_timestamp() + expires_in - 200;
-            let token_key = format!("{}_access_token_cp", self.corp_id);
-            let expires_key = format!("{}_expires_at_cp", self.corp_id);
             session.set(&token_key, token.to_owned(), Some(expires_in as usize));
             session.set(&expires_key, expires_at, Some(expires_in as usize));
             Ok(token.to_string())
         } else {
             Ok(token)
         }
+    }
+    
+    /// <pre>
+    /// 获取服务商凭证
+    /// 文档地址：<a href="https://work.weixin.qq.com/api/doc#90001/90143/91200">地址</a>
+    /// 请求方式：POST（HTTPS）
+    /// 请求地址： <a href="https://qyapi.weixin.qq.com/cgi-bin/service/get_provider_token">地址</a>
+    /// </pre>
+    #[inline]
+    pub async fn get_provider_token(&self, corp_id: &str, provider_secret: &str) -> LabradorResult<WechatCpProviderToken> {
+        let mut req = LabraRequest::new().url(WechatCpMethod::GetProviderToken.get_method()).json(json!({
+            "corpid": corp_id,
+            "provider_secret": provider_secret,
+        })).method(Method::Post).req_type(RequestType::Json);
+        let res = self.client.request(req).await?.json::<WechatCpProviderToken>()?;
+        Ok(res)
     }
 
     ///
@@ -135,8 +168,8 @@ impl<T: SessionStore> WeChatCpClient<T> {
     /// [详情](http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421135319&token=&lang=zh_CN)
     /// </pre>
     pub fn check_signature(&self, signature: &str, timestamp: i64, nonce: &str, data: &str) -> LabradorResult<bool> {
-        let crp = WeChatCrypto::new(&self.aes_key.to_owned().unwrap_or_default());
-        let _ = crp.check_signature(signature, timestamp, nonce, data, "", &self.token.to_owned().unwrap_or_default())?;
+        let crp = WechatCrypto::new(&self.aes_key.to_owned().unwrap_or_default());
+        let _ = crp.check_signature(signature, timestamp, nonce, data, &self.token.to_owned().unwrap_or_default())?;
         Ok(true)
     }
 
@@ -150,7 +183,7 @@ impl<T: SessionStore> WeChatCpClient<T> {
         let timestamp = get_timestamp() / 1000;
         let noncestr = get_nonce_str();
         let jsapi_ticket = self.get_jsapi_ticket(false).await?;
-        let signature = WeChatCrypto::get_sha1_sign(&vec!["jsapi_ticket=".to_string() + &jsapi_ticket,
+        let signature = WechatCrypto::get_sha1_sign(&vec!["jsapi_ticket=".to_string() + &jsapi_ticket,
                                                          "noncestr=".to_string() + &noncestr,
                                                          "timestamp=".to_string() + &timestamp.to_string(),"url=".to_string() + &url].join("&"));
         Ok(JsapiSignature{
@@ -172,7 +205,7 @@ impl<T: SessionStore> WeChatCpClient<T> {
         let timestamp = get_timestamp() / 1000;
         let noncestr = get_nonce_str();
         let jsapi_ticket = self.get_jsapi_ticket(false).await?;
-        let signature = WeChatCrypto::get_sha1_sign(&vec!["jsapi_ticket=".to_string() + &jsapi_ticket,
+        let signature = WechatCrypto::get_sha1_sign(&vec!["jsapi_ticket=".to_string() + &jsapi_ticket,
                                                          "noncestr=".to_string() + &noncestr,
                                                          "timestamp=".to_string() + &timestamp.to_string(),"url=".to_string() + &url].join("&"));
         Ok(AgentJsapiSignature{
@@ -281,19 +314,16 @@ impl<T: SessionStore> WeChatCpClient<T> {
         if !access_token.is_empty() && method.need_token() {
             querys.push((ACCESS_TOKEN.to_string(), access_token));
         }
-        let mut req = LabraRequest::new().url(method.get_method()).params(querys).method(Method::Post).json(data).req_type(request_type);
-        self.client.request(req).await
+        self.client.post(method, querys, data, request_type).await
     }
 
     /// 发送GET请求
-    async fn get(&self, method: WechatCpMethod, params: Vec<(&str, &str)>, request_type: RequestType) -> LabradorResult<LabraResponse> {
+    async fn get(&self, method: WechatCpMethod, mut params: Vec<(&str, &str)>, request_type: RequestType) -> LabradorResult<LabraResponse> {
         let access_token = self.access_token(false).await?;
-        let mut querys = params.into_iter().map(|(k, v)| (k.to_string(), v.to_string())).collect::<Vec<(String,String)>>();
         if !access_token.is_empty() && method.need_token() {
-            querys.push((ACCESS_TOKEN.to_string(), access_token));
+            params.push((ACCESS_TOKEN, access_token.as_str()));
         }
-        let mut req = LabraRequest::<String>::new().url(method.get_method()).params(querys).method(Method::Get).req_type(request_type);
-        self.client.request(req).await
+        self.client.get(method, params, request_type).await
     }
 
     /// codesssion相关服务

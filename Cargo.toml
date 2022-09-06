@@ -1,6 +1,6 @@
 [package]
 name = "labrador"
-version = "0.1.8"
+version = "0.1.9"
 authors = ["mrpan <1049058427@qq.com>"]
 edition = "2018"
 description = "Labrador - Mini thirdpart client for rust."

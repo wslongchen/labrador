@@ -3,29 +3,29 @@ use serde_json::{json};
 
 use serde::{Serialize, Deserialize};
 
-use crate::{session::SessionStore, errors::LabraError, wechat::{cryptos::WeChatCrypto}, request::RequestType, WechatCommonResponse, LabradorResult};
+use crate::{session::SessionStore, errors::LabraError, wechat::{cryptos::WechatCrypto}, request::RequestType, WechatCommonResponse, LabradorResult};
 use crate::wechat::miniapp::method::{MaUserMethod, WechatMaMethod};
-use crate::wechat::miniapp::WeChatMaClient;
+use crate::wechat::miniapp::WechatMaClient;
 
 /// 用户信息相关操作
 #[derive(Debug, Clone)]
-pub struct WeChatMaUser<'a, T: SessionStore> {
-    client: &'a WeChatMaClient<T>,
+pub struct WechatMaUser<'a, T: SessionStore> {
+    client: &'a WechatMaClient<T>,
 }
 
 #[allow(unused)]
-impl<'a, T: SessionStore> WeChatMaUser<'a, T> {
+impl<'a, T: SessionStore> WechatMaUser<'a, T> {
 
     #[inline]
-    pub fn new(client: &WeChatMaClient<T>) -> WeChatMaUser<T> {
-        WeChatMaUser {
+    pub fn new(client: &WechatMaClient<T>) -> WechatMaUser<T> {
+        WechatMaUser {
             client,
         }
     }
 
     /// 解密用户敏感数据
     pub fn decrypt_user_info(&self, session_key: &str, encrypted_data: &str, iv: &str) -> LabradorResult<WechatMaUserResponse> {
-        let result = WeChatCrypto::decrypt_data(session_key, encrypted_data, iv)?;
+        let result = WechatCrypto::decrypt_data(session_key, encrypted_data, iv)?;
         serde_json::from_str::<WechatMaUserResponse>(&result).map_err(LabraError::from)
     }
 
@@ -44,7 +44,7 @@ impl<'a, T: SessionStore> WeChatMaUser<'a, T> {
         let req = json!({
             "kv_list": params
         });
-        let signature = WeChatCrypto::create_hmac_sha256_sign(session_key, &req.to_string())?;
+        let signature = WechatCrypto::create_hmac_sha256_sign(session_key, &req.to_string())?;
         self.client.post(WechatMaMethod::User(MaUserMethod::SetUserStorage), vec![("appid".to_string(), self.client.secret.to_string()),
           ("signature".to_string(), signature),("openid".to_string(), openid.to_string()),("sig_method".to_string(), "hmac_sha256".to_string()),], &req, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
@@ -61,7 +61,7 @@ impl<'a, T: SessionStore> WeChatMaUser<'a, T> {
 
     /// 解密用户手机号信息.
     pub async fn decrypt_phone_info(&self, session_key: &str, encrypted_data: &str, iv: &str) -> LabradorResult<PhoneInfo> {
-        let result = WeChatCrypto::decrypt_data(session_key, encrypted_data, iv)?;
+        let result = WechatCrypto::decrypt_data(session_key, encrypted_data, iv)?;
         serde_json::from_str::<PhoneInfo>(&result).map_err(LabraError::from)
     }
 }

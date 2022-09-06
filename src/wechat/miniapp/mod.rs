@@ -1,4 +1,4 @@
-use crate::{session::SessionStore, client::APIClient, request::{Method, RequestType, LabraResponse, LabraRequest, RequestMethod}, util::current_timestamp, LabradorResult, SimpleStorage, WeChatCrypto, WechatRequest};
+use crate::{session::SessionStore, client::APIClient, request::{Method, RequestType, LabraResponse, LabraRequest, RequestMethod}, util::current_timestamp, LabradorResult, SimpleStorage, WechatCrypto, WechatRequest};
 use serde::{Serialize, Deserialize};
 
 mod method;
@@ -12,7 +12,7 @@ use crate::wechat::miniapp::method::WechatMaMethod;
 
 #[allow(unused)]
 #[derive(Debug, Clone)]
-pub struct WeChatMaClient<T: SessionStore> {
+pub struct WechatMaClient<T: SessionStore> {
     appid: String,
     secret: String,
     token: Option<String>,
@@ -28,10 +28,10 @@ pub struct AccessTokenResponse{
 }
 
 #[allow(unused)]
-impl<T: SessionStore> WeChatMaClient<T> {
+impl<T: SessionStore> WechatMaClient<T> {
 
-    fn from_client(client: APIClient<T>) -> WeChatMaClient<T> {
-        WeChatMaClient {
+    fn from_client(client: APIClient<T>) -> WechatMaClient<T> {
+        WechatMaClient {
             appid: client.app_key.to_owned(),
             secret: client.secret.to_owned(),
             token: None,
@@ -51,13 +51,13 @@ impl<T: SessionStore> WeChatMaClient<T> {
     }
 
     /// get the wechat client
-    pub fn new<S: Into<String>>(appid: S, secret: S) -> WeChatMaClient<SimpleStorage> {
+    pub fn new<S: Into<String>>(appid: S, secret: S) -> WechatMaClient<SimpleStorage> {
         let client = APIClient::<SimpleStorage>::from_session(appid.into(), secret.into(), "https://api.weixin.qq.com", SimpleStorage::new());
-        WeChatMaClient::<SimpleStorage>::from_client(client)
+        WechatMaClient::<SimpleStorage>::from_client(client)
     }
 
     /// get the wechat client
-    pub fn from_session<S: Into<String>>(appid: S, secret: S, session: T) -> WeChatMaClient<T> {
+    pub fn from_session<S: Into<String>>(appid: S, secret: S, session: T) -> WechatMaClient<T> {
         let client = APIClient::from_session(appid.into(), secret.into(), "https://api.weixin.qq.com", session);
         Self::from_client(client)
     }
@@ -95,8 +95,8 @@ impl<T: SessionStore> WeChatMaClient<T> {
     /// 详情(http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421135319&token=&lang=zh_CN)
     /// </pre>
     pub fn check_signature(&self, signature: &str, timestamp: i64, nonce: &str, echo_str: &str) -> LabradorResult<bool> {
-        let crp = WeChatCrypto::new(&self.aes_key.to_owned().unwrap_or_default());
-        let _ = crp.check_signature(signature, timestamp, nonce, echo_str, "", &self.token.to_owned().unwrap_or_default())?;
+        let crp = WechatCrypto::new(&self.aes_key.to_owned().unwrap_or_default());
+        let _ = crp.check_signature(signature, timestamp, nonce, echo_str, &self.token.to_owned().unwrap_or_default())?;
         Ok(true)
     }
 
@@ -124,19 +124,16 @@ impl<T: SessionStore> WeChatMaClient<T> {
         if !access_token.is_empty() && method.need_token() {
             querys.push((ACCESS_TOKEN.to_string(), access_token));
         }
-        let mut req = LabraRequest::new().url(method.get_method()).params(querys).method(Method::Post).json(data).req_type(request_type);
-        self.client.request(req).await
+        self.client.post(method, querys, data, request_type).await
     }
 
     /// 发送GET请求
-    async fn get(&self, method: WechatMaMethod, params: Vec<(&str, &str)>, request_type: RequestType) -> LabradorResult<LabraResponse> {
+    async fn get(&self, method: WechatMaMethod, mut params: Vec<(&str, &str)>, request_type: RequestType) -> LabradorResult<LabraResponse> {
         let access_token = self.access_token(false).await?;
-        let mut querys = params.into_iter().map(|(k, v)| (k.to_string(), v.to_string())).collect::<Vec<(String,String)>>();
         if !access_token.is_empty() && method.need_token() {
-            querys.push((ACCESS_TOKEN.to_string(), access_token));
+            params.push((ACCESS_TOKEN, access_token.as_str()));
         }
-        let mut req = LabraRequest::<String>::new().url(method.get_method()).params(querys).method(Method::Get).req_type(request_type);
-        self.client.request(req).await
+        self.client.get(method, params, request_type).await
     }
 
     /// codesssion相关服务
@@ -149,8 +146,8 @@ impl<T: SessionStore> WeChatMaClient<T> {
         WechatMaQrcode::new(self)
     }
     /// 用户相关操作接口
-    pub fn user(&self) -> WeChatMaUser<T> {
-        WeChatMaUser::new(self)
+    pub fn user(&self) -> WechatMaUser<T> {
+        WechatMaUser::new(self)
     }
     /// 媒体操作接口
     pub fn media(&self) -> WechatMaMedia<T> {

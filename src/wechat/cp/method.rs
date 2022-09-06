@@ -4,15 +4,26 @@ use crate::RequestMethod;
 #[derive(Debug, PartialEq, Clone)]
 pub enum WechatCpMethod {
     AccessToken,
+    GetProviderToken,
+    GetSuiteToken,
+    GetCorpToken,
     JsCode2Session,
+    GetPermanentCode,
+    GetPreAuthCode,
     GetJsapiTicket,
     GetAgentConfigTicket,
+    GetSuiteJsapiTicket,
     GetCallbackIp,
+    GetAuthInfo,
     Media(CpMediaMethod),
+    Tag(CpTagMethod),
+    License(CpLicenseMethod),
     Oauth2(CpOauth2Method),
+    Menu(CpMenuMethod),
+    Message(CpMessageMethod),
     ExternalContact(CpExternalContactMethod),
     /// 自定义方法
-    Custom(String)
+    Custom{ need_token: bool, method_url: String }
 }
 
 impl RequestMethod for WechatCpMethod {
@@ -20,13 +31,24 @@ impl RequestMethod for WechatCpMethod {
         match self {
             WechatCpMethod::AccessToken => String::from("/cgi-bin/gettoken"),
             WechatCpMethod::GetJsapiTicket => String::from("/cgi-bin/get_jsapi_ticket"),
+            WechatCpMethod::GetSuiteJsapiTicket => String::from("/cgi-bin/ticket/get"),
+            WechatCpMethod::GetPreAuthCode => String::from("/cgi-bin/service/get_pre_auth_code"),
+            WechatCpMethod::GetAuthInfo => String::from("/cgi-bin/service/get_auth_info"),
+            WechatCpMethod::GetPermanentCode => String::from("/cgi-bin/service/get_permanent_code"),
+            WechatCpMethod::GetProviderToken => String::from("/cgi-bin/service/get_provider_token"),
+            WechatCpMethod::GetCorpToken => String::from("/cgi-bin/service/get_corp_token"),
+            WechatCpMethod::GetSuiteToken => String::from("/cgi-bin/service/get_suite_token"),
             WechatCpMethod::JsCode2Session => String::from("/cgi-bin/miniprogram/jscode2session"),
             WechatCpMethod::GetCallbackIp => String::from("/cgi-bin/getcallbackip"),
             WechatCpMethod::GetAgentConfigTicket => String::from("/cgi-bin/ticket/get?&type=agent_config"),
             WechatCpMethod::Media(v) => v.get_method(),
             WechatCpMethod::ExternalContact(v) => v.get_method(),
             WechatCpMethod::Oauth2(v) => v.get_method(),
-            WechatCpMethod::Custom(v) => v.to_string(),
+            WechatCpMethod::Custom{ method_url, .. } => method_url.to_string(),
+            WechatCpMethod::Menu(v) => v.get_method(),
+            WechatCpMethod::Message(v) => v.get_method(),
+            WechatCpMethod::Tag(v) => v.get_method(),
+            WechatCpMethod::License(v) => v.get_method(),
         }
     }
 }
@@ -36,6 +58,7 @@ impl WechatCpMethod {
 
     pub fn need_token(&self) -> bool {
         match self {
+            WechatCpMethod::Custom{ need_token, .. } => *need_token,
             WechatCpMethod::AccessToken => false,
             _ => true,
         }
@@ -67,6 +90,126 @@ impl CpMediaMethod {
             CpMediaMethod::UploadAttachment => String::from("/cgi-bin/media/upload_attachment"),
             CpMediaMethod::GetMedia => String::from("/cgi-bin/media/get"),
             CpMediaMethod::GetMediaJssdk => String::from("/cgi-bin/media/get/jssdk"),
+        }
+    }
+}
+
+
+#[allow(unused)]
+#[derive(Debug, PartialEq, Clone)]
+pub enum CpTagMethod {
+    Create,
+    Update,
+    List,
+    AddTagUsers,
+    DeleteTagUsers,
+    Delete(String),
+    Get(String),
+}
+
+#[allow(unused)]
+impl CpTagMethod {
+    pub fn get_method(&self) -> String {
+        match self {
+            CpTagMethod::Create => String::from("/cgi-bin/tag/create"),
+            CpTagMethod::Update => String::from("/cgi-bin/tag/update"),
+            CpTagMethod::List => String::from("/cgi-bin/tag/list"),
+            CpTagMethod::AddTagUsers => String::from("/cgi-bin/tag/addtagusers"),
+            CpTagMethod::DeleteTagUsers => String::from("/cgi-bin/tag/deltagusers"),
+            CpTagMethod::Delete(v) => format!("/cgi-bin/tag/delete?tagid={}", v),
+            CpTagMethod::Get(v) => format!("/cgi-bin/tag/get?tagid={}", v),
+        }
+    }
+}
+
+
+
+
+#[allow(unused)]
+#[derive(Debug, PartialEq, Clone)]
+pub enum CpLicenseMethod {
+    CreateOrder,
+    CreateRenewOrderJob,
+    SubmitOrderJob,
+    ListOrder,
+    GetOrder,
+    ListOrderCount,
+    ActiveAccount,
+    BatchActiveAccount,
+    GetActiveInfoByCode,
+    BatchGetActiveInfoByCode,
+    ListActivedAccount,
+    GetActiveInfoByUser,
+    BatchTransferLicense,
+}
+
+#[allow(unused)]
+impl CpLicenseMethod {
+    pub fn get_method(&self) -> String {
+        match self {
+            CpLicenseMethod::CreateOrder => String::from("/cgi-bin/license/create_new_order"),
+            CpLicenseMethod::CreateRenewOrderJob => String::from("/cgi-bin/license/create_renew_order_job"),
+            CpLicenseMethod::SubmitOrderJob => String::from("/cgi-bin/license/submit_order_job"),
+            CpLicenseMethod::ListOrder => String::from("/cgi-bin/license/list_order"),
+            CpLicenseMethod::GetOrder => String::from("/cgi-bin/license/get_order"),
+            CpLicenseMethod::ListOrderCount => String::from("/cgi-bin/license/list_order_account"),
+            CpLicenseMethod::ActiveAccount => String::from("/cgi-bin/license/active_account"),
+            CpLicenseMethod::BatchActiveAccount => String::from("/cgi-bin/license/batch_active_account"),
+            CpLicenseMethod::GetActiveInfoByCode => String::from("/cgi-bin/license/get_active_info_by_code"),
+            CpLicenseMethod::BatchGetActiveInfoByCode => String::from("/cgi-bin/license/batch_get_active_info_by_code"),
+            CpLicenseMethod::ListActivedAccount => String::from("/cgi-bin/license/list_actived_account"),
+            CpLicenseMethod::GetActiveInfoByUser => String::from("/cgi-bin/license/get_active_info_by_user"),
+            CpLicenseMethod::BatchTransferLicense => String::from("/cgi-bin/license/batch_transfer_license"),
+        }
+    }
+}
+
+
+#[allow(unused)]
+#[derive(Debug, PartialEq, Clone)]
+pub enum CpMenuMethod {
+    Create(i32),
+    Delete(i32),
+    Get(i32),
+}
+
+#[allow(unused)]
+impl CpMenuMethod {
+    pub fn get_method(&self) -> String {
+        match self {
+            CpMenuMethod::Create(v) => format!("/cgi-bin/menu/create?agentid={}", v),
+            CpMenuMethod::Delete(v) => format!("/cgi-bin/menu/delete?agentid={}", v),
+            CpMenuMethod::Get(v) => format!("/cgi-bin/menu/get?agentid={}", v),
+        }
+    }
+}
+
+
+
+
+#[allow(unused)]
+#[derive(Debug, PartialEq, Clone)]
+pub enum CpMessageMethod {
+    /// 发送应用消息
+    Send,
+    /// 查询应用消息发送统计
+    Statistics,
+    /// 互联企业发送应用消息
+    /// https://developer.work.weixin.qq.com/document/path/90250
+    LinkedCorpSend,
+    /// 发送学校通知
+    /// https://developer.work.weixin.qq.com/document/path/92321
+    ExternalContactSend,
+}
+
+#[allow(unused)]
+impl CpMessageMethod {
+    pub fn get_method(&self) -> String {
+        match self {
+            CpMessageMethod::Send => String::from("/cgi-bin/message/send"),
+            CpMessageMethod::Statistics => String::from("/cgi-bin/message/get_statistics"),
+            CpMessageMethod::LinkedCorpSend => String::from("/cgi-bin/linkedcorp/message/send"),
+            CpMessageMethod::ExternalContactSend => String::from("/cgi-bin/externalcontact/message/send"),
         }
     }
 }

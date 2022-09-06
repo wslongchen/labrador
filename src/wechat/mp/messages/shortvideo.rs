@@ -17,7 +17,7 @@ pub struct ShortVideoMessage {
 }
 
 impl MessageParser for ShortVideoMessage {
-    type WeChatMessage = ShortVideoMessage;
+    type WechatMessage = ShortVideoMessage;
 
     #[inline]
     fn from_xml(xml: &str) -> ShortVideoMessage {
