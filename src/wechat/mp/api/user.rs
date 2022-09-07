@@ -39,7 +39,7 @@ impl<'a, T: SessionStore> WechatMpUser<'a, T> {
     /// 接口地址：https://api.weixin.qq.com/cgi-bin/user/info?access_token=ACCESS_TOKEN&openid=OPENID&lang=zh_CN
     /// </pre>
     pub async fn get_with_lang(&mut self, openid: &str, lang: &str) -> LabradorResult<WechatUser> {
-        let res = self.client.get(WechatMpMethod::User(MpUserMethod::Info), vec![("openid", openid), ("lang", lang)], RequestType::Json).await?.json::<serde_json::Value>()?;
+        let res = self.client.get(WechatMpMethod::User(MpUserMethod::Info), vec![("openid".to_string(), openid.to_string()), ("lang".to_string(), lang.to_string())], RequestType::Json).await?.json::<serde_json::Value>()?;
         let result = WechatCommonResponse::from_value(res.clone())?;
         if result.is_success() {
             Ok(self.json_to_user(&res))
@@ -126,7 +126,7 @@ impl<'a, T: SessionStore> WechatMpUser<'a, T> {
     /// </pre>
     pub async fn get_followers(&mut self, next_openid: Option<&str>) -> LabradorResult<Followers> {
         let params = match next_openid {
-            Some(openid) => vec![("next_openid", openid)],
+            Some(openid) => vec![("next_openid".to_string(), openid.to_string())],
             None => vec![],
         };
         let res = self.client.get(WechatMpMethod::User(MpUserMethod::Get), params, RequestType::Json, ).await?.json::<serde_json::Value>()?;

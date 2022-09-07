@@ -20,6 +20,8 @@ pub enum WechatCpMethod {
     License(CpLicenseMethod),
     Oauth2(CpOauth2Method),
     Menu(CpMenuMethod),
+    User(CpUserMethod),
+    Department(CpDepartmentMethod),
     Message(CpMessageMethod),
     ExternalContact(CpExternalContactMethod),
     /// 自定义方法
@@ -49,6 +51,8 @@ impl RequestMethod for WechatCpMethod {
             WechatCpMethod::Message(v) => v.get_method(),
             WechatCpMethod::Tag(v) => v.get_method(),
             WechatCpMethod::License(v) => v.get_method(),
+            WechatCpMethod::Department(v) => v.get_method(),
+            WechatCpMethod::User(v) => v.get_method(),
         }
     }
 }
@@ -180,6 +184,76 @@ impl CpMenuMethod {
             CpMenuMethod::Create(v) => format!("/cgi-bin/menu/create?agentid={}", v),
             CpMenuMethod::Delete(v) => format!("/cgi-bin/menu/delete?agentid={}", v),
             CpMenuMethod::Get(v) => format!("/cgi-bin/menu/get?agentid={}", v),
+        }
+    }
+}
+
+
+
+
+#[allow(unused)]
+#[derive(Debug, PartialEq, Clone)]
+pub enum CpUserMethod {
+    AuthSuccess(String),
+    Create,
+    Update,
+    BatchDelete,
+    Invite,
+    ConvertToOpenid,
+    ConvertToUserid,
+    GetUserid,
+    Delete(String),
+    Get(String),
+    GetExternalContact(String),
+    List(i64),
+    SimpleList(i64),
+}
+
+#[allow(unused)]
+impl CpUserMethod {
+    pub fn get_method(&self) -> String {
+        match self {
+            CpUserMethod::AuthSuccess(v) => format!("/cgi-bin/user/authsucc?userid={}", v),
+            CpUserMethod::Create => String::from("/cgi-bin/user/create"),
+            CpUserMethod::Update => String::from("/cgi-bin/user/update"),
+            CpUserMethod::BatchDelete => String::from("/cgi-bin/user/batchdelete"),
+            CpUserMethod::ConvertToOpenid => String::from("/cgi-bin/user/convert_to_openid"),
+            CpUserMethod::ConvertToUserid => String::from("/cgi-bin/user/convert_to_userid"),
+            CpUserMethod::GetUserid => String::from("/cgi-bin/user/getuserid"),
+            CpUserMethod::Invite => String::from("/cgi-bin/batch/invite"),
+            CpUserMethod::Delete(v) => format!("/cgi-bin/user/delete?userid={}", v),
+            CpUserMethod::Get(v) => format!("/cgi-bin/user/get?userid={}", v),
+            CpUserMethod::GetExternalContact(v) => format!("/cgi-bin/crm/get_external_contact?external_userid={}", v),
+            CpUserMethod::List(v) => format!("/cgi-bin/user/list?department_id={}", v),
+            CpUserMethod::SimpleList(v) => format!("/cgi-bin/user/simplelist?department_id={}", v),
+        }
+    }
+}
+
+
+
+
+#[allow(unused)]
+#[derive(Debug, PartialEq, Clone)]
+pub enum CpDepartmentMethod {
+    Create,
+    List,
+    Update,
+    SimpleList,
+    Get(i64),
+    Delete(i64),
+}
+
+#[allow(unused)]
+impl CpDepartmentMethod {
+    pub fn get_method(&self) -> String {
+        match self {
+            CpDepartmentMethod::Create => String::from("/cgi-bin/department/create"),
+            CpDepartmentMethod::Update => String::from("/cgi-bin/department/update"),
+            CpDepartmentMethod::Get(v) => format!("/cgi-bin/department/get?id={}", v),
+            CpDepartmentMethod::Delete(v) => format!("/cgi-bin/department/delete?id={}", v),
+            CpDepartmentMethod::List => String::from("/cgi-bin/department/list"),
+            CpDepartmentMethod::SimpleList => String::from("/cgi-bin/department/simplelist"),
         }
     }
 }

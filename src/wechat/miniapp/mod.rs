@@ -128,10 +128,10 @@ impl<T: SessionStore> WechatMaClient<T> {
     }
 
     /// 发送GET请求
-    async fn get(&self, method: WechatMaMethod, mut params: Vec<(&str, &str)>, request_type: RequestType) -> LabradorResult<LabraResponse> {
+    async fn get(&self, method: WechatMaMethod, mut params: Vec<(String, String)>, request_type: RequestType) -> LabradorResult<LabraResponse> {
         let access_token = self.access_token(false).await?;
         if !access_token.is_empty() && method.need_token() {
-            params.push((ACCESS_TOKEN, access_token.as_str()));
+            params.push((ACCESS_TOKEN.to_string(), access_token));
         }
         self.client.get(method, params, request_type).await
     }

@@ -177,7 +177,7 @@ impl<T: SessionStore> WechatMpClient<T> {
         let timestamp = current_timestamp();
         let expires_at: i64 = session.get(&expires_key, Some(timestamp))?.unwrap_or_default();
         if expires_at <= timestamp || force_refresh {
-            let res = self.get(WechatMpMethod::GetTicket, vec![(TICKET_TYPE, ticket_type.to_string().as_str())], RequestType::Json).await?.json::<Value>()?;
+            let res = self.get(WechatMpMethod::GetTicket, vec![(TICKET_TYPE.to_string(), ticket_type.to_string())], RequestType::Json).await?.json::<Value>()?;
             let v = WechatCommonResponse::parse::<Value>(res)?;
             let ticket = v["ticket"].as_str().unwrap_or_default();
             let expires_in = v["expires_in"].as_i64().unwrap_or_default();
@@ -287,10 +287,10 @@ impl<T: SessionStore> WechatMpClient<T> {
     }
 
     /// 发送GET请求
-    async fn get(&self, method: WechatMpMethod, mut params: Vec<(&str, &str)>, request_type: RequestType) -> LabradorResult<LabraResponse> {
+    async fn get(&self, method: WechatMpMethod, mut params: Vec<(String, String)>, request_type: RequestType) -> LabradorResult<LabraResponse> {
         let access_token = self.access_token(false).await?;
         if !access_token.is_empty() && method.need_token() {
-            params.push((ACCESS_TOKEN, access_token.as_str()));
+            params.push((ACCESS_TOKEN.to_string(), access_token));
         }
         self.client.get(method, params, request_type).await
     }

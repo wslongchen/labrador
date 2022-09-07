@@ -3,12 +3,21 @@ use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
 use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCrypto, current_timestamp, LabraError, JsapiTicket, JsapiSignature, get_timestamp, get_nonce_str, APIClient, WechatRequest, LabraResponse, LabraRequest, SimpleStorage, WechatCpProviderToken};
-use crate::wechat::cp::constants::{ACCESS_TOKEN, ACCESS_TOKEN_KEY, AUTH_URL_INSTALL, TYPE};
+use crate::wechat::cp::constants::{ACCESS_TOKEN, ACCESS_TOKEN_KEY, AUTH_URL_INSTALL, SUITE_ACCESS_TOKEN, TYPE};
 use crate::wechat::cp::method::WechatCpMethod;
 use crate::wechat::cp::AccessTokenResponse;
 
 mod tag;
 mod license;
+mod media;
+mod department;
+mod user;
+
+pub use tag::*;
+pub use license::*;
+pub use media::*;
+pub use department::*;
+pub use user::*;
 
 
 /// 企业微信第三方应用API
@@ -212,7 +221,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let timestamp = current_timestamp();
         let expires_at: i64 = session.get(&expires_key, Some(timestamp))?.unwrap_or_default();
         if expires_at <= timestamp || force_refresh {
-            let res = self.client.get(WechatCpMethod::GetSuiteJsapiTicket, vec![(TYPE, "agent_config"), (ACCESS_TOKEN, self.get_access_token(auth_corp_id).as_str())], RequestType::Json).await?.json::<JsapiTicket>()?;
+            let res = self.client.get(WechatCpMethod::GetSuiteJsapiTicket, vec![(TYPE.to_string(), "agent_config".to_string()), (ACCESS_TOKEN.to_string(), self.get_access_token(auth_corp_id))], RequestType::Json).await?.json::<JsapiTicket>()?;
             let ticket = res.ticket;
             let expires_in = res.expires_in;
             // 预留200秒的时间
@@ -245,7 +254,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let timestamp = current_timestamp();
         let expires_at: i64 = session.get(&expires_key, Some(timestamp))?.unwrap_or_default();
         if expires_at <= timestamp || force_refresh {
-            let res = self.client.get(WechatCpMethod::GetJsapiTicket, vec![(ACCESS_TOKEN, self.get_access_token(auth_corp_id).as_str())], RequestType::Json).await?.json::<JsapiTicket>()?;
+            let res = self.client.get(WechatCpMethod::GetJsapiTicket, vec![(ACCESS_TOKEN.to_string(), self.get_access_token(auth_corp_id))], RequestType::Json).await?.json::<JsapiTicket>()?;
             let ticket = res.ticket;
             let expires_in = res.expires_in;
             // 预留200秒的时间
@@ -397,8 +406,16 @@ impl<T: SessionStore> WechatCpTpClient<T> {
     /// Service没有实现某个API的时候，可以用这个，
     /// 比 get 和 post 方法更灵活，可以自己构造用来处理不同的参数和不同的返回类型。
     /// </pre>
-    async fn execute<D: WechatRequest, B: Serialize>(&self, request: D) -> LabradorResult<LabraResponse> {
+    async fn execute<D: WechatRequest, B: Serialize>(&self, request: D, corp_id: Option<&str>) -> LabradorResult<LabraResponse> {
         let mut querys = request.get_query_params();
+        if request.is_need_token() {
+            if let Some(corp_id) = corp_id {
+                let access_token = self.get_access_token(corp_id);
+                if !access_token.is_empty() {
+                    querys.insert(ACCESS_TOKEN.to_string(), access_token);
+                }
+            }
+        }
         let params = querys.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect::<Vec<(String, String)>>();
         let mut req = LabraRequest::<B>::new().url(request.get_api_method_name())
             .params(params).method(request.get_request_method()).req_type(request.get_request_type()).body(request.get_request_body::<B>());
@@ -407,11 +424,19 @@ impl<T: SessionStore> WechatCpTpClient<T> {
 
     /// 发送POST请求
     async fn post<D: Serialize>(&self, method: WechatCpMethod, mut querys: Vec<(String, String)>, data: D, request_type: RequestType) -> LabradorResult<LabraResponse> {
+        if method.need_token() {
+            let token = self.get_suite_access_token_force(false).await?;
+            querys.push((SUITE_ACCESS_TOKEN.to_string(), token));
+        }
         self.client.post(method, querys, data, request_type).await
     }
 
     /// 发送GET请求
-    async fn get(&self, method: WechatCpMethod, mut params: Vec<(&str, &str)>, request_type: RequestType) -> LabradorResult<LabraResponse> {
+    async fn get(&self, method: WechatCpMethod, mut params: Vec<(String, String)>, request_type: RequestType) -> LabradorResult<LabraResponse> {
+        if method.need_token() {
+            let token = self.get_suite_access_token_force(false).await?.to_string();
+            params.push((SUITE_ACCESS_TOKEN.to_string(), token));
+        }
         self.client.get(method, params, request_type).await
     }
 }

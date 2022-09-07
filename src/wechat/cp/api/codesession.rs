@@ -23,8 +23,8 @@ impl<'a, T: SessionStore> WechatCpCodeSession<'a, T> {
     /// # 小程序登录凭证校验
     pub async fn jscode_2_session(&self, code: &str) -> LabradorResult<WechatCpJsCodeSession> {
         let v = self.client.get(WechatCpMethod::JsCode2Session, vec![
-            (GRANT_TYPE, AUTHORIZATION_CODE),
-            (JS_CODE, code),
+            (GRANT_TYPE.to_string(), AUTHORIZATION_CODE.to_string()),
+            (JS_CODE.to_string(), code.to_string()),
         ], RequestType::Json).await?.json::<serde_json::Value>()?;
         WechatCommonResponse::parse::<WechatCpJsCodeSession>(v)
     }

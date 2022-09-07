@@ -47,9 +47,9 @@ impl<'a, T: SessionStore> WechatMpSubscribeMessage<'a, T> {
         let ids = ids.join(",").to_string();
         let start = start.to_string();
         let limit = limit.to_string();
-        let params = vec![( "ids", ids.as_str()),
-          ("start", start.as_str()),
-          ("limit", limit.as_str())];
+        let params = vec![( "ids".to_string(), ids),
+          ("start".to_string(), start),
+          ("limit".to_string(), limit)];
         let v = self.client.get(WechatMpMethod::SubscribeMessage(MpSubscribeMessageMethod::GetPubTemplateTitles), params, RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse::<WechatMpPubTemplateTitleListResponse>(v)
     }
@@ -61,7 +61,7 @@ impl<'a, T: SessionStore> WechatMpSubscribeMessage<'a, T> {
     /// 接口url格式: GET https://api.weixin.qq.com/wxaapi/newtmpl/getpubtemplatekeywords?access_token=ACCESS_TOKEN
     /// </pre>
     pub async fn get_pub_template_keywords_byid(&self, ids: &str) -> LabradorResult<Vec<WechatMpPubTemplateKeywordResponse>> {
-        let v = self.client.get(WechatMpMethod::SubscribeMessage(MpSubscribeMessageMethod::GetPubTemplateKeywords), vec![( "tid", ids)], RequestType::Json).await?.json::<Value>()?;
+        let v = self.client.get(WechatMpMethod::SubscribeMessage(MpSubscribeMessageMethod::GetPubTemplateKeywords), vec![( "tid".to_string(), ids.to_string())], RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse_with_key::<Vec<WechatMpPubTemplateKeywordResponse>>(v, "data")
     }
 
