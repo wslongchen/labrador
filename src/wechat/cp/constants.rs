@@ -14,6 +14,7 @@ pub static ZH_CN: &str = "zh_CN";
 pub static SECRET: &str = "secret";
 pub static ACCESS_TOKEN: &str = "access_token";
 pub static PROVIDER_ACCESS_TOKEN: &str = "provider_access_token";
+pub static SUITE_ACCESS_TOKEN: &str = "suite_access_token";
 pub static REFRESH_TOKEN: &str = "refresh_token";
 pub static EXTERNAL_USERID: &str = "external_userid";
 pub static CURSOR: &str = "cursor";

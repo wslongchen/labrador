@@ -6,16 +6,16 @@ use crate::wechat::cp::method::{CpTagMethod, WechatCpMethod};
 
 /// 企业微信第三方开发-标签相关
 #[derive(Debug, Clone)]
-pub struct WechatTpTag<'a, T: SessionStore> {
+pub struct WechatCpTpTag<'a, T: SessionStore> {
     client: &'a WechatCpTpClient<T>,
 }
 
 #[allow(unused)]
-impl<'a, T: SessionStore> WechatTpTag<'a, T> {
+impl<'a, T: SessionStore> WechatCpTpTag<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatCpTpClient<T>) -> WechatTpTag<T> {
-        WechatTpTag {
+    pub fn new(client: &WechatCpTpClient<T>) -> WechatCpTpTag<T> {
+        WechatCpTpTag {
             client,
         }
     }
@@ -79,9 +79,9 @@ impl<'a, T: SessionStore> WechatTpTag<'a, T> {
     }
 
     /// 获得标签列表.
-    pub async fn list_all(&self) -> LabradorResult<Vec<WechatCpTpTag>> {
+    pub async fn list_all(&self) -> LabradorResult<Vec<WechatCpTpTagInfo>> {
         let v = self.client.get(WechatCpMethod::Tag(CpTagMethod::List), vec![], RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<Vec<WechatCpTpTag>>(v)
+        WechatCommonResponse::parse::<Vec<WechatCpTpTagInfo>>(v)
     }
 }
 
@@ -105,7 +105,7 @@ pub struct WechatCpTagAddOrRemoveUsersResponse {
 
 
 #[derive(Debug, Clone,Serialize, Deserialize)]
-pub struct WechatCpTpTag {
+pub struct WechatCpTpTagInfo {
     pub tagid: Option<String>,
     pub tagname: Option<Vec<String>>,
 }

@@ -7,16 +7,16 @@ use crate::wechat::cp::method::{CpLicenseMethod, WechatCpMethod};
 
 /// 服务商接口调用许可相关
 #[derive(Debug, Clone)]
-pub struct WechatTpLicense<'a, T: SessionStore> {
+pub struct WechatCpTpLicense<'a, T: SessionStore> {
     client: &'a WechatCpTpClient<T>,
 }
 
 #[allow(unused)]
-impl<'a, T: SessionStore> WechatTpLicense<'a, T> {
+impl<'a, T: SessionStore> WechatCpTpLicense<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatCpTpClient<T>) -> WechatTpLicense<T> {
-        WechatTpLicense {
+    pub fn new(client: &WechatCpTpClient<T>) -> WechatCpTpLicense<T> {
+        WechatCpTpLicense {
             client,
         }
     }

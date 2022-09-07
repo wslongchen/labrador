@@ -97,9 +97,8 @@ impl<T: SessionStore> APIClient<T> {
     }
 
     /// 发送GET请求
-    pub async fn get<R: RequestMethod>(&self, method: R, params: Vec<(&str, &str)>, request_type: RequestType) -> LabradorResult<LabraResponse> {
-        let querys = params.into_iter().map(|(k, v)| (k.to_string(), v.to_string())).collect::<Vec<(String,String)>>();
-        let req = LabraRequest::<String>::new().url(method.get_method()).params(querys).method(Method::Get).req_type(request_type);
+    pub async fn get<R: RequestMethod>(&self, method: R, params: Vec<(String, String)>, request_type: RequestType) -> LabradorResult<LabraResponse> {
+        let req = LabraRequest::<String>::new().url(method.get_method()).params(params).method(Method::Get).req_type(request_type);
         self.request(req).await
     }
 }

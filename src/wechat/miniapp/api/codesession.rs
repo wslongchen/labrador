@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 
 use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult};
+use crate::wechat::miniapp::constants::{APPID, AUTHORIZATION_CODE, GRANT_TYPE, JS_CODE, SECRET};
 use crate::wechat::miniapp::method::WechatMaMethod;
 use crate::wechat::miniapp::WechatMaClient;
 
@@ -26,10 +27,10 @@ impl<'a, T: SessionStore> WechatMaCodeSession<'a, T> {
     /// 登录凭证校验。通过 wx.login 接口获得临时登录凭证 code 后传到开发者服务器调用此接口完成登录流程。更多使用方法详见[小程序登录](https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/login.html)。
     pub async fn jscode_2_session(&self, code: &str) -> LabradorResult<JsCodeSession> {
         let v = self.client.get(WechatMaMethod::CodeSession, vec![
-            ("grant_type", "authorization_code"),
-            ("js_code", code),
-            ("appid", &self.client.appid),
-            ("secret", &self.client.secret),
+            (GRANT_TYPE.to_string(), AUTHORIZATION_CODE.to_string()),
+            (JS_CODE.to_string(), code.to_string()),
+            (APPID.to_string(), self.client.appid.to_string()),
+            (SECRET.to_string(), self.client.secret.to_string()),
         ], RequestType::Json).await?.json::<serde_json::Value>()?;
         WechatCommonResponse::parse::<JsCodeSession>(v)
     }

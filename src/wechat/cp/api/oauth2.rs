@@ -80,7 +80,7 @@ impl<'a, T: SessionStore> WechatCpOauth2<'a, T> {
     /// 注意: 这个方法里的agentId，需要开发人员自己给出
     pub async fn get_user_info_with_agent(&self, code: &str, agent_id: i32) -> LabradorResult<WechatCpOauth2UserInfo> {
         let agent_id = agent_id.to_string();
-        let v = self.client.get(WechatCpMethod::Oauth2(CpOauth2Method::GetUserInfo), vec![(CODE, code), (AGENTID, agent_id.as_str())], RequestType::Json).await?.json::<Value>()?;
+        let v = self.client.get(WechatCpMethod::Oauth2(CpOauth2Method::GetUserInfo), vec![(CODE.to_string(), code.to_string()), (AGENTID.to_string(), agent_id)], RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse::<WechatCpOauth2UserInfo>(v)
     }
 

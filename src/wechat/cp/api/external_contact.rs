@@ -104,7 +104,7 @@ impl<'a, T: SessionStore> WechatCpExternalContact<'a, T> {
     /// 第三方/自建应用调用时，返回的跟进人follow_user仅包含应用可见范围之内的成员。
     /// </pre>
     pub async fn get_contact_detail(&self, user_id: &str, cursor: &str) -> LabradorResult<WechatCpExternalContactInfoResponse> {
-        let v = self.client.get(WechatCpMethod::ExternalContact(CpExternalContactMethod::GetContactWayDetail), vec![(EXTERNAL_USERID, user_id), (CURSOR, cursor)], RequestType::Json).await?.json::<Value>()?;
+        let v = self.client.get(WechatCpMethod::ExternalContact(CpExternalContactMethod::GetContactWayDetail), vec![(EXTERNAL_USERID.to_string(), user_id.to_string()), (CURSOR.to_string(), cursor.to_string())], RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse::<WechatCpExternalContactInfoResponse>(v)
     }
 
@@ -247,7 +247,7 @@ impl<'a, T: SessionStore> WechatCpExternalContact<'a, T> {
     /// 第三方/自建应用只能获取到可见范围内的配置了客户联系功能的成员。
     /// </pre>
     pub async fn list_external_contacts(&self, userid: &str) -> LabradorResult<Vec<String>> {
-        let v = self.client.get(WechatCpMethod::ExternalContact(CpExternalContactMethod::List), vec![(USERID, userid)], RequestType::Json).await?.json::<Value>()?;
+        let v = self.client.get(WechatCpMethod::ExternalContact(CpExternalContactMethod::List), vec![(USERID.to_string(), userid.to_string())], RequestType::Json).await?.json::<Value>()?;
         let v = WechatCommonResponse::parse::<Value>(v)?;
         let external_userids = v["external_userid"].as_array().unwrap_or(&vec![]).iter().map(|v| v.as_str().unwrap_or_default().to_string()).collect::<Vec<String>>();
         Ok(external_userids)
