@@ -19,6 +19,7 @@ pub enum WechatCpMethod {
     GetOrderList,
     Media(CpMediaMethod),
     Tag(CpTagMethod),
+    Agent(CpAgentMethod),
     License(CpLicenseMethod),
     Oauth2(CpOauth2Method),
     Menu(CpMenuMethod),
@@ -132,6 +133,27 @@ impl CpTagMethod {
 
 
 
+#[allow(unused)]
+#[derive(Debug, PartialEq, Clone)]
+pub enum CpAgentMethod {
+    Get(i32),
+    Set,
+    List,
+}
+
+#[allow(unused)]
+impl CpAgentMethod {
+    pub fn get_method(&self) -> String {
+        match self {
+            CpAgentMethod::Get(v) => format!("/cgi-bin/agent/get?agentid={}", v),
+            CpAgentMethod::Set => String::from("/cgi-bin/agent/set"),
+            CpAgentMethod::List => String::from("/cgi-bin/agent/list"),
+        }
+    }
+}
+
+
+
 
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
@@ -206,9 +228,11 @@ pub enum CpUserMethod {
     ConvertToOpenid,
     ConvertToUserid,
     GetUserid,
+    GetActiveStat,
     Delete(String),
     Get(String),
     GetExternalContact(String),
+    GetJoinQrcode(i32),
     List(i64),
     SimpleList(i64),
 }
@@ -225,8 +249,10 @@ impl CpUserMethod {
             CpUserMethod::ConvertToUserid => String::from("/cgi-bin/user/convert_to_userid"),
             CpUserMethod::GetUserid => String::from("/cgi-bin/user/getuserid"),
             CpUserMethod::Invite => String::from("/cgi-bin/batch/invite"),
+            CpUserMethod::GetActiveStat => String::from("/cgi-bin/user/get_active_stat"),
             CpUserMethod::Delete(v) => format!("/cgi-bin/user/delete?userid={}", v),
             CpUserMethod::Get(v) => format!("/cgi-bin/user/get?userid={}", v),
+            CpUserMethod::GetJoinQrcode(v) => format!("/cgi-bin/corp/get_join_qrcode?size_type={}", v),
             CpUserMethod::GetExternalContact(v) => format!("/cgi-bin/crm/get_external_contact?external_userid={}", v),
             CpUserMethod::List(v) => format!("/cgi-bin/user/list?department_id={}", v),
             CpUserMethod::SimpleList(v) => format!("/cgi-bin/user/simplelist?department_id={}", v),

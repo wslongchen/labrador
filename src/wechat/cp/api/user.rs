@@ -1,22 +1,22 @@
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
-use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCpTpClient, WechatCpUser, ExternalContact, FollowedUser};
+use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCpClient, ExternalContact, FollowedUser, WechatCpUserInfo};
 use crate::wechat::cp::constants::ACCESS_TOKEN;
 use crate::wechat::cp::method::{CpUserMethod, WechatCpMethod};
 
 /// 部门管理
 #[derive(Debug, Clone)]
-pub struct WechatCpTpUser<'a, T: SessionStore> {
-    client: &'a WechatCpTpClient<T>,
+pub struct WechatCpUser<'a, T: SessionStore> {
+    client: &'a WechatCpClient<T>,
 }
 
 #[allow(unused)]
-impl<'a, T: SessionStore> WechatCpTpUser<'a, T> {
+impl<'a, T: SessionStore> WechatCpUser<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatCpTpClient<T>) -> WechatCpTpUser<T> {
-        WechatCpTpUser {
+    pub fn new(client: &WechatCpClient<T>) -> WechatCpUser<T> {
+        WechatCpUser {
             client,
         }
     }
@@ -30,13 +30,14 @@ impl<'a, T: SessionStore> WechatCpTpUser<'a, T> {
     }
 
     /// <pre>
-    /// 获取部门成员(详情).
+    /// 获取部门成员详情
+    /// 请求方式：GET（HTTPS）
+    /// 请求地址：https://qyapi.weixin.qq.com/cgi-bin/user/list?access_token=ACCESS_TOKEN&department_id=DEPARTMENT_ID&fetch_child=FETCH_CHILD
     ///
-    /// http://qydev.weixin.qq.com/wiki/index.php?title=管理成员#.E8.8E.B7.E5.8F.96.E9.83.A8.E9.97.A8.E6.88.90.E5.91.98.28.E8.AF.A6.E6.83.85.29
+    /// 文档地址：https://work.weixin.qq.com/api/doc/90000/90135/90201
     /// </pre>
-    pub async fn list_by_department(&self, depart_id: i64, fetch_child: Option<bool>, status: Option<i32>, corp_id: &str) -> LabradorResult<Vec<WechatCpUser>> {
-        let access_token = self.client.get_access_token(corp_id);
-        let mut query = vec![(ACCESS_TOKEN.to_string(), access_token)];
+    pub async fn list_by_department(&self, depart_id: i64, fetch_child: Option<bool>, status: Option<i32>) -> LabradorResult<Vec<WechatCpUserInfo>> {
+        let mut query = vec![];
         if let Some(fetch_child) = fetch_child {
             query.push(("fetch_child".to_string(), fetch_child.to_string()));
         }
@@ -46,7 +47,7 @@ impl<'a, T: SessionStore> WechatCpTpUser<'a, T> {
             query.push(("status".to_string(), "0".to_string()));
         }
         let v = self.client.get(WechatCpMethod::User(CpUserMethod::List(depart_id)), query, RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<Vec<WechatCpUser>>(v)
+        WechatCommonResponse::parse::<Vec<WechatCpUserInfo>>(v)
     }
 
     /// <pre>
@@ -54,7 +55,7 @@ impl<'a, T: SessionStore> WechatCpTpUser<'a, T> {
     ///
     /// http://qydev.weixin.qq.com/wiki/index.php?title=管理成员#.E8.8E.B7.E5.8F.96.E9.83.A8.E9.97.A8.E6.88.90.E5.91.98
     /// </pre>
-    pub async fn list_simple_by_department(&self, depart_id: i64, fetch_child: Option<bool>, status: Option<i32>) -> LabradorResult<Vec<WechatCpUser>> {
+    pub async fn list_simple_by_department(&self, depart_id: i64, fetch_child: Option<bool>, status: Option<i32>) -> LabradorResult<Vec<WechatCpUserInfo>> {
         let mut query = vec![];
         if let Some(fetch_child) = fetch_child {
             query.push(("fetch_child".to_string(), fetch_child.to_string()));
@@ -65,21 +66,21 @@ impl<'a, T: SessionStore> WechatCpTpUser<'a, T> {
             query.push(("status".to_string(), "0".to_string()));
         }
         let v = self.client.get(WechatCpMethod::User(CpUserMethod::SimpleList(depart_id)), query, RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<Vec<WechatCpUser>>(v)
+        WechatCommonResponse::parse::<Vec<WechatCpUserInfo>>(v)
     }
 
 
     /// <pre>
     /// 新建用户
     /// </pre>
-    pub async fn create(&self, req: WechatCpUser) -> LabradorResult<WechatCommonResponse> {
+    pub async fn create(&self, req: WechatCpUserInfo) -> LabradorResult<WechatCommonResponse> {
         self.client.post(WechatCpMethod::User(CpUserMethod::Create), vec![], req, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
     /// <pre>
     /// 更新用户
     /// </pre>
-    pub async fn update(&self, req: WechatCpUser) -> LabradorResult<WechatCommonResponse> {
+    pub async fn update(&self, req: WechatCpUserInfo) -> LabradorResult<WechatCommonResponse> {
         self.client.post(WechatCpMethod::User(CpUserMethod::Update), vec![], req, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
@@ -99,11 +100,11 @@ impl<'a, T: SessionStore> WechatCpTpUser<'a, T> {
     /// <pre>
     /// 获取用户
     /// </pre>
-    pub async fn get_by_id(&self, userid: &str, corp_id: &str) -> LabradorResult<WechatCpUser> {
+    pub async fn get_by_id(&self, userid: &str, corp_id: &str) -> LabradorResult<WechatCpUserInfo> {
         let access_token = self.client.get_access_token(corp_id);
         let query = vec![(ACCESS_TOKEN.to_string(), access_token)];
         let v = self.client.get(WechatCpMethod::User(CpUserMethod::Get(userid.to_string())), query,RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<WechatCpUser>(v)
+        WechatCommonResponse::parse::<WechatCpUserInfo>(v)
     }
 
     /// <pre>
@@ -113,14 +114,14 @@ impl<'a, T: SessionStore> WechatCpTpUser<'a, T> {
     /// 请求地址： https://qyapi.weixin.qq.com/cgi-bin/batch/invite?access_token=ACCESS_TOKEN
     /// 文档地址：https://work.weixin.qq.com/api/doc#12543
     /// </pre>
-    pub async fn invite(&self, userids: Vec<&str>, party_ids: Vec<&str>, tag_ids: Vec<&str>) -> LabradorResult<WxCpTpInviteResponse> {
+    pub async fn invite(&self, userids: Vec<&str>, party_ids: Vec<&str>, tag_ids: Vec<&str>) -> LabradorResult<WxCpInviteResponse> {
         let req = json!({
             "user": userids,
             "party": party_ids,
             "tag": tag_ids,
         });
         let v = self.client.post(WechatCpMethod::User(CpUserMethod::Invite), vec![],req, RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<WxCpTpInviteResponse>(v)
+        WechatCommonResponse::parse::<WxCpInviteResponse>(v)
     }
 
     /// <pre>
@@ -133,13 +134,13 @@ impl<'a, T: SessionStore> WechatCpTpUser<'a, T> {
     ///
     /// 文档地址：https://work.weixin.qq.com/api/doc#11279
     /// </pre>
-    pub async fn userid_2_openid(&self, userid: &str, agent_id: i32) -> LabradorResult<WxCpTpUseridToOpenidResponse> {
+    pub async fn userid_2_openid(&self, userid: &str, agent_id: i32) -> LabradorResult<WxCpUseridToOpenidResponse> {
         let req = json!({
             "userid": userid,
             "agentid": agent_id,
         });
         let v = self.client.post(WechatCpMethod::User(CpUserMethod::ConvertToOpenid), vec![],req, RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<WxCpTpUseridToOpenidResponse>(v)
+        WechatCommonResponse::parse::<WxCpUseridToOpenidResponse>(v)
     }
 
     /// <pre>
@@ -192,18 +193,47 @@ impl<'a, T: SessionStore> WechatCpTpUser<'a, T> {
         let v = self.client.get(WechatCpMethod::User(CpUserMethod::GetExternalContact(userid.to_string())), vec![],RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse::<WechatCpUserExternalContactInfo>(v)
     }
+
+    /// <pre>
+    /// 获取加入企业二维码。
+    ///
+    /// 请求方式：GET（HTTPS）
+    /// 请求地址：https://qyapi.weixin.qq.com/cgi-bin/corp/get_join_qrcode?access_token=ACCESS_TOKEN&size_type=SIZE_TYPE
+    ///
+    /// 文档地址：https://work.weixin.qq.com/api/doc/90000/90135/91714
+    /// </pre>
+    pub async fn get_join_qrcode(&self, size_type: i32) -> LabradorResult<String> {
+        let v = self.client.get(WechatCpMethod::User(CpUserMethod::GetJoinQrcode(size_type)), vec![],RequestType::Json).await?.json::<Value>()?;
+        let v = WechatCommonResponse::parse::<Value>(v)?;
+        let qrcode = v["join_qrcode"].as_str().unwrap_or_default();
+        Ok(qrcode.to_string())
+    }
+
+    /// <pre>
+    /// 获取企业活跃成员数。
+    ///
+    /// 请求方式：POST（HTTPS）
+    /// 请求地址：<a href="https://qyapi.weixin.qq.com/cgi-bin/user/get_active_stat?access_token=ACCESS_TOKEN">https://qyapi.weixin.qq.com/cgi-bin/user/get_active_stat?access_token=ACCESS_TOKEN</a>
+    ///
+    /// 文档地址：<a href="https://developer.work.weixin.qq.com/document/path/92714">https://developer.work.weixin.qq.com/document/path/92714</a>
+    /// </pre>
+    pub async fn get_active_count(&self, date: &str) -> LabradorResult<u64> {
+        let v = self.client.post(WechatCpMethod::User(CpUserMethod::GetActiveStat), vec![], json!({"date": date}),RequestType::Json).await?.json::<Value>()?;
+        let active_cnt = v["active_cnt"].as_u64().unwrap_or_default();
+        Ok(active_cnt)
+    }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 /// 邀请成员的结果对象类
 #[derive(Debug, Clone,Serialize, Deserialize)]
-pub struct WxCpTpInviteResponse {
+pub struct WxCpInviteResponse {
     pub invaliduser: Option<Vec<String>>,
     pub invalidparty: Option<Vec<String>>,
     pub invalidtag: Option<Vec<String>>,
 }
 #[derive(Debug, Clone,Serialize, Deserialize)]
-pub struct WxCpTpUseridToOpenidResponse {
+pub struct WxCpUseridToOpenidResponse {
     pub openid: Option<String>,
     pub appid: Option<String>,
 }

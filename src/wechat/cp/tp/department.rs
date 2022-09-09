@@ -41,7 +41,6 @@ impl<'a, T: SessionStore> WechatCpTpDepartment<'a, T> {
     pub async fn list_byid(&self, id: Option<i64>, corp_id: &str) -> LabradorResult<WechatCpTpDepartResponse> {
         let access_token = self.client.get_access_token(corp_id);
         let mut query = vec![(ACCESS_TOKEN.to_string(), access_token)];
-        let access_token = self.client.get_access_token(corp_id);
         if let Some(id) = id {
             query.push(("id".to_string(), id.to_string()));
         }
