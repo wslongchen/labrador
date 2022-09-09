@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
-use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCpTpClient, WechatCpUser, ExternalContact, FollowedUser};
+use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCpTpClient, WechatCpUserInfo, ExternalContact, FollowedUser};
 use crate::wechat::cp::constants::ACCESS_TOKEN;
 use crate::wechat::cp::method::{CpUserMethod, WechatCpMethod};
 
@@ -34,7 +34,7 @@ impl<'a, T: SessionStore> WechatCpTpUser<'a, T> {
     ///
     /// http://qydev.weixin.qq.com/wiki/index.php?title=管理成员#.E8.8E.B7.E5.8F.96.E9.83.A8.E9.97.A8.E6.88.90.E5.91.98.28.E8.AF.A6.E6.83.85.29
     /// </pre>
-    pub async fn list_by_department(&self, depart_id: i64, fetch_child: Option<bool>, status: Option<i32>, corp_id: &str) -> LabradorResult<Vec<WechatCpUser>> {
+    pub async fn list_by_department(&self, depart_id: i64, fetch_child: Option<bool>, status: Option<i32>, corp_id: &str) -> LabradorResult<Vec<WechatCpUserInfo>> {
         let access_token = self.client.get_access_token(corp_id);
         let mut query = vec![(ACCESS_TOKEN.to_string(), access_token)];
         if let Some(fetch_child) = fetch_child {
@@ -46,7 +46,7 @@ impl<'a, T: SessionStore> WechatCpTpUser<'a, T> {
             query.push(("status".to_string(), "0".to_string()));
         }
         let v = self.client.get(WechatCpMethod::User(CpUserMethod::List(depart_id)), query, RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<Vec<WechatCpUser>>(v)
+        WechatCommonResponse::parse::<Vec<WechatCpUserInfo>>(v)
     }
 
     /// <pre>
@@ -54,7 +54,7 @@ impl<'a, T: SessionStore> WechatCpTpUser<'a, T> {
     ///
     /// http://qydev.weixin.qq.com/wiki/index.php?title=管理成员#.E8.8E.B7.E5.8F.96.E9.83.A8.E9.97.A8.E6.88.90.E5.91.98
     /// </pre>
-    pub async fn list_simple_by_department(&self, depart_id: i64, fetch_child: Option<bool>, status: Option<i32>) -> LabradorResult<Vec<WechatCpUser>> {
+    pub async fn list_simple_by_department(&self, depart_id: i64, fetch_child: Option<bool>, status: Option<i32>) -> LabradorResult<Vec<WechatCpUserInfo>> {
         let mut query = vec![];
         if let Some(fetch_child) = fetch_child {
             query.push(("fetch_child".to_string(), fetch_child.to_string()));
@@ -65,21 +65,21 @@ impl<'a, T: SessionStore> WechatCpTpUser<'a, T> {
             query.push(("status".to_string(), "0".to_string()));
         }
         let v = self.client.get(WechatCpMethod::User(CpUserMethod::SimpleList(depart_id)), query, RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<Vec<WechatCpUser>>(v)
+        WechatCommonResponse::parse::<Vec<WechatCpUserInfo>>(v)
     }
 
 
     /// <pre>
     /// 新建用户
     /// </pre>
-    pub async fn create(&self, req: WechatCpUser) -> LabradorResult<WechatCommonResponse> {
+    pub async fn create(&self, req: WechatCpUserInfo) -> LabradorResult<WechatCommonResponse> {
         self.client.post(WechatCpMethod::User(CpUserMethod::Create), vec![], req, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
     /// <pre>
     /// 更新用户
     /// </pre>
-    pub async fn update(&self, req: WechatCpUser) -> LabradorResult<WechatCommonResponse> {
+    pub async fn update(&self, req: WechatCpUserInfo) -> LabradorResult<WechatCommonResponse> {
         self.client.post(WechatCpMethod::User(CpUserMethod::Update), vec![], req, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
@@ -99,11 +99,11 @@ impl<'a, T: SessionStore> WechatCpTpUser<'a, T> {
     /// <pre>
     /// 获取用户
     /// </pre>
-    pub async fn get_by_id(&self, userid: &str, corp_id: &str) -> LabradorResult<WechatCpUser> {
+    pub async fn get_by_id(&self, userid: &str, corp_id: &str) -> LabradorResult<WechatCpUserInfo> {
         let access_token = self.client.get_access_token(corp_id);
         let query = vec![(ACCESS_TOKEN.to_string(), access_token)];
         let v = self.client.get(WechatCpMethod::User(CpUserMethod::Get(userid.to_string())), query,RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<WechatCpUser>(v)
+        WechatCommonResponse::parse::<WechatCpUserInfo>(v)
     }
 
     /// <pre>

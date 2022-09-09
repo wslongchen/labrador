@@ -58,6 +58,7 @@ impl RequestMethod for WechatCpMethod {
             WechatCpMethod::License(v) => v.get_method(),
             WechatCpMethod::Department(v) => v.get_method(),
             WechatCpMethod::User(v) => v.get_method(),
+            WechatCpMethod::Agent(v) => v.get_method(),
         }
     }
 }

@@ -2,7 +2,6 @@ use serde::{Serialize, Deserialize};
 use serde_json::{Value};
 
 use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCpClient};
-use crate::wechat::cp::constants::ACCESS_TOKEN;
 use crate::wechat::cp::method::{CpDepartmentMethod, WechatCpMethod};
 
 /// 部门管理

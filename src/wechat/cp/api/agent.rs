@@ -2,7 +2,6 @@ use serde::{Serialize, Deserialize};
 use serde_json::Value;
 
 use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCpClient};
-use crate::wechat::cp::constants::{AUTHORIZATION_CODE, GRANT_TYPE, JS_CODE};
 use crate::wechat::cp::method::{CpAgentMethod, WechatCpMethod};
 
 /// 管理企业号应用
@@ -46,7 +45,7 @@ impl<'a, T: SessionStore> WechatCpAgent<'a, T> {
     /// 详情请见: https://work.weixin.qq.com/api/doc#11214
     /// </pre>
     pub async fn list(&self) -> LabradorResult<WechatCpAgentListResponse> {
-        let v = self.client.post(WechatCpMethod::Agent(CpAgentMethod::List), vec![], req,RequestType::Json).await?.json::<Value>()?;
+        let v = self.client.get(WechatCpMethod::Agent(CpAgentMethod::List), vec![],RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse::<WechatCpAgentListResponse>(v)
     }
 }

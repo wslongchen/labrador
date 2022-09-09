@@ -2,7 +2,6 @@ use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
 use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCpClient, ExternalContact, FollowedUser, WechatCpUserInfo};
-use crate::wechat::cp::constants::ACCESS_TOKEN;
 use crate::wechat::cp::method::{CpUserMethod, WechatCpMethod};
 
 /// 部门管理
@@ -101,9 +100,7 @@ impl<'a, T: SessionStore> WechatCpUser<'a, T> {
     /// 获取用户
     /// </pre>
     pub async fn get_by_id(&self, userid: &str, corp_id: &str) -> LabradorResult<WechatCpUserInfo> {
-        let access_token = self.client.get_access_token(corp_id);
-        let query = vec![(ACCESS_TOKEN.to_string(), access_token)];
-        let v = self.client.get(WechatCpMethod::User(CpUserMethod::Get(userid.to_string())), query,RequestType::Json).await?.json::<Value>()?;
+        let v = self.client.get(WechatCpMethod::User(CpUserMethod::Get(userid.to_string())), vec![],RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse::<WechatCpUserInfo>(v)
     }
 
