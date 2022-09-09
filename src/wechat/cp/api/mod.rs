@@ -5,6 +5,7 @@ mod external_contact;
 mod menu;
 mod group_robot;
 mod message;
+mod department;
 
 // 企业微信
 
@@ -15,3 +16,4 @@ pub use self::external_contact::*;
 pub use self::menu::*;
 pub use self::group_robot::*;
 pub use self::message::*;
+pub use self::department::*;
