@@ -336,4 +336,49 @@ impl<T: SessionStore> WechatCpClient<T> {
         WechatCpMedia::new(self)
     }
 
+    /// 自建应用
+    pub fn agent(&self) -> WechatCpAgent<T> {
+        WechatCpAgent::new(self)
+    }
+
+    /// 部门
+    pub fn department(&self) -> WechatCpDepartment<T> {
+        WechatCpDepartment::new(self)
+    }
+
+    /// 外部联系人
+    pub fn external_contact(&self) -> WechatCpExternalContact<T> {
+        WechatCpExternalContact::new(self)
+    }
+
+    /// 群机器人
+    pub fn group_robot(&self) -> WechatCpGroupRobot<T> {
+        WechatCpGroupRobot::new(self)
+    }
+
+    /// 菜单
+    pub fn menu(&self) -> WechatCpMenu<T> {
+        WechatCpMenu::new(self)
+    }
+
+    /// 消息
+    pub fn message(&self) -> WechatCpMessage<T> {
+        WechatCpMessage::new(self)
+    }
+
+    /// 认证
+    pub fn oauth2(&self) -> WechatCpOauth2<T> {
+        WechatCpOauth2::new(self)
+    }
+
+    /// 标签
+    pub fn tag(&self) -> WechatCpTag<T> {
+        WechatCpTag::new(self)
+    }
+
+    /// 用户
+    pub fn user(&self) -> WechatCpUser<T> {
+        WechatCpUser::new(self)
+    }
+
 }
