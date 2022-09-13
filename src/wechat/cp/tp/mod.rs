@@ -441,6 +441,36 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         }
         self.client.get(method, params, request_type).await
     }
+
+    /// 部门
+    pub fn department(&self) -> WechatCpTpDepartment<T> {
+        WechatCpTpDepartment::new(self)
+    }
+
+    /// 接口调用许可
+    pub fn license(&self) -> WechatCpTpLicense<T> {
+        WechatCpTpLicense::new(self)
+    }
+
+    /// 媒体
+    pub fn media(&self) -> WechatCpTpMedia<T> {
+        WechatCpTpMedia::new(self)
+    }
+
+    /// 订单
+    pub fn order(&self) -> WechatCpTpOrder<T> {
+        WechatCpTpOrder::new(self)
+    }
+
+    /// 标签
+    pub fn tag(&self) -> WechatCpTpTag<T> {
+        WechatCpTpTag::new(self)
+    }
+
+    /// 用户
+    pub fn user(&self) -> WechatCpTpUser<T> {
+        WechatCpTpUser::new(self)
+    }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
