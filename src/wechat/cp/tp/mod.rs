@@ -121,6 +121,16 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         Ok(true)
     }
 
+    /// <pre>
+    /// 检验消息的真实性，并且获取解密后的明文.
+    /// 详情请见: <a href="https://work.weixin.qq.com/api/doc#90000/90139/90968/消息体签名校验">文档</a>
+    /// </pre>
+    pub fn decrypt_content(&self, signature: &str, timestamp: i64, nonce: &str, data: &str) -> LabradorResult<String> {
+        let crp = WechatCrypto::new(&self.aes_key.to_owned().unwrap_or_default());
+        let res = crp.decrypt_content(data, signature, timestamp, nonce,&self.token.to_owned().unwrap_or_default())?;
+        Ok(res)
+    }
+
     /// 获得suite_ticket,不强制刷新suite_ticket
     /// 由微信服务器推送
     pub fn get_suite_ticket(&self) -> LabradorResult<String> {

@@ -77,7 +77,7 @@ impl WechatCrypto {
         }
     }
 
-    /// #获取签名
+    /// # 获取签名
     ///
     /// timestamp 时间戳
     /// nonce 随机字符串
@@ -119,7 +119,7 @@ impl WechatCrypto {
         PrpCrypto::hmac_sha256_sign(key, message)
     }
 
-    /// #数据解密
+    /// # 数据解密
     ///
     /// session_key key
     /// iv 偏移量
@@ -131,7 +131,7 @@ impl WechatCrypto {
         Ok(msg)
     }
 
-    /// #检查签名
+    /// # 检查签名
     ///
     /// timestamp 时间戳
     /// nonce 随机字符串
@@ -146,14 +146,14 @@ impl WechatCrypto {
         Ok(true)
     }
 
-    /// #加密消息
+    /// # 加密消息
     ///
     /// timestamp 时间戳
     /// nonce 随机字符串
     /// msg 加密数据
     pub fn encrypt_message(&self, msg: &str, timestamp: i64, nonce: &str, token: &str, id: &str) -> LabradorResult<String> {
         let prp = PrpCrypto::new(self.key.to_owned());
-        let encrypted_msg = prp.aes_128_cbc_encrypt_msg(msg, id)?;
+        let encrypted_msg = prp.aes_128_cbc_encrypt_msg(msg, id.into())?;
         let signature = self.get_signature(timestamp, nonce, &encrypted_msg, token);
         let msg = format!(
             "<xml>\n\
@@ -170,7 +170,7 @@ impl WechatCrypto {
         Ok(msg)
     }
 
-    /// #解密消息
+    /// # 解密消息
     ///
     /// xml 解密内容
     /// nonce 随机字符串
@@ -186,11 +186,27 @@ impl WechatCrypto {
             return Err(LabraError::InvalidSignature("unmatched signature.".to_string()));
         }
         let prp = PrpCrypto::new(self.key.to_owned());
-        let msg = prp.aes_128_cbc_decrypt_msg(&encrypted_msg, id)?;
+        let msg = prp.aes_128_cbc_decrypt_msg(&encrypted_msg, id.into())?;
         Ok(msg)
     }
 
-    /// #解密退款消息
+    /// # 检验消息的真实性，并且获取解密后的明文.
+    /// <ol>
+    /// <li>利用收到的密文生成安全签名，进行签名验证</li>
+    /// <li>若验证通过，则提取xml中的加密消息</li>
+    /// <li>对消息进行解密</li>
+    /// </ol>
+    pub fn decrypt_content(&self, encrypted_content: &str, signature: &str, timestamp: i64, nonce: &str, token: &str) -> LabradorResult<String> {
+        let real_signature = self.get_signature(timestamp, nonce, &encrypted_content, token);
+        if signature != &real_signature {
+            return Err(LabraError::InvalidSignature("unmatched signature.".to_string()));
+        }
+        let prp = PrpCrypto::new(self.key.to_owned());
+        let msg = prp.aes_256_cbc_decrypt_msg(&encrypted_content).unwrap();
+        Ok(msg)
+    }
+
+    /// # 解密退款消息
     ///
     /// app_key 应用key
     /// ciphertext 加密数据
