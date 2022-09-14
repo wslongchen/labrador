@@ -88,6 +88,9 @@ impl WechatCrypto {
             timestamp.to_string(),
             nonce.to_string(),
         ];
+        if !encrypted.is_empty() {
+            data.push(encrypted.to_string());
+        }
         data.sort();
         let data_str = data.join("");
         // create a Sha1 object
