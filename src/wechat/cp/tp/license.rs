@@ -345,7 +345,7 @@ pub struct WechatCpTpLicenseOrder {
 pub struct WechatCpTpLicenseOrderAccountListResponse {
     pub next_cursor: Option<String>,
     pub has_more: Option<i32>,
-    pub account_list: Option<WechatCpTpLicenseAccount>,
+    pub account_list: Option<Vec<WechatCpTpLicenseAccount>>,
 }
 
 /// 订单账号信息
