@@ -116,19 +116,15 @@ impl<T: SessionStore> WechatCpTpClient<T> {
     /// 详情请见: <a href="https://work.weixin.qq.com/api/doc#90000/90139/90968/消息体签名校验">文档</a>
     /// </pre>
     pub fn check_signature(&self, signature: &str, timestamp: i64, nonce: &str, data: &str) -> LabradorResult<bool> {
-        let crp = WechatCrypto::new(&self.aes_key.to_owned().unwrap_or_default());
-        let _ = crp.check_signature(signature, timestamp, nonce, data,&self.token.to_owned().unwrap_or_default())?;
+        let crp = WechatCrypto::new(&self.aes_key.to_owned().unwrap_or_default()).token(&self.token.to_owned().unwrap_or_default());
+        let _ = crp.check_signature(signature, timestamp, nonce, data)?;
         Ok(true)
     }
 
-    /// <pre>
-    /// 检验消息的真实性，并且获取解密后的明文.
-    /// 详情请见: <a href="https://work.weixin.qq.com/api/doc#90000/90139/90968/消息体签名校验">文档</a>
-    /// </pre>
-    pub fn decrypt_content(&self, signature: &str, timestamp: i64, nonce: &str, data: &str) -> LabradorResult<String> {
-        let crp = WechatCrypto::new(&self.aes_key.to_owned().unwrap_or_default());
-        let res = crp.decrypt_content(data, signature, timestamp, nonce,&self.token.to_owned().unwrap_or_default())?;
-        Ok(res)
+    /// 获取加密工具
+    pub fn get_crypto(&self) -> WechatCrypto {
+        let crp = WechatCrypto::new(&self.aes_key.to_owned().unwrap_or_default()).token(&self.token.to_owned().unwrap_or_default());
+        crp
     }
 
     /// 获得suite_ticket,不强制刷新suite_ticket

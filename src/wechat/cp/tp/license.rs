@@ -353,6 +353,10 @@ pub struct WechatCpTpLicenseOrderAccountListResponse {
 pub struct WechatCpTpLicenseAccount {
     /// 激活码
     pub active_code: Option<String>,
+    /// 用户ID
+    pub userid: Option<String>,
+    #[serde(rename="type")]
+    pub r#type: Option<u8>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

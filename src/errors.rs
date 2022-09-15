@@ -76,6 +76,14 @@ impl From<JsonError> for LabraError {
     }
 }
 
+
+impl From<serde_xml_rs::Error> for LabraError {
+    fn from(_err: serde_xml_rs::Error) -> Self {
+        error!("error to parse xml:{:?}", _err);
+        LabraError::RedundantField(_err.to_string())
+    }
+}
+
 impl From<ErrorStack> for LabraError {
     fn from(err: ErrorStack) -> Self {
         LabraError::InvalidSignature(format!("加解密出错：{}", err.to_string()))

@@ -10,15 +10,26 @@ mod cryptos;
 mod miniapp;
 #[allow(unused)]
 mod constants;
-mod msg_parser;
 
 pub use cp::*;
 pub use mp::*;
 pub use pay::*;
 pub use cryptos::*;
-pub use msg_parser::*;
 use crate::{LabradorResult, LabraError, Method, RequestBody, RequestType};
 
+pub trait XmlMessageParser {
+    type WechatXmlMessage;
+
+    fn from_xml(xml: &str) -> LabradorResult<Self::WechatXmlMessage>;
+}
+
+impl <T> XmlMessageParser for T where T: DeserializeOwned {
+    type WechatXmlMessage = T;
+
+    fn from_xml(xml: &str) -> LabradorResult<Self::WechatXmlMessage> {
+        serde_xml_rs::from_str(xml).map_err(LabraError::from)
+    }
+}
 
 pub trait WechatRequest {
     ///

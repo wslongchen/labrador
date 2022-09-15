@@ -95,8 +95,8 @@ impl<T: SessionStore> WechatMaClient<T> {
     /// 详情(http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421135319&token=&lang=zh_CN)
     /// </pre>
     pub fn check_signature(&self, signature: &str, timestamp: i64, nonce: &str) -> LabradorResult<bool> {
-        let crp = WechatCrypto::new(&self.aes_key.to_owned().unwrap_or_default());
-        let _ = crp.check_signature(signature, timestamp, nonce, "", &self.token.to_owned().unwrap_or_default())?;
+        let crp = WechatCrypto::new(&self.aes_key.to_owned().unwrap_or_default()).token(&self.token.to_owned().unwrap_or_default());
+        let _ = crp.check_signature(signature, timestamp, nonce, "")?;
         Ok(true)
     }
 
