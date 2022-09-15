@@ -1,4 +1,4 @@
-
+use bytes::Bytes;
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
@@ -349,7 +349,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let req = json!({
             "auth_code": auth_code,
         });
-        let result = self.client.post(WechatCpMethod::GetPermanentCode, vec![], req, RequestType::Json).await?.json::<Value>()?;
+        let result = self.post(WechatCpMethod::GetPermanentCode, vec![], req, RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse::<WechatCpThirdPermanentCodeInfo>(result)
     }
 
@@ -357,12 +357,27 @@ impl<T: SessionStore> WechatCpTpClient<T> {
     /// 获取预授权链接
     /// </pre>
     pub async fn get_pre_auth_url(&self, redirect_uri: &str, state: Option<&str>) -> LabradorResult<String> {
-        let result = self.client.get(WechatCpMethod::GetPreAuthCode, vec![], RequestType::Json).await?.json::<WechatCpThirdPreauthCode>()?;
+        let result = self.get(WechatCpMethod::GetPreAuthCode, vec![], RequestType::Json).await?.json::<WechatCpThirdPreauthCode>()?;
         let mut pre_auth_url = format!("{}?suite_id={}&pre_auth_code={}&redirect_uri={}", AUTH_URL_INSTALL, self.suite_id.to_owned().unwrap_or_default(), result.pre_auth_code, urlencoding::encode(redirect_uri));
         if let Some(state) = state {
             pre_auth_url.push_str(&format!("&state={}", state));
         }
         Ok(pre_auth_url)
+    }
+
+    /// <pre>
+    /// 设置授权配置
+    /// </pre>
+    pub async fn set_session_info(&self, pre_auth_code: &str, app_ids: Vec<&str>, auth_type: u8) -> LabradorResult<WechatCommonResponse> {
+        let req = json!({
+            "pre_auth_code": pre_auth_code,
+            "session_info":
+            {
+                "appid": app_ids,
+                "auth_type": auth_type
+            }
+        });
+        self.post(WechatCpMethod::SetSessionInfo, vec![], req, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
     /// <pre>
@@ -375,6 +390,78 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         });
         let result = self.client.post(WechatCpMethod::GetAuthInfo, vec![], req, RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse::<WechatCpThirdAuthInfo>(result)
+    }
+
+
+    /// <pre>
+    /// 获取应用的管理员列表
+    /// 第三方服务商可以用此接口获取授权企业中某个第三方应用的管理员列表(不包括外部管理员)，以便服务商在用户进入应用主页之后根据是否管理员身份做权限的区分。
+    /// </pre>
+    pub async fn get_admin_info_with_agentid(&self, agent_id: i32) -> LabradorResult<Vec<AdminUserInfo>> {
+        let req = json!({
+           "auth_corpid": auth_corp_id,
+           "agentid": agent_id
+        });
+        let result = self.client.post(WechatCpMethod::GetAdminInfo, vec![], req, RequestType::Json).await?.json::<Value>()?;
+        let v = WechatCommonResponse::parse::<Value>(result)?;
+        serde_json::from_value::<Vec<AdminUserInfo>>(v["admin"].to_owned()).map_err(LabraError::from)
+    }
+
+
+    /// <pre>
+    /// 获取应用二维码
+    /// 用于获取第三方应用二维码。
+    /// </pre>
+    pub async fn get_app_qrcode_buffer(&self, suite_id: &str, appid: Option<i32>, state: Option<&str>, style: Option<u8>) -> LabradorResult<Bytes> {
+        let req = json!({
+           "suite_id": suite_id,
+            "appid": appid,
+            "state": state,
+            "style": style,
+            "result_type": 1
+        });
+        self.client.post(WechatCpMethod::GetAppQrcode, vec![], req, RequestType::Json).await?.bytes()
+    }
+
+    /// <pre>
+    /// 获取应用二维码
+    /// 用于获取第三方应用二维码。
+    /// </pre>
+    pub async fn get_app_qrcode_url(&self, suite_id: &str, appid: Option<i32>, state: Option<&str>, style: Option<u8>, result_type: Option<u8>) -> LabradorResult<String> {
+        let req = json!({
+           "suite_id": suite_id,
+            "appid": appid,
+            "state": state,
+            "style": style,
+            "result_type": 2
+        });
+        let v = self.client.post(WechatCpMethod::GetAppQrcode, vec![], req, RequestType::Json).await?.json::<Value>()?;
+        let v = WechatCommonResponse::parse::<Value>(v)?;
+        let qrcode = v["qrcode"].as_str().unwrap_or_default();
+        Ok(qrcode.to_string())
+    }
+
+    /// <pre>
+    /// 明文corpid转换为加密corpid
+    /// 为更好地保护企业与用户的数据，第三方应用获取的corpid不再是明文的corpid，将升级为第三方服务商级别的加密corpid（了解更多）。第三方可以将已有的明文corpid转换为第三方的加密corpid。。
+    /// </pre>
+    pub async fn corpid_to_opencorpid(&self, corpid: &str) -> LabradorResult<String> {
+        let req = json!({
+           "corpid": corpid,
+        });
+        let v = self.client.post(WechatCpMethod::CorpToOpenCorpid, vec![], req, RequestType::Json).await?.json::<Value>()?;
+        let v = WechatCommonResponse::parse::<Value>(v)?;
+        let qrcode = v["open_corpid"].as_str().unwrap_or_default();
+        Ok(qrcode.to_string())
+    }
+
+
+    /// <pre>
+    /// 获取应用的管理员列表
+    /// 第三方服务商可以用此接口获取授权企业中某个第三方应用的管理员列表(不包括外部管理员)，以便服务商在用户进入应用主页之后根据是否管理员身份做权限的区分。
+    /// </pre>
+    pub async fn get_admin_info(&self) -> LabradorResult<Vec<AdminUserInfo>> {
+        self.get_admin_info_with_agentid(self.agent_id.unwrap_or_default()).await
     }
 
     ///
@@ -543,6 +630,17 @@ pub struct AuthUserInfo {
     pub avatar: Option<String>,
     /// 授权管理员的open_userid，可能为空
     pub open_userid: Option<String>,
+}
+
+
+/// 管理员信息
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AdminUserInfo {
+    pub userid: Option<String>,
+    /// 管理员的open_userid，可能为空
+    pub open_userid: Option<String>,
+    /// 该管理员对应用的权限：0=发消息权限，1=管理权限
+    pub auth_type: Option<u8>,
 }
 
 
