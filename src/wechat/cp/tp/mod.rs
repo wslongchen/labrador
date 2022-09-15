@@ -397,7 +397,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
     /// 获取应用的管理员列表
     /// 第三方服务商可以用此接口获取授权企业中某个第三方应用的管理员列表(不包括外部管理员)，以便服务商在用户进入应用主页之后根据是否管理员身份做权限的区分。
     /// </pre>
-    pub async fn get_admin_info_with_agentid(&self, agent_id: i32) -> LabradorResult<Vec<AdminUserInfo>> {
+    pub async fn get_admin_info(&self, auth_corp_id: &str, agent_id: i32) -> LabradorResult<Vec<AdminUserInfo>> {
         let req = json!({
            "auth_corpid": auth_corp_id,
            "agentid": agent_id
@@ -453,15 +453,6 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let v = WechatCommonResponse::parse::<Value>(v)?;
         let qrcode = v["open_corpid"].as_str().unwrap_or_default();
         Ok(qrcode.to_string())
-    }
-
-
-    /// <pre>
-    /// 获取应用的管理员列表
-    /// 第三方服务商可以用此接口获取授权企业中某个第三方应用的管理员列表(不包括外部管理员)，以便服务商在用户进入应用主页之后根据是否管理员身份做权限的区分。
-    /// </pre>
-    pub async fn get_admin_info(&self) -> LabradorResult<Vec<AdminUserInfo>> {
-        self.get_admin_info_with_agentid(self.agent_id.unwrap_or_default()).await
     }
 
     ///
