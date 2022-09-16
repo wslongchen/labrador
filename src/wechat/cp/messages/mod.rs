@@ -11,7 +11,7 @@ mod location;
 mod link;
 mod unknown;
 
-use crate::{CpAppAdminChangeEvent, CpAuthCancelEvent, CpAuthChangeEvent, CpAuthCreateEvent, CpBatchJobResultEvent, CpContactCreatePartyEvent, CpContactCreateUserEvent, CpContactDeletePartyEvent, CpContactDeleteUserEvent, CpContactUpdatePartyEvent, CpContactUpdateTagEvent, CpContactUpdateUserEvent, CpEnterAgentEvent, CpLocationEvent, CpMenuClickEvent, CpMenuLocationSelectEvent, CpMenuPicPhotoOrAlbumEvent, CpMenuPicSysPhotoEvent, CpMenuPicWeixinEvent, CpMenuScanCodePushEvent, CpMenuScanCodeWaitMsgEvent, CpMenuViewEvent, CpOpenApprovalChangeEvent, CpPermanentCodeEvent, CpShareAgentChangeEvent, CpShareChainChangeEvent, CpSubscribeEvent, CpTemplateCardEvent, CpTemplateCardMenuEvent, CpTicketEvent, CpTpContactCreatePartyEvent, CpTpContactCreateUserEvent, CpTpContactDeletePartyEvent, CpTpContactDeleteUserEvent, CpTpContactUpdatePartyEvent, CpTpContactUpdateTagEvent, CpTpContactUpdateUserEvent, CpUnsubscribeEvent, LabradorResult, parse_cp_message};
+use crate::{CpAppAdminChangeEvent, CpAuthCancelEvent, CpAuthChangeEvent, CpAuthCreateEvent, CpBatchJobResultEvent, CpContactCreatePartyEvent, CpContactCreateUserEvent, CpContactDeletePartyEvent, CpContactDeleteUserEvent, CpContactUpdatePartyEvent, CpContactUpdateTagEvent, CpContactUpdateUserEvent, CpEnterAgentEvent, CpLicensePaySuccessEvent, CpLicenseRefundEvent, CpLocationEvent, CpMenuClickEvent, CpMenuLocationSelectEvent, CpMenuPicPhotoOrAlbumEvent, CpMenuPicSysPhotoEvent, CpMenuPicWeixinEvent, CpMenuScanCodePushEvent, CpMenuScanCodeWaitMsgEvent, CpMenuViewEvent, CpOpenApprovalChangeEvent, CpPermanentCodeEvent, CpShareAgentChangeEvent, CpShareChainChangeEvent, CpSubscribeEvent, CpTemplateCardEvent, CpTemplateCardMenuEvent, CpTicketEvent, CpTpContactCreatePartyEvent, CpTpContactCreateUserEvent, CpTpContactDeletePartyEvent, CpTpContactDeleteUserEvent, CpTpContactUpdatePartyEvent, CpTpContactUpdateTagEvent, CpTpContactUpdateUserEvent, CpUnlicensedNotifyEvent, CpUnsubscribeEvent, LabradorResult, parse_cp_message};
 // export Message types
 pub use self::text::CpTextMessage;
 pub use self::image::CpImageMessage;
@@ -56,6 +56,9 @@ pub enum CpMessage {
     TpContactDeletePartyEvent(CpTpContactDeletePartyEvent),
     TpContactUpdateTagEvent(CpTpContactUpdateTagEvent),
     EnterAgentEvent(CpEnterAgentEvent),
+    LicensePaySuccessEvent(CpLicensePaySuccessEvent),
+    LicenseRefundEvent(CpLicenseRefundEvent),
+    UnlicensedNotifyEvent(CpUnlicensedNotifyEvent),
     MenuClickEvent(CpMenuClickEvent),
     MenuViewEvent(CpMenuViewEvent),
     MenuPicWeixinEvent(CpMenuPicWeixinEvent),

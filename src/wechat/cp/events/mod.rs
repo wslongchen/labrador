@@ -21,6 +21,10 @@ mod auth;
 mod permanent_code;
 mod app_admin;
 mod tp_contact_change;
+mod unlicensed;
+mod licecnse_pay_success;
+mod licecnse_refund;
+mod auto_activate;
 
 pub use subscribe::CpSubscribeEvent;
 pub use unsubscribe::CpUnsubscribeEvent;
@@ -38,3 +42,7 @@ pub use auth::*;
 pub use permanent_code::*;
 pub use app_admin::*;
 pub use tp_contact_change::*;
+pub use unlicensed::*;
+pub use licecnse_pay_success::*;
+pub use licecnse_refund::*;
+pub use auto_activate::*;
