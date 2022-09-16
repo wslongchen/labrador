@@ -1,48 +1,25 @@
-use chrono::NaiveDateTime;
+use serde::{Serialize, Deserialize};
 
-use crate::wechat::mp::messages::MessageParser;
-use crate::xmlutil;
-
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ViewEvent {
+    #[serde(rename="FromUserName")]
     pub source: String,
+    #[serde(rename="ToUserName")]
     pub target: String,
-    pub time: i64,
-    pub create_time: NaiveDateTime,
+    #[serde(rename="CreateTime")]
+    pub create_time: i64,
+    #[serde(rename="MsgId")]
     pub id: i64,
-    pub url: String,
+    #[serde(rename="Event")]
     pub event: String,
-    pub raw: String,
+    #[serde(rename="EventKey")]
+    pub url: String,
 }
 
-impl MessageParser for ViewEvent {
-    type WechatMessage = ViewEvent;
-
-    #[inline]
-    fn from_xml(xml: &str) -> ViewEvent {
-        let package = xmlutil::parse(xml);
-        let doc = package.as_document();
-        let source = xmlutil::evaluate(&doc, "//xml/FromUserName/text()").string();
-        let target = xmlutil::evaluate(&doc, "//xml/ToUserName/text()").string();
-        let id = xmlutil::evaluate(&doc, "//xml/MsgId/text()").number() as i64;
-        let time = xmlutil::evaluate(&doc, "//xml/CreateTime/text()").number() as i64;
-        let url = xmlutil::evaluate(&doc, "//xml/EventKey/text()").string();
-        ViewEvent {
-            source: source,
-            target: target,
-            id: id,
-            time: time,
-            create_time: NaiveDateTime::from_timestamp(time, 0),
-            url: url,
-            event: "view".to_owned(),
-            raw: xml.to_owned(),
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
-    use crate::wechat::{messages::MessageParser};
+    use crate::XmlMessageParser;
     use super::ViewEvent;
 
     #[test]
@@ -55,12 +32,11 @@ mod tests {
         <Event><![CDATA[VIEW]]></Event>
         <EventKey><![CDATA[www.qq.com]]></EventKey>
         </xml>";
-        let msg = ViewEvent::from_xml(xml);
+        let msg = ViewEvent::from_xml(xml).unwrap();
 
         assert_eq!("fromUser", &msg.source);
         assert_eq!("toUser", &msg.target);
         assert_eq!("view", &msg.event);
-        assert_eq!(123456789, msg.time);
         assert_eq!("www.qq.com", &msg.url);
     }
 }

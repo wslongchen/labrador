@@ -7,9 +7,17 @@ mod api;
 #[allow(unused)]
 mod constants;
 mod tp;
+mod messages;
+mod msg_parser;
+mod events;
+mod replies;
 
 pub use api::*;
 pub use tp::*;
+pub use messages::*;
+pub use replies::*;
+pub use events::*;
+pub use msg_parser::*;
 use crate::wechat::cp::constants::{ACCESS_TOKEN, CORPID, CORPSECRET};
 use crate::wechat::cp::method::{WechatCpMethod};
 
@@ -168,8 +176,8 @@ impl<T: SessionStore> WechatCpClient<T> {
     /// [详情](http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421135319&token=&lang=zh_CN)
     /// </pre>
     pub fn check_signature(&self, signature: &str, timestamp: i64, nonce: &str, data: &str) -> LabradorResult<bool> {
-        let crp = WechatCrypto::new(&self.aes_key.to_owned().unwrap_or_default());
-        let _ = crp.check_signature(signature, timestamp, nonce, data, &self.token.to_owned().unwrap_or_default())?;
+        let crp = WechatCrypto::new(&self.aes_key.to_owned().unwrap_or_default()).token(&self.token.to_owned().unwrap_or_default());
+        let _ = crp.check_signature(signature, timestamp, nonce, data)?;
         Ok(true)
     }
 

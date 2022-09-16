@@ -1,53 +1,28 @@
-use chrono::NaiveDateTime;
+use serde::{Serialize, Deserialize};
 
 
-use crate::wechat::mp::messages::MessageParser;
-use crate::xmlutil;
-
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct VoiceMessage {
+    #[serde(rename="FromUserName")]
     pub source: String,
+    #[serde(rename="ToUserName")]
     pub target: String,
-    pub time: i64,
-    pub create_time: NaiveDateTime,
+    #[serde(rename="CreateTime")]
+    pub create_time: i64,
+    #[serde(rename="MsgId")]
     pub id: i64,
+    #[serde(rename="MediaId")]
     pub media_id: String,
+    #[serde(rename="Format")]
     pub format: String,
+    #[serde(rename="Recognition")]
     pub recognition: String,
-    pub raw: String,
 }
 
-impl MessageParser for VoiceMessage {
-    type WechatMessage = VoiceMessage;
-
-    #[inline]
-    fn from_xml(xml: &str) -> VoiceMessage {
-        let package = xmlutil::parse(xml);
-        let doc = package.as_document();
-        let source = xmlutil::evaluate(&doc, "//xml/FromUserName/text()").string();
-        let target = xmlutil::evaluate(&doc, "//xml/ToUserName/text()").string();
-        let id = xmlutil::evaluate(&doc, "//xml/MsgId/text()").number() as i64;
-        let time = xmlutil::evaluate(&doc, "//xml/CreateTime/text()").number() as i64;
-        let media_id = xmlutil::evaluate(&doc, "//xml/MediaId/text()").string();
-        let format = xmlutil::evaluate(&doc, "//xml/Format/text()").string();
-        let recognition = xmlutil::evaluate(&doc, "//xml/Recognition/text()").string();
-        VoiceMessage {
-            source: source,
-            target: target,
-            id: id,
-            time: time,
-            create_time: NaiveDateTime::from_timestamp(time, 0),
-            media_id: media_id,
-            format: format,
-            recognition: recognition,
-            raw: xml.to_owned(),
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
-    use crate::wechat::{messages::MessageParser};
+    use crate::XmlMessageParser;
     use super::VoiceMessage;
 
     #[test]
@@ -61,12 +36,11 @@ mod tests {
         <Format><![CDATA[Format]]></Format>\
         <MsgId>1234567890123456</MsgId>\
         </xml>";
-        let msg = VoiceMessage::from_xml(xml);
+        let msg = VoiceMessage::from_xml(xml).unwrap();
 
         assert_eq!("fromUser", &msg.source);
         assert_eq!("toUser", &msg.target);
         assert_eq!(1234567890123456, msg.id);
-        assert_eq!(1348831860, msg.time);
         assert_eq!("media_id", &msg.media_id);
         assert_eq!("Format", &msg.format);
         assert_eq!("", &msg.recognition);

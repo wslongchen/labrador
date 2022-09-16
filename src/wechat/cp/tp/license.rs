@@ -85,6 +85,21 @@ impl<'a, T: SessionStore> WechatCpTpLicense<'a, T> {
 
 
     /// <pre>
+    ///  获取订单列表
+    /// 服务商查询自己某段时间内的平台能力服务订单列表
+    /// 文档地址：<a href="https://developer.work.weixin.qq.com/document/path/95647">文档</a>
+    /// </pre>
+    pub async fn get_order(&self, order_id: &str) -> LabradorResult<WechatCpTpLicenseOrderInfoResponse> {
+        let mut req = json!({
+            "order_id": order_id,
+        });
+        let access_token = self.client.get_wechat_provider_token().await?;
+        let v = self.client.post(WechatCpMethod::License(CpLicenseMethod::GetOrder), vec![(PROVIDER_ACCESS_TOKEN.to_string(), access_token)], req, RequestType::Json).await?.json::<Value>()?;
+        WechatCommonResponse::parse::<WechatCpTpLicenseOrderInfoResponse>(v)
+    }
+
+
+    /// <pre>
     ///  查询指定订单下的平台能力服务帐号列表。
     /// 若为购买帐号的订单或者存量企业的版本付费迁移订单，则返回帐号激活码列表；
     /// 若为续期帐号的订单，则返回续期帐号的成员列表。注意，若是购买帐号的订单，
@@ -98,10 +113,24 @@ impl<'a, T: SessionStore> WechatCpTpLicense<'a, T> {
             "limit": limit,
         });
         let access_token = self.client.get_wechat_provider_token().await?;
-        let v = self.client.post(WechatCpMethod::License(CpLicenseMethod::ListOrderCount), vec![(PROVIDER_ACCESS_TOKEN.to_string(), access_token)], req, RequestType::Json).await?.json::<Value>()?;
+        let v = self.client.post(WechatCpMethod::License(CpLicenseMethod::ListOrderAccount), vec![(PROVIDER_ACCESS_TOKEN.to_string(), access_token)], req, RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse::<WechatCpTpLicenseOrderAccountListResponse>(v)
     }
 
+
+    /// <pre>
+    ///  取消订单
+    /// 取消接口许可购买和续费订单，只可取消未支付且未失效的订单。
+    /// 文档地址：<a href="https://developer.work.weixin.qq.com/document/path/96106">文档</a>
+    /// </pre>
+    pub async fn cancel_order(&self, corp_id: &str, order_id: &str) -> LabradorResult<WechatCommonResponse> {
+        let mut req = json!({
+            "corpid": corp_id,
+            "order_id": order_id,
+        });
+        let access_token = self.client.get_wechat_provider_token().await?;
+        self.client.post(WechatCpMethod::License(CpLicenseMethod::CancelOrder), vec![(PROVIDER_ACCESS_TOKEN.to_string(), access_token)], req, RequestType::Json).await?.json::<WechatCommonResponse>()
+    }
 
     /// <pre>
     ///  激活帐号
@@ -316,7 +345,7 @@ pub struct WechatCpTpLicenseOrder {
 pub struct WechatCpTpLicenseOrderAccountListResponse {
     pub next_cursor: Option<String>,
     pub has_more: Option<i32>,
-    pub account_list: Option<WechatCpTpLicenseAccount>,
+    pub account_list: Option<Vec<WechatCpTpLicenseAccount>>,
 }
 
 /// 订单账号信息
@@ -324,6 +353,10 @@ pub struct WechatCpTpLicenseOrderAccountListResponse {
 pub struct WechatCpTpLicenseAccount {
     /// 激活码
     pub active_code: Option<String>,
+    /// 用户ID
+    pub userid: Option<String>,
+    #[serde(rename="type")]
+    pub r#type: Option<u8>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

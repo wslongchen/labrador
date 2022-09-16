@@ -43,7 +43,6 @@ impl<'d> XPathEvaluator<'d> {
             &self.variables,
             &self.namespaces,
         );
-
         let v = self.factory.build(xpath).unwrap_or(None).map(|xpath| xpath.evaluate(&context).ok().unwrap_or(Value::String("".to_string())));
         v.unwrap_or(Value::String("".to_string()))
     }

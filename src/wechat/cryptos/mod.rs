@@ -11,6 +11,7 @@ use crate::prp::PrpCrypto;
 #[derive(Debug, Eq, PartialEq)]
 pub struct WechatCrypto {
     key: Vec<u8>,
+    token: Option<String>,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -74,20 +75,30 @@ impl WechatCrypto {
         let key = base64::decode(&aes_key).unwrap_or_default();
         WechatCrypto {
             key: key,
+            token: None
         }
     }
 
-    /// #获取签名
+    pub fn token(mut self, token: &str) -> WechatCrypto {
+        self.token = token.to_string().into();
+        self
+    }
+
+    /// # 获取签名
     ///
     /// timestamp 时间戳
     /// nonce 随机字符串
     /// encrypted 加密数据
-    pub fn get_signature(&self, timestamp: i64, nonce: &str, encrypted: &str, token: &str) -> String {
+    pub fn get_signature(&self, timestamp: i64, nonce: &str, encrypted: &str) -> String {
+        let token = self.token.to_owned().unwrap_or_default();
         let mut data = vec![
             token.to_string(),
             timestamp.to_string(),
             nonce.to_string(),
         ];
+        if !encrypted.is_empty() {
+            data.push(encrypted.to_string());
+        }
         data.sort();
         let data_str = data.join("");
         // create a Sha1 object
@@ -116,7 +127,7 @@ impl WechatCrypto {
         PrpCrypto::hmac_sha256_sign(key, message)
     }
 
-    /// #数据解密
+    /// # 数据解密
     ///
     /// session_key key
     /// iv 偏移量
@@ -128,13 +139,13 @@ impl WechatCrypto {
         Ok(msg)
     }
 
-    /// #检查签名
+    /// # 检查签名
     ///
     /// timestamp 时间戳
     /// nonce 随机字符串
     /// echo_str 加密数据
-    pub fn check_signature(&self, signature: &str, timestamp: i64, nonce: &str, echo_str: &str, token: &str) -> LabradorResult<bool> {
-        let real_signature = self.get_signature(timestamp, nonce, echo_str, token);
+    pub fn check_signature(&self, signature: &str, timestamp: i64, nonce: &str, echo_str: &str) -> LabradorResult<bool> {
+        let real_signature = self.get_signature(timestamp, nonce, echo_str);
         if signature != &real_signature {
             return Err(LabraError::InvalidSignature("Unmatched signature.".to_string()));
         }
@@ -143,15 +154,15 @@ impl WechatCrypto {
         Ok(true)
     }
 
-    /// #加密消息
+    /// # 加密消息
     ///
     /// timestamp 时间戳
     /// nonce 随机字符串
     /// msg 加密数据
-    pub fn encrypt_message(&self, msg: &str, timestamp: i64, nonce: &str, token: &str, id: &str) -> LabradorResult<String> {
+    pub fn encrypt_message(&self, msg: &str, timestamp: i64, nonce: &str, id: &str) -> LabradorResult<String> {
         let prp = PrpCrypto::new(self.key.to_owned());
-        let encrypted_msg = prp.aes_128_cbc_encrypt_msg(msg, id)?;
-        let signature = self.get_signature(timestamp, nonce, &encrypted_msg, token);
+        let encrypted_msg = prp.aes_128_cbc_encrypt_msg(msg, id.into())?;
+        let signature = self.get_signature(timestamp, nonce, &encrypted_msg);
         let msg = format!(
             "<xml>\n\
             <Encrypt><![CDATA[{encrypt}]]></Encrypt>\n\
@@ -167,27 +178,55 @@ impl WechatCrypto {
         Ok(msg)
     }
 
-    /// #解密消息
+    /// # 解密消息
     ///
     /// xml 解密内容
     /// nonce 随机字符串
     /// timestamp 时间戳
     /// signature 签名
-    pub fn decrypt_message(&self, xml: &str, signature: &str, timestamp: i64, nonce: &str, token: &str, id: &str) -> LabradorResult<String> {
+    pub fn decrypt_message(&self, xml: &str, signature: &str, timestamp: i64, nonce: &str, id: &str) -> LabradorResult<String> {
         use crate::util::xmlutil;
         let package = xmlutil::parse(xml);
         let doc = package.as_document();
         let encrypted_msg = xmlutil::evaluate(&doc, "//xml/Encrypt/text()").string();
-        let real_signature = self.get_signature(timestamp, nonce, &encrypted_msg, token);
+        let real_signature = self.get_signature(timestamp, nonce, &encrypted_msg);
         if signature != &real_signature {
             return Err(LabraError::InvalidSignature("unmatched signature.".to_string()));
         }
         let prp = PrpCrypto::new(self.key.to_owned());
-        let msg = prp.aes_128_cbc_decrypt_msg(&encrypted_msg, id)?;
+        let msg = prp.aes_128_cbc_decrypt_msg(&encrypted_msg, id.into())?;
         Ok(msg)
     }
 
-    /// #解密退款消息
+    /// # 检验消息的真实性，并且获取解密后的明文.
+    /// <ol>
+    /// <li>利用收到的密文生成安全签名，进行签名验证</li>
+    /// <li>若验证通过，则提取xml中的加密消息</li>
+    /// <li>对消息进行解密</li>
+    /// </ol>
+    pub fn decrypt_content(&self, encrypted_content: &str, signature: &str, timestamp: i64, nonce: &str) -> LabradorResult<String> {
+        let real_signature = self.get_signature(timestamp, nonce, &encrypted_content);
+        if signature != &real_signature {
+            return Err(LabraError::InvalidSignature("unmatched signature.".to_string()));
+        }
+        let prp = PrpCrypto::new(self.key.to_owned());
+        let msg = prp.aes_256_cbc_decrypt_msg(&encrypted_content)?;
+        Ok(msg)
+    }
+
+    /// # 检验消息的真实性，并且获取解密后的明文.
+    /// <ol>
+    /// <li>利用收到的密文生成安全签名，进行签名验证</li>
+    /// <li>若验证通过，则提取xml中的加密消息</li>
+    /// <li>对消息进行解密</li>
+    /// </ol>
+    pub fn decrypt_xml(&self, encrypted_xml: &str, signature: &str, timestamp: i64, nonce: &str) -> LabradorResult<String> {
+        let doc = serde_xml_rs::from_str::<serde_json::Value>(encrypted_xml).unwrap_or(serde_json::Value::Null);
+        let cipher_text = doc["Encrypt"]["$value"].as_str().unwrap_or_default();
+        self.decrypt_content(cipher_text, signature, timestamp, nonce)
+    }
+
+    /// # 解密退款消息
     ///
     /// app_key 应用key
     /// ciphertext 加密数据
@@ -266,7 +305,7 @@ mod tests {
     #[test]
     fn test_get_signature() {
         let crypto = WechatCrypto::new( "kWxPEV2UEDyxWpmPdKC3F4dgPDmOvfKX1HGnEUDS1aR");
-        let signature = crypto.get_signature(123456i64, "test", "rust").unwrap();
+        let signature = crypto.get_signature(123456i64, "test", "rust");
         assert_eq!("d6056f2bb3ad3e30f4afa5ef90cc9ddcdc7b7b27", &signature);
     }
 
@@ -334,7 +373,7 @@ mod tests {
             </xml>";
         // , "wx49f0ab532d5d035a"
         let crypto = WechatCrypto::new("kWxPEV2UEDyxWpmPdKC3F4dgPDmOvfKX1HGnEUDS1aR");
-        let encrypted = crypto.encrypt_message(msg, timestamp, nonce).unwrap();
+        let encrypted = crypto.encrypt_message(msg, timestamp, nonce,"").unwrap();
         assert_eq!(expected, &encrypted);
     }
 
@@ -358,7 +397,7 @@ mod tests {
         let nonce = "461056294";
         //  "wx49f0ab532d5d035a"
         let crypto = WechatCrypto::new("kWxPEV2UEDyxWpmPdKC3F4dgPDmOvfKX1HGnEUDS1aR");
-        let decrypted = crypto.decrypt_message(xml, signature, timestamp, nonce).unwrap();
+        let decrypted = crypto.decrypt_message(xml, signature, timestamp, nonce,"").unwrap();
         assert_eq!(expected, &decrypted);
     }
 }

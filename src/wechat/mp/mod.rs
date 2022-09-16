@@ -10,8 +10,10 @@ pub mod messages;
 pub mod replies;
 #[allow(unused)]
 mod constants;
+mod msg_parser;
 
 pub use api::*;
+pub use msg_parser::parse_message;
 use crate::wechat::mp::constants::{ACCESS_TOKEN, APPID, CLIENT_CREDENTIAL, GRANT_TYPE, SECRET, TICKET_TYPE, TICKET_TYPE_JSAPI, TICKET_TYPE_SDK, TICKET_TYPE_WXCARD};
 use crate::wechat::mp::method::WechatMpMethod::QrConnectUrl;
 
@@ -253,9 +255,9 @@ impl<T: SessionStore> WechatMpClient<T> {
     /// 验证消息的确来自微信服务器.
     /// 详情(http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421135319&token=&lang=zh_CN)
     /// </pre>
-    pub fn check_signature(&self, signature: &str, timestamp: i64, nonce: &str, echo_str: &str) -> LabradorResult<bool> {
-        let crp = WechatCrypto::new(&self.aes_key.to_owned().unwrap_or_default());
-        let _ = crp.check_signature(signature, timestamp, nonce, echo_str, &self.token.to_owned().unwrap_or_default())?;
+    pub fn check_signature(&self, signature: &str, timestamp: i64, nonce: &str) -> LabradorResult<bool> {
+        let crp = WechatCrypto::new(&self.aes_key.to_owned().unwrap_or_default()).token(&self.token.to_owned().unwrap_or_default());
+        let _ = crp.check_signature(signature, timestamp, nonce, "")?;
         Ok(true)
     }
 

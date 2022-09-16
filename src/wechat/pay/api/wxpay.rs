@@ -604,7 +604,7 @@ mod tests {
         let mut private_key = Vec::new();
         File::open("src/wechat/pay/sec/apiclient_key.pem").unwrap().read_to_end(&mut private_key).unwrap();
         let r = rt.spawn(async {
-            let c =  WechatPayClient::new("appid", "secret");
+            let c =  WechatPayClient::<SimpleStorage>::new("appid", "secret");
             let mut client =c.wxpay();
             let result = client.close_order_v3(WechatCloseOrderRequestV3 {
                 mchid: "mchid".to_string(),
@@ -630,7 +630,7 @@ mod tests {
         let mut private_key = Vec::new();
         File::open("src/wechat/pay/sec/apiclient_key.pem").unwrap().read_to_end(&mut private_key).unwrap();
         let r = rt.spawn(async {
-            let c =  WechatPayClient::new("appid", "secret");
+            let c =  WechatPayClient::<SimpleStorage>::new("appid", "secret");
             let mut client =c.wxpay();
             // .cert(MchCert {
             //     mch_id: "1602920235".to_string().into(),
@@ -682,7 +682,7 @@ mod tests {
         let mut private_key = Vec::new();
         File::open("src/wechat/pay/sec/apiclient_key.pem").unwrap().read_to_end(&mut private_key).unwrap();
         let r = rt.spawn(async {
-            let c =  WechatPayClient::new("appid", "secret");
+            let c =  WechatPayClient::<SimpleStorage>::new("appid", "secret");
             let mut client =c.wxpay();
             let date = Local::now().to_rfc3339_opts(SecondsFormat::Secs, false);
             let result = client.unified_order_v3(TradeType::Jsapi, WechatPayRequestV3 {
