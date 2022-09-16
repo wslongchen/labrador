@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use crate::{LabradorResult, request::RequestType, session::SessionStore, WechatCommonResponse, WechatCpTpClient};
-use crate::wechat::cp::constants::{PROVIDER_ACCESS_TOKEN};
-use crate::wechat::cp::method::{CpDepartmentMethod, WechatCpMethod};
+use crate::wechat::cp::constants::PROVIDER_ACCESS_TOKEN;
+use crate::wechat::cp::method::WechatCpMethod;
 
 /// 部门管理
 #[derive(Debug, Clone)]
@@ -25,7 +25,7 @@ impl<'a, T: SessionStore> WechatCpTpAgent<'a, T> {
     /// 该API用于获取代开发自建应用授权链接，用于生成带参临时二维码。
     /// 详情请见: https://developer.work.weixin.qq.com/document/path/95436
     /// </pre>
-    pub async fn create(&self, state: &str, templateid_list: Vec<&str>) -> LabradorResult<WechatCpTpProxyResponse> {
+    pub async fn get_customized_auth_url(&self, state: &str, templateid_list: &Vec<&str>) -> LabradorResult<WechatCpTpProxyResponse> {
         let req = json!({"state":state,"templateid_list":templateid_list});
         let access_token = self.client.get_wechat_provider_token().await?;
         let query = vec![(PROVIDER_ACCESS_TOKEN.to_string(), access_token)];
