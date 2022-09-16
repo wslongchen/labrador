@@ -13,6 +13,7 @@ mod media;
 mod department;
 mod user;
 mod order;
+mod agent;
 
 pub use tag::*;
 pub use license::*;
