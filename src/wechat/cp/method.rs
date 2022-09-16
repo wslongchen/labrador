@@ -78,7 +78,7 @@ impl WechatCpMethod {
     pub fn need_token(&self) -> bool {
         match self {
             WechatCpMethod::Custom { need_token, .. } => *need_token,
-            WechatCpMethod::AccessToken => false,
+            WechatCpMethod::AccessToken | WechatCpMethod::GetCustomizedAuthUrl => false,
             _ => true,
         }
     }
