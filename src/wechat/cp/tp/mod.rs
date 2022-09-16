@@ -13,6 +13,7 @@ mod media;
 mod department;
 mod user;
 mod order;
+mod agent;
 
 pub use tag::*;
 pub use license::*;
@@ -20,6 +21,7 @@ pub use media::*;
 pub use department::*;
 pub use user::*;
 pub use order::*;
+pub use agent::*;
 
 
 /// 企业微信第三方应用API
