@@ -1,9 +1,8 @@
-use crate::current_timestamp;
-use super::ReplyRenderer;
+use crate::{current_timestamp, ReplyRenderer};
 
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub struct VoiceReply {
+pub struct CpVoiceReply {
     pub source: String,
     pub target: String,
     pub time: i64,
@@ -11,10 +10,10 @@ pub struct VoiceReply {
 }
 
 #[allow(unused)]
-impl VoiceReply {
+impl CpVoiceReply {
     #[inline]
-    pub fn new<S: Into<String>>(source: S, target: S, media_id: S) -> VoiceReply {
-        VoiceReply {
+    pub fn new<S: Into<String>>(source: S, target: S, media_id: S) -> CpVoiceReply {
+        CpVoiceReply {
             source: source.into(),
             target: target.into(),
             time: current_timestamp(),
@@ -24,7 +23,7 @@ impl VoiceReply {
 }
 
 #[allow(unused)]
-impl ReplyRenderer for VoiceReply {
+impl ReplyRenderer for CpVoiceReply {
     #[inline]
     fn render(&self) -> String {
         format!("<xml>\n\
@@ -47,11 +46,11 @@ impl ReplyRenderer for VoiceReply {
 #[cfg(test)]
 mod tests {
     use super::ReplyRenderer;
-    use super::VoiceReply;
+    use super::CpVoiceReply;
 
     #[test]
     fn test_render_voice_reply() {
-        let reply = VoiceReply::new("test1", "test2", "test");
+        let reply = CpVoiceReply::new("test1", "test2", "test");
         let rendered = reply.render();
         assert!(rendered.contains("test1"));
         assert!(rendered.contains("test2"));

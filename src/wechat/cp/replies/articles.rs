@@ -1,5 +1,5 @@
-use crate::current_timestamp;
-use super::ReplyRenderer;
+use crate::{current_timestamp, ReplyRenderer};
+
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Article {
@@ -10,7 +10,7 @@ pub struct Article {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub struct ArticlesReply {
+pub struct CpArticlesReply {
     pub source: String,
     pub target: String,
     pub time: i64,
@@ -86,10 +86,10 @@ impl Article {
 }
 
 #[allow(unused)]
-impl ArticlesReply {
+impl CpArticlesReply {
     #[inline]
-    pub fn new<S: Into<String>>(source: S, target: S) -> ArticlesReply {
-        ArticlesReply {
+    pub fn new<S: Into<String>>(source: S, target: S) -> CpArticlesReply {
+        CpArticlesReply {
             source: source.into(),
             target: target.into(),
             time: current_timestamp(),
@@ -98,8 +98,8 @@ impl ArticlesReply {
     }
 
     #[inline]
-    pub fn with_articles<S: Into<String>>(source: S, target: S, articles: &[Article]) -> ArticlesReply {
-        ArticlesReply {
+    pub fn with_articles<S: Into<String>>(source: S, target: S, articles: &[Article]) -> CpArticlesReply {
+        CpArticlesReply {
             source: source.into(),
             target: target.into(),
             time: current_timestamp(),
@@ -116,7 +116,7 @@ impl ArticlesReply {
     }
 }
 
-impl ReplyRenderer for ArticlesReply {
+impl ReplyRenderer for CpArticlesReply {
     #[inline]
     fn render(&self) -> String {
         let mut articles = vec![];
@@ -144,11 +144,11 @@ impl ReplyRenderer for ArticlesReply {
 #[cfg(test)]
 mod tests {
     use super::ReplyRenderer;
-    use super::{Article, ArticlesReply};
+    use super::{Article, CpArticlesReply};
 
     #[test]
     fn test_render_articles_reply() {
-        let mut reply = ArticlesReply::new("test1", "test2");
+        let mut reply = CpArticlesReply::new("test1", "test2");
         let article1 = Article::new("test3", "test4");
         let article2 = Article::with_image("test5", "test6", "test7");
         let article3 = Article::with_description("test8", "test9", "test10");

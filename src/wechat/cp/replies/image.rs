@@ -1,8 +1,7 @@
-use crate::current_timestamp;
-use super::ReplyRenderer;
+use crate::{current_timestamp, ReplyRenderer};
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub struct ImageReply {
+pub struct CpImageReply {
     pub source: String,
     pub target: String,
     pub time: i64,
@@ -10,10 +9,10 @@ pub struct ImageReply {
 }
 
 #[allow(unused)]
-impl ImageReply {
+impl CpImageReply {
     #[inline]
-    pub fn new<S: Into<String>>(source: S, target: S, media_id: S) -> ImageReply {
-        ImageReply {
+    pub fn new<S: Into<String>>(source: S, target: S, media_id: S) -> CpImageReply {
+        CpImageReply {
             source: source.into(),
             target: target.into(),
             time: current_timestamp(),
@@ -22,7 +21,7 @@ impl ImageReply {
     }
 }
 
-impl ReplyRenderer for ImageReply {
+impl ReplyRenderer for CpImageReply {
     #[inline]
     fn render(&self) -> String {
         format!("<xml>\n\
@@ -45,11 +44,11 @@ impl ReplyRenderer for ImageReply {
 #[cfg(test)]
 mod tests {
     use super::ReplyRenderer;
-    use super::ImageReply;
+    use super::CpImageReply;
 
     #[test]
     fn test_render_image_reply() {
-        let reply = ImageReply::new("test1", "test2", "test");
+        let reply = CpImageReply::new("test1", "test2", "test");
         let rendered = reply.render();
         assert!(rendered.contains("test1"));
         assert!(rendered.contains("test2"));

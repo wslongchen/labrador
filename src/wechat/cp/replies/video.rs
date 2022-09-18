@@ -1,8 +1,7 @@
-use crate::current_timestamp;
-use super::ReplyRenderer;
+use crate::{current_timestamp, ReplyRenderer};
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub struct VideoReply {
+pub struct CpVideoReply {
     pub source: String,
     pub target: String,
     pub time: i64,
@@ -12,10 +11,10 @@ pub struct VideoReply {
 }
 
 #[allow(unused)]
-impl VideoReply {
+impl CpVideoReply {
     #[inline]
-    pub fn new<S: Into<String>>(source: S, target: S, media_id: S) -> VideoReply {
-        VideoReply {
+    pub fn new<S: Into<String>>(source: S, target: S, media_id: S) -> CpVideoReply {
+        CpVideoReply {
             source: source.into(),
             target: target.into(),
             time: current_timestamp(),
@@ -26,7 +25,7 @@ impl VideoReply {
     }
 }
 
-impl ReplyRenderer for VideoReply {
+impl ReplyRenderer for CpVideoReply {
     #[inline]
     fn render(&self) -> String {
         format!("<xml>\n\
@@ -53,11 +52,11 @@ impl ReplyRenderer for VideoReply {
 #[cfg(test)]
 mod tests {
     use super::ReplyRenderer;
-    use super::VideoReply;
+    use super::CpVideoReply;
 
     #[test]
     fn test_render_video_reply() {
-        let reply = VideoReply::new("test1", "test2", "test");
+        let reply = CpVideoReply::new("test1", "test2", "test");
         let rendered = reply.render();
         assert!(rendered.contains("test1"));
         assert!(rendered.contains("test2"));

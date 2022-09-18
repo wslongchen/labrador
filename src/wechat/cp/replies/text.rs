@@ -1,9 +1,7 @@
-use crate::current_timestamp;
-
-use super::ReplyRenderer;
+use crate::{current_timestamp, ReplyRenderer};
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub struct TextReply {
+pub struct CpTextReply {
     pub source: String,
     pub target: String,
     pub time: i64,
@@ -11,10 +9,10 @@ pub struct TextReply {
 }
 
 #[allow(unused)]
-impl TextReply {
+impl CpTextReply {
     #[inline]
-    pub fn new<S: Into<String>>(source: S, target: S, content: S) -> TextReply {
-        TextReply {
+    pub fn new<S: Into<String>>(source: S, target: S, content: S) -> CpTextReply {
+        CpTextReply {
             source: source.into(),
             target: target.into(),
             time: current_timestamp(),
@@ -23,7 +21,7 @@ impl TextReply {
     }
 }
 
-impl ReplyRenderer for TextReply {
+impl ReplyRenderer for CpTextReply {
     #[inline]
     fn render(&self) -> String {
         format!("<xml>\n\
@@ -44,11 +42,11 @@ impl ReplyRenderer for TextReply {
 #[cfg(test)]
 mod tests {
     use super::ReplyRenderer;
-    use super::TextReply;
+    use super::CpTextReply;
 
     #[test]
     fn test_render_text_reply() {
-        let reply = TextReply::new("test1", "test2", "test");
+        let reply = CpTextReply::new("test1", "test2", "test");
         let rendered = reply.render();
         assert!(rendered.contains("test1"));
         assert!(rendered.contains("test2"));

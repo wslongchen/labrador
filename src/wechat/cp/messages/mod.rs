@@ -156,4 +156,92 @@ impl CpMessage {
             _ => "".to_string()
         }
     }
+
+    pub fn get_agent_id(&self) -> i64 {
+        match *self {
+            CpMessage::TextMessage(ref msg) => msg.agent_id,
+            CpMessage::ImageMessage(ref msg) => msg.agent_id,
+            CpMessage::VoiceMessage(ref msg) => msg.agent_id,
+            CpMessage::VideoMessage(ref msg) => msg.agent_id,
+            CpMessage::LocationMessage(ref msg) => msg.agent_id,
+            CpMessage::LinkMessage(ref msg) => msg.agent_id,
+            CpMessage::UnknownMessage(ref msg) => msg.agent_id,
+            CpMessage::LocationEvent(ref msg) => msg.agent_id,
+            CpMessage::OpenApprovalChangeEvent(ref msg) => msg.agent_id,
+            CpMessage::BatchJobResultEvent(ref msg) => msg.agent_id,
+            CpMessage::EnterAgentEvent(ref msg) => msg.agent_id,
+            CpMessage::MenuClickEvent(ref msg) => msg.agent_id,
+            CpMessage::MenuViewEvent(ref msg) => msg.agent_id,
+            CpMessage::ShareAgentChangeEvent(ref msg) => msg.agent_id,
+            CpMessage::ShareChainChangeEvent(ref msg) => msg.agent_id,
+            CpMessage::SubscribeEvent(ref msg) => msg.agent_id,
+            CpMessage::UnsubscribeEvent(ref msg) => msg.agent_id,
+            CpMessage::TemplateCardEvent(ref msg) => msg.agent_id,
+            CpMessage::TemplateCardMenuEvent(ref msg) => msg.agent_id,
+            CpMessage::MenuPicWeixinEvent(ref msg) => msg.agent_id,
+            CpMessage::MenuLocationSelectEvent(ref msg) => msg.agent_id,
+            CpMessage::MenuPicSysPhotoEvent(ref msg) => msg.agent_id,
+            CpMessage::MenuScanCodePushEvent(ref msg) => msg.agent_id,
+            CpMessage::MenuPicPhotoOrAlbumEvent(ref msg) => msg.agent_id,
+            CpMessage::MenuScanCodeWaitMsgEvent(ref msg) => msg.agent_id,
+            CpMessage::AppAdminChangeEvent(ref msg) => msg.agent_id,
+            CpMessage::UnlicensedNotifyEvent(ref msg) => msg.agent_id,
+            _ => 0
+        }
+    }
+
+    pub fn get_content(&self) -> String {
+        match *self {
+            CpMessage::TextMessage(ref msg) => msg.content.to_string(),
+            _ => "".to_string()
+        }
+    }
+
+    pub fn get_event_key(&self) -> String {
+        match *self {
+            CpMessage::LocationMessage(ref msg) => msg.agent_id.to_string(),
+            CpMessage::LinkMessage(ref msg) => msg.agent_id.to_string(),
+            CpMessage::UnknownMessage(ref msg) => msg.agent_id.to_string(),
+            CpMessage::MenuClickEvent(ref msg) => msg.event_key.to_string(),
+            CpMessage::MenuViewEvent(ref msg) => msg.event_key.to_string(),
+            CpMessage::MenuPicWeixinEvent(ref msg) => msg.event_key.to_string(),
+            CpMessage::MenuLocationSelectEvent(ref msg) => msg.event_key.to_string(),
+            CpMessage::MenuPicSysPhotoEvent(ref msg) => msg.event_key.to_string(),
+            CpMessage::MenuScanCodePushEvent(ref msg) => msg.event_key.to_string(),
+            CpMessage::MenuPicPhotoOrAlbumEvent(ref msg) => msg.event_key.to_string(),
+            CpMessage::MenuScanCodeWaitMsgEvent(ref msg) => msg.event_key.to_string(),
+            _ => "".to_string()
+        }
+    }
+
+    pub fn get_event(&self) -> String {
+        match *self {
+            CpMessage::LocationEvent(ref msg) => msg.event.to_string(),
+            CpMessage::OpenApprovalChangeEvent(ref msg) => msg.event.to_string(),
+            CpMessage::BatchJobResultEvent(ref msg) => msg.event.to_string(),
+            CpMessage::ContactCreateUserEvent(ref msg) => msg.event.to_string(),
+            CpMessage::ContactUpdateUserEvent(ref msg) => msg.event.to_string(),
+            CpMessage::ContactDeleteUserEvent(ref msg) => msg.event.to_string(),
+            CpMessage::ContactCreatePartyEvent(ref msg) => msg.event.to_string(),
+            CpMessage::ContactUpdatePartyEvent(ref msg) => msg.event.to_string(),
+            CpMessage::ContactDeletePartyEvent(ref msg) => msg.event.to_string(),
+            CpMessage::ContactUpdateTagEvent(ref msg) => msg.event.to_string(),
+            CpMessage::EnterAgentEvent(ref msg) => msg.event.to_string(),
+            CpMessage::MenuClickEvent(ref msg) => msg.event.to_string(),
+            CpMessage::MenuViewEvent(ref msg) => msg.event.to_string(),
+            CpMessage::ShareAgentChangeEvent(ref msg) => msg.event.to_string(),
+            CpMessage::ShareChainChangeEvent(ref msg) => msg.event.to_string(),
+            CpMessage::SubscribeEvent(ref msg) => msg.event.to_string(),
+            CpMessage::UnsubscribeEvent(ref msg) => msg.event.to_string(),
+            CpMessage::TemplateCardEvent(ref msg) => msg.event.to_string(),
+            CpMessage::TemplateCardMenuEvent(ref msg) => msg.event.to_string(),
+            CpMessage::MenuPicWeixinEvent(ref msg) => msg.event.to_string(),
+            CpMessage::MenuLocationSelectEvent(ref msg) => msg.event.to_string(),
+            CpMessage::MenuPicSysPhotoEvent(ref msg) => msg.event.to_string(),
+            CpMessage::MenuScanCodePushEvent(ref msg) => msg.event.to_string(),
+            CpMessage::MenuPicPhotoOrAlbumEvent(ref msg) => msg.event.to_string(),
+            CpMessage::MenuScanCodeWaitMsgEvent(ref msg) => msg.event.to_string(),
+            _ => "".to_string()
+        }
+    }
 }

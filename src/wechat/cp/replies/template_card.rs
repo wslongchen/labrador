@@ -1,9 +1,8 @@
-use crate::{current_timestamp, QuoteArea};
-use super::ReplyRenderer;
+use crate::{current_timestamp, QuoteArea, ReplyRenderer};
 
 /// 更新点击用户的整张卡片
 #[derive(Debug, Clone)]
-pub struct TemplateCardTextReply {
+pub struct CpTemplateCardTextReply {
     pub source: String,
     pub target: String,
     pub time: i64,
@@ -118,10 +117,10 @@ pub struct TemplateCardSource {
 }
 
 #[allow(unused)]
-impl TemplateCardTextReply {
+impl CpTemplateCardTextReply {
     #[inline]
-    pub fn new<S: Into<String>>(source: S, target: S) -> TemplateCardTextReply {
-        TemplateCardTextReply {
+    pub fn new<S: Into<String>>(source: S, target: S) -> CpTemplateCardTextReply {
+        CpTemplateCardTextReply {
             source: source.into(),
             target: target.into(),
             time: current_timestamp(),
@@ -162,7 +161,7 @@ impl TemplateCardTextReply {
     }
 }
 
-impl ReplyRenderer for TemplateCardTextReply {
+impl ReplyRenderer for CpTemplateCardTextReply {
     #[inline]
     fn render(&self) -> String {
 

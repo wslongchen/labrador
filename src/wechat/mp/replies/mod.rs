@@ -1,7 +1,3 @@
-pub trait ReplyRenderer {
-    fn render(&self) -> String;
-}
-
 mod text;
 mod image;
 mod voice;
@@ -10,6 +6,7 @@ mod music;
 mod articles;
 mod transfer_customer_service;
 
+use crate::ReplyRenderer;
 pub use self::text::TextReply;
 pub use self::image::ImageReply;
 pub use self::voice::VoiceReply;
