@@ -13,6 +13,7 @@ mod media;
 mod department;
 mod user;
 mod order;
+mod agent;
 
 pub use tag::*;
 pub use license::*;
@@ -20,6 +21,7 @@ pub use media::*;
 pub use department::*;
 pub use user::*;
 pub use order::*;
+pub use agent::*;
 
 
 /// 企业微信第三方应用API
@@ -324,7 +326,6 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let timestamp = current_timestamp();
         let expires_at: i64 = session.get(&expires_key, Some(timestamp))?.unwrap_or_default();
         if expires_at <= timestamp {
-            let suite_ticket = self.get_suite_ticket()?;
             let req = json!({
                 "corpid": self.corp_id,
                 "provider_secret": self.provider_secret,

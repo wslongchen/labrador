@@ -21,6 +21,7 @@ pub enum WechatCpMethod {
     GetAdminInfo,
     GetOrder,
     GetOrderList,
+    GetCustomizedAuthUrl,
     Media(CpMediaMethod),
     Tag(CpTagMethod),
     Agent(CpAgentMethod),
@@ -32,7 +33,7 @@ pub enum WechatCpMethod {
     Message(CpMessageMethod),
     ExternalContact(CpExternalContactMethod),
     /// 自定义方法
-    Custom{ need_token: bool, method_url: String }
+    Custom { need_token: bool, method_url: String },
 }
 
 impl RequestMethod for WechatCpMethod {
@@ -56,10 +57,11 @@ impl RequestMethod for WechatCpMethod {
             WechatCpMethod::JsCode2Session => String::from("/cgi-bin/miniprogram/jscode2session"),
             WechatCpMethod::GetCallbackIp => String::from("/cgi-bin/getcallbackip"),
             WechatCpMethod::GetAgentConfigTicket => String::from("/cgi-bin/ticket/get?&type=agent_config"),
+            WechatCpMethod::GetCustomizedAuthUrl => String::from("/cgi-bin/service/get_customized_auth_url"),
             WechatCpMethod::Media(v) => v.get_method(),
             WechatCpMethod::ExternalContact(v) => v.get_method(),
             WechatCpMethod::Oauth2(v) => v.get_method(),
-            WechatCpMethod::Custom{ method_url, .. } => method_url.to_string(),
+            WechatCpMethod::Custom { method_url, .. } => method_url.to_string(),
             WechatCpMethod::Menu(v) => v.get_method(),
             WechatCpMethod::Message(v) => v.get_method(),
             WechatCpMethod::Tag(v) => v.get_method(),
@@ -73,11 +75,10 @@ impl RequestMethod for WechatCpMethod {
 
 #[allow(unused)]
 impl WechatCpMethod {
-
     pub fn need_token(&self) -> bool {
         match self {
-            WechatCpMethod::Custom{ need_token, .. } => *need_token,
-            WechatCpMethod::AccessToken => false,
+            WechatCpMethod::Custom { need_token, .. } => *need_token,
+            WechatCpMethod::AccessToken | WechatCpMethod::GetCustomizedAuthUrl => false,
             _ => true,
         }
     }
@@ -141,7 +142,6 @@ impl CpTagMethod {
 }
 
 
-
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum CpAgentMethod {
@@ -160,8 +160,6 @@ impl CpAgentMethod {
         }
     }
 }
-
-
 
 
 #[allow(unused)]
@@ -226,8 +224,6 @@ impl CpMenuMethod {
 }
 
 
-
-
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum CpUserMethod {
@@ -272,8 +268,6 @@ impl CpUserMethod {
 }
 
 
-
-
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum CpDepartmentMethod {
@@ -298,8 +292,6 @@ impl CpDepartmentMethod {
         }
     }
 }
-
-
 
 
 #[allow(unused)]
@@ -348,6 +340,7 @@ impl CpOauth2Method {
         }
     }
 }
+
 #[allow(unused)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum CpExternalContactMethod {
