@@ -33,8 +33,6 @@ pub struct WechatCpTpClient<T: SessionStore> {
     corp_id: String,
     /// 第三方应用的EncodingAESKey，用来检查签名
     aes_key: Option<String>,
-    ///企业secret，来自于企微配置
-    corp_secret: String,
     /// 服务商secret
     provider_secret: Option<String>,
     agent_id: Option<i32>,
@@ -50,7 +48,6 @@ impl<T: SessionStore> WechatCpTpClient<T> {
     fn from_client(client: APIClient<T>) -> WechatCpTpClient<T> {
         WechatCpTpClient {
             corp_id: client.app_key.to_owned(),
-            corp_secret: client.secret.to_owned(),
             token: None,
             aes_key: None,
             agent_id: None,
@@ -91,19 +88,23 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         self
     }
 
+    pub fn get_corpid(&self) -> &str {
+        &self.corp_id
+    }
+
     fn key_with_prefix(&self, key: &str) -> String {
         format!("cp:{}:{}", self.suite_id.to_owned().unwrap_or_default(), key)
     }
 
     /// get the wechat client
-    pub fn new<S: Into<String>>(crop_id: S, crop_secret: S) -> WechatCpTpClient<SimpleStorage> {
-        let client = APIClient::<SimpleStorage>::from_session(crop_id.into(), crop_secret.into(), "https://qyapi.weixin.qq.com", SimpleStorage::new());
+    pub fn new<S: Into<String>>(crop_id: S) -> WechatCpTpClient<SimpleStorage> {
+        let client = APIClient::<SimpleStorage>::from_session(crop_id.into(), "", "https://qyapi.weixin.qq.com", SimpleStorage::new());
         WechatCpTpClient::<SimpleStorage>::from_client(client)
     }
 
     /// get the wechat client
-    pub fn from_session<S: Into<String>>(crop_id: S, crop_secret: S, session: T) -> WechatCpTpClient<T> {
-        let client = APIClient::from_session(crop_id.into(), crop_secret.into(), "https://qyapi.weixin.qq.com", session);
+    pub fn from_session<S: Into<String>>(crop_id: S, session: T) -> WechatCpTpClient<T> {
+        let client = APIClient::from_session(crop_id.into(), "", "https://qyapi.weixin.qq.com", session);
         Self::from_client(client)
     }
 
