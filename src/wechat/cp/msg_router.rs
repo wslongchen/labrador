@@ -195,7 +195,7 @@ impl WechatCpMessageRouterRule {
 
     pub fn test(&self, msg: &CpMessage) -> bool {
         (self.source.is_empty() || self.source.eq(&msg.get_source())) &&
-            (self.agent_id != 0 || self.agent_id.eq(&msg.get_agent_id())) && (self.event_key.is_empty() || self.event_key.eq(&msg.get_event_key())) &&
+            (self.agent_id == 0 || self.agent_id.eq(&msg.get_agent_id())) && (self.event_key.is_empty() || self.event_key.eq(&msg.get_event_key())) &&
             (self.event.is_empty() || self.event.eq(&msg.get_event()))
     }
 

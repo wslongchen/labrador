@@ -241,6 +241,22 @@ impl CpMessage {
             CpMessage::MenuScanCodePushEvent(ref msg) => msg.event.to_string(),
             CpMessage::MenuPicPhotoOrAlbumEvent(ref msg) => msg.event.to_string(),
             CpMessage::MenuScanCodeWaitMsgEvent(ref msg) => msg.event.to_string(),
+            CpMessage::TicketEvent(ref msg) => msg.info_type.to_string(),
+            CpMessage::AuthChangeEvent(ref msg) => msg.info_type.to_string(),
+            CpMessage::AuthCreateEvent(ref msg) => msg.info_type.to_string(),
+            CpMessage::AuthCancelEvent(ref msg) => msg.info_type.to_string(),
+            CpMessage::PermanentCodeEvent(ref msg) => msg.info_type.to_string(),
+            CpMessage::AppAdminChangeEvent(ref msg) => msg.event.to_string(),
+            CpMessage::TpContactCreateUserEvent(ref msg) => msg.info_type.to_string(),
+            CpMessage::TpContactUpdateUserEvent(ref msg) => msg.info_type.to_string(),
+            CpMessage::TpContactDeleteUserEvent(ref msg) => msg.info_type.to_string(),
+            CpMessage::TpContactCreatePartyEvent(ref msg) => msg.info_type.to_string(),
+            CpMessage::TpContactUpdatePartyEvent(ref msg) => msg.info_type.to_string(),
+            CpMessage::TpContactDeletePartyEvent(ref msg) => msg.info_type.to_string(),
+            CpMessage::TpContactUpdateTagEvent(ref msg) => msg.info_type.to_string(),
+            CpMessage::LicensePaySuccessEvent(ref msg) => msg.into_type.to_string(),
+            CpMessage::LicenseRefundEvent(ref msg) => msg.into_type.to_string(),
+            CpMessage::UnlicensedNotifyEvent(ref msg) => msg.event.to_string(),
             _ => "".to_string()
         }
     }
