@@ -351,7 +351,9 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let req = json!({
             "auth_code": auth_code,
         });
-        let result = self.post(WechatCpMethod::GetPermanentCode, vec![], req, RequestType::Json).await?.json::<Value>()?;
+        let suite_access_token = self.get_suite_access_token().await?;
+        let query = vec![(SUITE_ACCESS_TOKEN.to_string(), suite_access_token)];
+        let result = self.post(WechatCpMethod::GetPermanentCode, query, req, RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse::<WechatCpThirdPermanentCodeInfo>(result)
     }
 
