@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, any::type_name, fmt, error, time::{SystemTime, UNIX_EPOCH}};
+use std::{collections::BTreeMap, any::type_name, fmt, error};
 use dashmap::DashMap;
 use once_cell::sync::Lazy;
 
@@ -365,7 +365,8 @@ impl SessionStore for SimpleStorage {
             let (ttl, value) = v.value();
             if let Some(ttl) =  ttl {
                 let current_stamp = get_timestamp() as usize;
-                if current_stamp >= *ttl {
+                let exipre_at = current_stamp + *ttl;
+                if current_stamp >= exipre_at {
                     // SIMPLE_STORAGE.remove(key);
                     is_expire = true;
                     None
@@ -387,7 +388,6 @@ impl SessionStore for SimpleStorage {
     fn set<'a, K: AsRef<str>, T: ToStore>(&self, key: K, value: T, ttl: Option<usize>) -> LabradorResult<()> {
         let key = key.as_ref();
         let ttl = if let Some(ttl) = ttl {
-            let ttl = get_timestamp() as usize + ttl;
             Some(ttl)
         } else {
             None
