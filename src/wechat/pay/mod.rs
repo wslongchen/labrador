@@ -285,7 +285,7 @@ impl<T: SessionStore> WechatPayClient<T> {
             let status_code = response.status().as_u16();
             if status_code == 200 {
                 let body = response.json::<Value>()?;
-                log::info!("获取平台证书:{}", serde_json::to_string(&body).unwrap_or_default());
+                tracing::info!("获取平台证书:{}", serde_json::to_string(&body).unwrap_or_default());
                 let bodys = serde_json::from_value::<Vec<PlatformCertificateResponse>>(body["data"].to_owned())?;
                 for body in bodys {
                     let data =body.encrypt_certificate;
