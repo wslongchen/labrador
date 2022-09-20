@@ -193,7 +193,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let timestamp = current_timestamp();
         let expires_at: i64 = session.get(&expires_key, Some(timestamp))?.unwrap_or_default();
         if expires_at <= timestamp || force_refresh {
-            let suite_ticket = self.get_suite_ticket()?;
+            let suite_ticket = self.get_suite_ticket().unwrap_or_default();
             let req = json!({
                 "suite_id": self.suite_id,
                 "suite_secret": self.suite_secret,
@@ -351,9 +351,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let req = json!({
             "auth_code": auth_code,
         });
-        let suite_access_token = self.get_suite_access_token().await?;
-        let query = vec![(SUITE_ACCESS_TOKEN.to_string(), suite_access_token)];
-        let result = self.post(WechatCpMethod::GetPermanentCode, query, req, RequestType::Json).await?.json::<Value>()?;
+        let result = self.post(WechatCpMethod::GetPermanentCode, vec![], req, RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse::<WechatCpThirdPermanentCodeInfo>(result)
     }
 
@@ -558,6 +556,11 @@ impl<T: SessionStore> WechatCpTpClient<T> {
     /// 用户
     pub fn user(&self) -> WechatCpTpUser<T> {
         WechatCpTpUser::new(self)
+    }
+
+    /// 第三方应用
+    pub fn agent(&self) -> WechatCpTpAgent<T> {
+        WechatCpTpAgent::new(self)
     }
 }
 

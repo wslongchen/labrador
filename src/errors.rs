@@ -7,7 +7,7 @@ use redis::RedisError;
 use reqwest::header::InvalidHeaderValue;
 use rustc_serialize::hex::FromHexError;
 use serde_json::{ error::Error as JsonError};
-use tracing::error;
+use log::error;
 
 #[allow(unused)]
 #[derive(Debug)]
