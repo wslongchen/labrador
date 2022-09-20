@@ -295,7 +295,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let token_key = format!("{}_corp_access_token_cp", auth_corpid);
         let expires_key = format!("{}_corp_access_token_expires_at_cp", auth_corpid);
         let token: String = session.get(&token_key, Some("".to_owned()))?.unwrap_or_default();
-        let timestamp = current_timestamp();
+        let timestamp = get_timestamp();
         let expires_at: i64 = session.get(&expires_key, Some(timestamp))?.unwrap_or_default();
         if expires_at <= timestamp || force_refresh {
             let suite_ticket = self.get_suite_ticket()?;
@@ -307,7 +307,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
             let token = result.access_token.to_string();
             let expires_in = result.expires_in;
             // 预留200秒的时间
-            let expires_at = current_timestamp() + expires_in - 200;
+            let expires_at = get_timestamp() + expires_in - 200;
             session.set(&token_key, token.to_owned(), Some(expires_in as usize));
             session.set(&expires_key, expires_at, Some(expires_in as usize));
             Ok(result)
@@ -324,7 +324,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let token_key = format!("{}_provider_access_token_cp", self.corp_id);
         let expires_key = format!("{}_provider_access_token_expires_at_cp", self.corp_id);
         let token: String = session.get(&token_key, Some("".to_owned()))?.unwrap_or_default();
-        let timestamp = current_timestamp();
+        let timestamp = get_timestamp();
         let expires_at: i64 = session.get(&expires_key, Some(timestamp))?.unwrap_or_default();
         if expires_at <= timestamp {
             let req = json!({
@@ -335,7 +335,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
             let token = result.provider_access_token.to_string();
             let expires_in = result.expires_in;
             // 预留200秒的时间
-            let expires_at = current_timestamp() + expires_in - 200;
+            let expires_at = get_timestamp() + expires_in - 200;
             session.set(&token_key, token.to_owned(), Some(expires_in as usize));
             session.set(&expires_key, expires_at, Some(expires_in as usize));
             Ok(token)

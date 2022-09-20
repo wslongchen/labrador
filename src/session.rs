@@ -387,8 +387,7 @@ impl SessionStore for SimpleStorage {
     fn set<'a, K: AsRef<str>, T: ToStore>(&self, key: K, value: T, ttl: Option<usize>) -> LabradorResult<()> {
         let key = key.as_ref();
         let ttl = if let Some(ttl) = ttl {
-            let current_stamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
-            let ttl = current_stamp as usize + ttl;
+            let ttl = get_timestamp() as usize + ttl;
             Some(ttl)
         } else {
             None
