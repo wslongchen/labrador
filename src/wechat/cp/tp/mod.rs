@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
 use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCrypto, current_timestamp, LabraError, JsapiTicket, JsapiSignature, get_timestamp, get_nonce_str, APIClient, WechatRequest, LabraResponse, LabraRequest, SimpleStorage, WechatCpProviderToken};
-use crate::wechat::cp::constants::{ACCESS_TOKEN, ACCESS_TOKEN_KEY, AUTH_URL_INSTALL, SUITE_ACCESS_TOKEN, TYPE};
+use crate::wechat::cp::constants::{ACCESS_TOKEN, ACCESS_TOKEN_KEY, AGENT_CONFIG, AUTH_URL_INSTALL, SUITE_ACCESS_TOKEN, TYPE};
 use crate::wechat::cp::method::WechatCpMethod;
 use crate::wechat::cp::AccessTokenResponse;
 
@@ -233,7 +233,8 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let timestamp = current_timestamp();
         let expires_at: i64 = session.get(&expires_key, Some(timestamp))?.unwrap_or_default();
         if expires_at <= timestamp || force_refresh {
-            let res = self.client.get(WechatCpMethod::GetSuiteJsapiTicket, vec![(TYPE.to_string(), "agent_config".to_string()), (ACCESS_TOKEN.to_string(), self.get_access_token(auth_corp_id))], RequestType::Json).await?.json::<JsapiTicket>()?;
+            let v = self.client.get(WechatCpMethod::GetSuiteJsapiTicket, vec![(TYPE.to_string(), AGENT_CONFIG.to_string()), (ACCESS_TOKEN.to_string(), self.get_access_token(auth_corp_id))], RequestType::Json).await?.json::<Value>()?;
+            let res = WechatCommonResponse::parse::<JsapiTicket>(v)?;
             let ticket = res.ticket;
             let expires_in = res.expires_in;
             // 预留200秒的时间
@@ -304,7 +305,8 @@ impl<T: SessionStore> WechatCpTpClient<T> {
                 "auth_corpid": auth_corpid,
                 "permanent_code": permanent_code,
             });
-            let result = self.client.post(WechatCpMethod::GetCorpToken, vec![], req, RequestType::Json).await?.json::<AccessTokenResponse>()?;
+            let v = self.client.post(WechatCpMethod::GetCorpToken, vec![], req, RequestType::Json).await?.json::<Value>()?;
+            let result = WechatCommonResponse::parse::<AccessTokenResponse>(v)?;
             let token = result.access_token.to_string();
             let expires_in = result.expires_in;
             // 预留200秒的时间
@@ -332,7 +334,8 @@ impl<T: SessionStore> WechatCpTpClient<T> {
                 "corpid": self.corp_id,
                 "provider_secret": self.provider_secret,
             });
-            let result = self.client.post(WechatCpMethod::GetProviderToken, vec![], req, RequestType::Json).await?.json::<WechatCpProviderToken>()?;
+            let v = self.client.post(WechatCpMethod::GetProviderToken, vec![], req, RequestType::Json).await?.json::<Value>()?;
+            let result = WechatCommonResponse::parse::<WechatCpProviderToken>(v)?;
             let token = result.provider_access_token.to_string();
             let expires_in = result.expires_in;
             // 预留200秒的时间
@@ -576,7 +579,7 @@ pub struct WechatCpSuiteAccessTokenResponse {
 /// 服务商模式获取永久授权码信息
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WechatCpThirdPermanentCodeInfo {
-    pub access_token: String,
+    pub access_token: Option<String>,
     pub permanent_code: String,
     /// 授权企业信息
     pub auth_corp_info: AuthCorpInfo,
@@ -586,7 +589,9 @@ pub struct WechatCpThirdPermanentCodeInfo {
     pub auth_user_info: Option<AuthUserInfo>,
     /// 企业当前生效的版本信息
     pub edition_info: Option<EditionInfo>,
-    pub expires_in: i64,
+    pub expires_in: Option<i64>,
+    /// 安装应用时，扫码或者授权链接中带的state值。详见state说明
+    pub state: Option<String>
 }
 
 
@@ -598,7 +603,7 @@ pub struct AuthCorpInfo {
     pub corp_square_logo_url: Option<String>,
     pub corp_round_logo_url: Option<String>,
     pub corp_user_max: Option<String>,
-    pub corp_agent_max: Option<String>,
+    pub corp_agent_max: Option<i32>,
     /// 所绑定的企业微信主体名称(仅认证过的企业有)
     pub corp_full_name: Option<String>,
     /// 授权企业在微工作台（原企业号）的二维码，可用于关注微工作台

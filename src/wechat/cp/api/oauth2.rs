@@ -123,7 +123,7 @@ impl<'a, T: SessionStore> WechatCpOauth2<'a, T> {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WechatCpOauth2UserInfo {
-    #[serde(rename="OpenId")]
+    #[serde(alias="OpenId", alias="openid")]
     pub openid: Option<String>,
     pub external_userid: Option<String>,
     #[serde(alias="UserId", alias="userid")]
