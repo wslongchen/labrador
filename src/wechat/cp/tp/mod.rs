@@ -681,11 +681,11 @@ pub struct Agent {
     /// 授权模式，0为管理员授权；1为成员授权
     pub auth_mode: Option<u8>,
     /// 是否为代开发自建应用
-    pub is_customized_app: Option<u8>,
+    pub is_customized_app: Option<bool>,
     /// 是否虚拟版本
-    pub is_virtual_version: Option<u8>,
+    pub is_virtual_version: Option<bool>,
     /// 是否由互联企业分享安装。详见 <a href='https://developer.work.weixin.qq.com/document/path/93360#24909'>企业互联</a>
-    pub is_shared_from_other_corp: Option<u8>,
+    pub is_shared_from_other_corp: Option<bool>,
     /// 用户上限。
     /// <p>特别注意, 以下情况该字段无意义，可以忽略：</p>
     /// <ul>
