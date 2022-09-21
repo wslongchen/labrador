@@ -602,7 +602,7 @@ pub struct AuthCorpInfo {
     pub corp_type: Option<String>,
     pub corp_square_logo_url: Option<String>,
     pub corp_round_logo_url: Option<String>,
-    pub corp_user_max: Option<String>,
+    pub corp_user_max: Option<i32>,
     pub corp_agent_max: Option<i32>,
     /// 所绑定的企业微信主体名称(仅认证过的企业有)
     pub corp_full_name: Option<String>,
