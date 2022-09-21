@@ -60,7 +60,7 @@ impl<'a, T: SessionStore> WechatCpOauth2<'a, T> {
 
 
     /// <pre>
-    /// 用oauth2获取用户信息
+    /// 企业号 - 用oauth2获取用户信息
     /// <a href="http://qydev.weixin.qq.com/wiki/index.php?title=根据code获取成员信息">根据code获取成员信息</a>
     /// 因为企业号oauth2.0必须在应用设置里设置通过ICP备案的可信域名，所以无法测试，因此这个方法很可能是坏的。
     ///
@@ -107,7 +107,7 @@ pub struct WechatCpOauth2UserInfo {
     #[serde(rename="OpenId")]
     pub openid: String,
     pub external_userid: String,
-    #[serde(rename="UserId")]
+    #[serde(rename="UserId", rename="userid")]
     pub user_id: String,
     pub user_ticket: String,
     pub expires_in: String,
