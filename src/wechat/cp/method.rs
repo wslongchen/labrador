@@ -329,6 +329,7 @@ pub enum CpOauth2Method {
     GetUserDetail,
     GetAuthUserDetail,
     GetUserInfo,
+    GetAuthUserInfo,
 }
 
 #[allow(unused)]

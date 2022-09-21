@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
 use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCpClient};
-use crate::wechat::cp::constants::{AGENTID, CODE, SNSAPI_BASE, SNSAPI_PRIVATEINFO, SNSAPI_USERINFO};
+use crate::wechat::cp::constants::{AGENTID, CODE, SNSAPI_BASE, SNSAPI_PRIVATEINFO, SNSAPI_USERINFO, USER_TICKET};
 use crate::wechat::cp::method::{CpOauth2Method, WechatCpMethod};
 
 
@@ -71,10 +71,20 @@ impl<'a, T: SessionStore> WechatCpOauth2<'a, T> {
     }
 
     /// <pre>
+    /// 获取访问用户身份
+    /// <a href="https://work.weixin.qq.com/api/doc#90000/90135/91023">获取访问用户身份</a>
+    /// 该接口用于根据code获取成员信息，适用于自建应用与代开发应用
+    ///
+    /// 注意: 这个方法里的agentId，需要开发人员自己给出
+    pub async fn get_user_info_new(&self, code: &str) -> LabradorResult<WechatCpOauth2UserInfo> {
+        let v = self.client.get(WechatCpMethod::Oauth2(CpOauth2Method::GetAuthUserInfo), vec![(CODE.to_string(), code.to_string())], RequestType::Json).await?.json::<Value>()?;
+        WechatCommonResponse::parse::<WechatCpOauth2UserInfo>(v)
+    }
+
+    /// <pre>
     /// 根据code获取成员信息
     /// <a href="http://qydev.weixin.qq.com/wiki/index.php?title=根据code获取成员信息">根据code获取成员信息</a>
     /// <a href="https://work.weixin.qq.com/api/doc#10028/根据code获取成员信息">根据code获取成员信息</a>
-    /// <a href="https://work.weixin.qq.com/api/doc#90000/90135/91023">获取访问用户身份</a>
     /// 因为企业号oauth2.0必须在应用设置里设置通过ICP备案的可信域名，所以无法测试，因此这个方法很可能是坏的。
     ///
     /// 注意: 这个方法里的agentId，需要开发人员自己给出
@@ -94,7 +104,16 @@ impl<'a, T: SessionStore> WechatCpOauth2<'a, T> {
     /// 权限说明：
     /// 需要有对应应用的使用权限，且成员必须在授权应用的可见范围内。
     pub async fn get_user_detail(&self, user_ticket: &str) -> LabradorResult<WechatCpUserDetail> {
-        let v = self.client.post(WechatCpMethod::Oauth2(CpOauth2Method::GetUserDetail), vec![], json!({"user_ticket": user_ticket}), RequestType::Json).await?.json::<Value>()?;
+        let v = self.client.post(WechatCpMethod::Oauth2(CpOauth2Method::GetUserDetail), vec![], json!({USER_TICKET: user_ticket}), RequestType::Json).await?.json::<Value>()?;
+        WechatCommonResponse::parse::<WechatCpUserDetail>(v)
+    }
+
+    /// <pre>
+    /// 获取访问用户敏感信息
+    /// 自建应用与代开发应用可通过该接口获取成员授权的敏感字段.
+    /// <a href="https://developer.work.weixin.qq.com/document/path/95833">获取访问用户敏感信息</a>
+    pub async fn get_user_detail_new(&self, user_ticket: &str) -> LabradorResult<WechatCpUserDetail> {
+        let v = self.client.post(WechatCpMethod::Oauth2(CpOauth2Method::GetAuthUserDetail), vec![], json!({USER_TICKET: user_ticket}), RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse::<WechatCpUserDetail>(v)
     }
 
@@ -105,14 +124,14 @@ impl<'a, T: SessionStore> WechatCpOauth2<'a, T> {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WechatCpOauth2UserInfo {
     #[serde(rename="OpenId")]
-    pub openid: String,
-    pub external_userid: String,
-    #[serde(rename="UserId", rename="userid")]
-    pub user_id: String,
-    pub user_ticket: String,
-    pub expires_in: String,
+    pub openid: Option<String>,
+    pub external_userid: Option<String>,
+    #[serde(alias="UserId", alias="userid")]
+    pub user_id: Option<String>,
+    pub user_ticket: Option<String>,
+    pub expires_in: Option<i64>,
     #[serde(rename="DeviceId")]
-    pub device_id: String,
+    pub device_id: Option<String>,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WechatCpUserDetail {
