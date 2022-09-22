@@ -95,7 +95,7 @@ impl PrpCrypto {
             symm::Cipher::aes_256_cbc(),
         symm::Mode::Decrypt,
             &self.key,
-            Some(&self.key[..16])).unwrap();
+            Some(&self.key[..16]))?;
         decrypter.pad(false);
         let mut unciphered_data = vec![0; b64decoded.len() + symm::Cipher::aes_256_cbc().block_size()];
         let count = decrypter.update(&b64decoded, &mut unciphered_data)?;
@@ -105,7 +105,6 @@ impl PrpCrypto {
         let content_length = u32::from_be(rdr.read_u32::<NativeEndian>().unwrap_or_default()) as usize;
         let content = &unciphered_data[20 .. content_length + 20];
         let from_id = &unciphered_data[content_length + 20 ..];
-        println!("id:{:?}, from_id:{}", id, String::from_utf8_lossy(from_id));
         if let Some(id) = id {
             if from_id != id.as_bytes() {
                 return Err(LabraError::InvalidAppId);
@@ -150,7 +149,7 @@ impl PrpCrypto {
     pub fn rsa_sha256_sign(content: &str, private_key: &str) -> LabradorResult<String> {
         let private_key = openssl::rsa::Rsa::private_key_from_pem(private_key.as_bytes())?;
         let pkey = PKey::from_rsa(private_key)?;
-        let mut signer = Signer::new(MessageDigest::sha256(), &pkey).unwrap();
+        let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
         signer.set_rsa_padding(Padding::PKCS1)?;
         signer.update(content.as_bytes())?;
         let result = signer.sign_to_vec()?;
@@ -209,7 +208,7 @@ impl PrpCrypto {
 
     pub fn hmac_sha256_sign(key: &str, message: &str) -> LabradorResult<String> {
         let pkey = PKey::hmac(key.as_bytes())?;
-        let mut signer = Signer::new(MessageDigest::sha256(), &pkey).unwrap();
+        let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
         signer.update(message.as_bytes())?;
         let result = signer.sign_to_vec()?;
         Ok(result.to_hex())
