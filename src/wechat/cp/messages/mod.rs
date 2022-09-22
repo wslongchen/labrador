@@ -165,7 +165,7 @@ impl CpMessage {
             CpMessage::VideoMessage(ref msg) => msg.agent_id,
             CpMessage::LocationMessage(ref msg) => msg.agent_id,
             CpMessage::LinkMessage(ref msg) => msg.agent_id,
-            CpMessage::UnknownMessage(ref msg) => msg.agent_id,
+            CpMessage::UnknownMessage(ref msg) => msg.agent_id.unwrap_or_default(),
             CpMessage::LocationEvent(ref msg) => msg.agent_id,
             CpMessage::OpenApprovalChangeEvent(ref msg) => msg.agent_id,
             CpMessage::BatchJobResultEvent(ref msg) => msg.agent_id,
@@ -201,7 +201,7 @@ impl CpMessage {
         match *self {
             CpMessage::LocationMessage(ref msg) => msg.agent_id.to_string(),
             CpMessage::LinkMessage(ref msg) => msg.agent_id.to_string(),
-            CpMessage::UnknownMessage(ref msg) => msg.agent_id.to_string(),
+            CpMessage::UnknownMessage(ref msg) => msg.agent_id.unwrap_or_default().to_string(),
             CpMessage::MenuClickEvent(ref msg) => msg.event_key.to_string(),
             CpMessage::MenuViewEvent(ref msg) => msg.event_key.to_string(),
             CpMessage::MenuPicWeixinEvent(ref msg) => msg.event_key.to_string(),

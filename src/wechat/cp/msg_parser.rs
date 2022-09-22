@@ -4,25 +4,36 @@ pub fn parse_cp_message<S: AsRef<str>>(xml: S) -> LabradorResult<CpMessage> {
     let doc = serde_xml_rs::from_str::<serde_json::Value>(xml.as_ref())?;
     let msg_type = doc["MsgType"]["$value"].as_str().unwrap_or_default();
     let info_type = doc["InfoType"]["$value"].as_str().unwrap_or_default();
-    match info_type {
-        "suite_ticket" => return Ok(CpMessage::TicketEvent(CpTicketEvent::from_xml(xml.as_ref())?)),
-        "create_auth" => return Ok(CpMessage::AuthCreateEvent(CpAuthCreateEvent::from_xml(xml.as_ref())?)),
-        "change_auth" => return Ok(CpMessage::AuthChangeEvent(CpAuthChangeEvent::from_xml(xml.as_ref())?)),
-        "cancel_auth" => return Ok(CpMessage::AuthCancelEvent(CpAuthCancelEvent::from_xml(xml.as_ref())?)),
-        "change_contact" => {
-            let change_type = doc["ChangeType"]["$value"].as_str().unwrap_or_default();
-            match change_type {
-                "create_user" =>  return Ok(CpMessage::TpContactCreateUserEvent(CpTpContactCreateUserEvent::from_xml(xml.as_ref())?)),
-                "update_user" =>  return Ok(CpMessage::TpContactUpdateUserEvent(CpTpContactUpdateUserEvent::from_xml(xml.as_ref())?)),
-                "delete_user" =>  return Ok(CpMessage::TpContactDeleteUserEvent(CpTpContactDeleteUserEvent::from_xml(xml.as_ref())?)),
-                "create_party" =>  return Ok(CpMessage::TpContactCreatePartyEvent(CpTpContactCreatePartyEvent::from_xml(xml.as_ref())?)),
-                "update_party" =>  return Ok(CpMessage::TpContactUpdatePartyEvent(CpTpContactUpdatePartyEvent::from_xml(xml.as_ref())?)),
-                "delete_party" =>  return Ok(CpMessage::TpContactDeletePartyEvent(CpTpContactDeletePartyEvent::from_xml(xml.as_ref())?)),
-                "update_tag" =>  return Ok(CpMessage::TpContactUpdateTagEvent(CpTpContactUpdateTagEvent::from_xml(xml.as_ref())?)),
-                _ => {}
+    if !info_type.is_empty() {
+        let msg = match info_type {
+            "suite_ticket" => CpMessage::TicketEvent(CpTicketEvent::from_xml(xml.as_ref())?),
+            "create_auth" => CpMessage::AuthCreateEvent(CpAuthCreateEvent::from_xml(xml.as_ref())?),
+            "change_auth" => CpMessage::AuthChangeEvent(CpAuthChangeEvent::from_xml(xml.as_ref())?),
+            "cancel_auth" => CpMessage::AuthCancelEvent(CpAuthCancelEvent::from_xml(xml.as_ref())?),
+            "change_contact" => {
+                let change_type = doc["ChangeType"]["$value"].as_str().unwrap_or_default();
+                match change_type {
+                    "create_user" =>  CpMessage::TpContactCreateUserEvent(CpTpContactCreateUserEvent::from_xml(xml.as_ref())?),
+                    "update_user" =>  CpMessage::TpContactUpdateUserEvent(CpTpContactUpdateUserEvent::from_xml(xml.as_ref())?),
+                    "delete_user" =>  CpMessage::TpContactDeleteUserEvent(CpTpContactDeleteUserEvent::from_xml(xml.as_ref())?),
+                    "create_party" =>  CpMessage::TpContactCreatePartyEvent(CpTpContactCreatePartyEvent::from_xml(xml.as_ref())?),
+                    "update_party" =>  CpMessage::TpContactUpdatePartyEvent(CpTpContactUpdatePartyEvent::from_xml(xml.as_ref())?),
+                    "delete_party" =>  CpMessage::TpContactDeletePartyEvent(CpTpContactDeletePartyEvent::from_xml(xml.as_ref())?),
+                    "update_tag" =>  CpMessage::TpContactUpdateTagEvent(CpTpContactUpdateTagEvent::from_xml(xml.as_ref())?),
+                    _ => {
+                        let mut msg = CpUnknownMessage::from_xml(xml.as_ref())?;
+                        msg.raw = xml.as_ref().to_string().into();
+                        CpMessage::UnknownMessage(msg)
+                    }
+                }
+            },
+            _=> {
+                let mut msg = CpUnknownMessage::from_xml(xml.as_ref())?;
+                msg.raw = xml.as_ref().to_string().into();
+                CpMessage::UnknownMessage(msg)
             }
-        },
-        _ => {}
+        };
+        return Ok(msg)
     }
     let msg = match msg_type {
         "text" => CpMessage::TextMessage(CpTextMessage::from_xml(xml.as_ref())?),
