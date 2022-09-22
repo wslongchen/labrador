@@ -154,7 +154,6 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let expires_key = format!("{}_suite_ticket_expires_at_cp", self.corp_id);
         session.set(token_key.to_string(), suite_ticket, Some(expire_second as usize))?;
         session.set(expires_key, expires_at, Some(expire_second as usize))?;
-        println!("ticket:{:?}", session.get(&token_key, "".to_string().into()));
         Ok(())
     }
 

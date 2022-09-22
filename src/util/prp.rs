@@ -76,23 +76,41 @@ impl PrpCrypto {
     }
 
     /// # 加密消息(aes_256_cbc)
-    pub fn aes_256_cbc_encrypt_msg(&self, plaintext: &str) -> LabradorResult<String> {
+    pub fn aes_256_cbc_encrypt_msg(&self, plaintext: &str, id: Option<&String>) -> LabradorResult<String> {
         let mut wtr = PrpCrypto::get_random_string().into_bytes();
         wtr.write_u32::<NativeEndian>((plaintext.len() as u32).to_be()).unwrap_or_default();
         wtr.extend(plaintext.bytes());
+        if let Some(id) = id {
+            wtr.extend(id.bytes());
+        }
         let encrypted = symm::encrypt(symm::Cipher::aes_256_cbc(), &self.key, Some(&self.key[..16]), &wtr)?;
         let b64encoded = base64::encode(&encrypted);
         Ok(b64encoded)
     }
 
     /// # 解密消息(aes_256_cbc)
-    pub fn aes_256_cbc_decrypt_msg(&self, ciphertext: &str) -> LabradorResult<String> {
+    pub fn aes_256_cbc_decrypt_msg(&self, ciphertext: &str, id: Option<&String>) -> LabradorResult<String> {
         let b64decoded = base64::decode(ciphertext)?;
-        let text = symm::decrypt(symm::Cipher::aes_256_cbc(), &self.key, Some(&self.key[..16]), &b64decoded)?;
-        let mut rdr = Cursor::new(text[16..20].to_vec());
+        let mut decrypter = symm::Crypter::new(
+            symm::Cipher::aes_256_cbc(),
+        symm::Mode::Decrypt,
+            &self.key,
+            Some(&self.key[..16])).unwrap();
+        decrypter.pad(false);
+        let mut unciphered_data = vec![0; b64decoded.len() + symm::Cipher::aes_256_cbc().block_size()];
+        let count = decrypter.update(&b64decoded, &mut unciphered_data)?;
+        let rest = decrypter.finalize(&mut unciphered_data[count..])?;
+        unciphered_data.truncate(count + rest);
+        let mut rdr = Cursor::new(unciphered_data[16..20].to_vec());
         let content_length = u32::from_be(rdr.read_u32::<NativeEndian>().unwrap_or_default()) as usize;
-        let content = &text[20 .. content_length + 20];
-        let from_id = &text[content_length + 20 ..];
+        let content = &unciphered_data[20 .. content_length + 20];
+        let from_id = &unciphered_data[content_length + 20 ..];
+        println!("id:{:?}, from_id:{}", id, String::from_utf8_lossy(from_id));
+        if let Some(id) = id {
+            if from_id != id.as_bytes() {
+                return Err(LabraError::InvalidAppId);
+            }
+        }
         let content_string = String::from_utf8(content.to_vec()).unwrap_or_default();
         Ok(content_string)
     }

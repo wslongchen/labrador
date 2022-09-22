@@ -12,6 +12,7 @@ use crate::prp::PrpCrypto;
 pub struct WechatCrypto {
     key: Vec<u8>,
     token: Option<String>,
+    s_receive_id : Option<String>,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -72,10 +73,12 @@ pub struct EncryptV3 {
 impl WechatCrypto {
     pub fn new(encoding_aes_key: &str) -> WechatCrypto {
         let mut aes_key = encoding_aes_key.to_owned();
+        aes_key += "=";
         let key = base64::decode(&aes_key).unwrap_or_default();
         WechatCrypto {
-            key: key,
-            token: None
+            key,
+            token: None,
+            s_receive_id: None
         }
     }
 
@@ -83,6 +86,12 @@ impl WechatCrypto {
         self.token = token.to_string().into();
         self
     }
+
+    pub fn receive_id(mut self, receive_id: &str) -> WechatCrypto {
+        self.s_receive_id = receive_id.to_string().into();
+        self
+    }
+
 
     /// # 获取签名
     ///
@@ -159,9 +168,9 @@ impl WechatCrypto {
     /// timestamp 时间戳
     /// nonce 随机字符串
     /// msg 加密数据
-    pub fn encrypt_message(&self, msg: &str, timestamp: i64, nonce: &str, id: &str) -> LabradorResult<String> {
+    pub fn encrypt_message(&self, msg: &str, timestamp: i64, nonce: &str) -> LabradorResult<String> {
         let prp = PrpCrypto::new(self.key.to_owned());
-        let encrypted_msg = prp.aes_128_cbc_encrypt_msg(msg, id.into())?;
+        let encrypted_msg = prp.aes_128_cbc_encrypt_msg(msg, (self.s_receive_id.to_owned().unwrap_or_default().as_str()).into())?;
         let signature = self.get_signature(timestamp, nonce, &encrypted_msg);
         let msg = format!(
             "<xml>\n\
@@ -184,7 +193,7 @@ impl WechatCrypto {
     /// nonce 随机字符串
     /// timestamp 时间戳
     /// signature 签名
-    pub fn decrypt_message(&self, xml: &str, signature: &str, timestamp: i64, nonce: &str, id: &str) -> LabradorResult<String> {
+    pub fn decrypt_message(&self, xml: &str, signature: &str, timestamp: i64, nonce: &str) -> LabradorResult<String> {
         use crate::util::xmlutil;
         let package = xmlutil::parse(xml);
         let doc = package.as_document();
@@ -194,7 +203,7 @@ impl WechatCrypto {
             return Err(LabraError::InvalidSignature("unmatched signature.".to_string()));
         }
         let prp = PrpCrypto::new(self.key.to_owned());
-        let msg = prp.aes_128_cbc_decrypt_msg(&encrypted_msg, id.into())?;
+        let msg = prp.aes_128_cbc_decrypt_msg(&encrypted_msg, (self.s_receive_id.to_owned().unwrap_or_default().as_str()).into())?;
         Ok(msg)
     }
 
@@ -210,7 +219,7 @@ impl WechatCrypto {
             return Err(LabraError::InvalidSignature("unmatched signature.".to_string()));
         }
         let prp = PrpCrypto::new(self.key.to_owned());
-        let msg = prp.aes_256_cbc_decrypt_msg(&encrypted_content)?;
+        let msg = prp.aes_256_cbc_decrypt_msg(&encrypted_content, self.s_receive_id.as_ref())?;
         Ok(msg)
     }
 
