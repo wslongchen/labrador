@@ -25,6 +25,11 @@ Features:
 *   ```jd``` - Jingdong related services
 *   ```wechat``` - Wechat related services
 
+### OpenSSL
+All encryption in this project is done with openssl. Later, other encryption databases will be supported for selection. Therefore, openssl needs to be introduced. See [openssl] for details.
+
+[openssl]: https://docs.rs/openssl/0.10.41/openssl/
+
 ### Supported Platform
 
 | Platform                                                                  | is supported |

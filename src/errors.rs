@@ -2,6 +2,7 @@ use std::fmt;
 use std::io;
 use std::string::FromUtf8Error;
 use base64::DecodeError;
+use crypto::symmetriccipher::SymmetricCipherError;
 use openssl::error::ErrorStack;
 use redis::RedisError;
 use reqwest::header::InvalidHeaderValue;
@@ -145,6 +146,18 @@ impl From<RedisError> for LabraError {
         LabraError::RequestError(format!("redis错误：{}", err.to_string()))
     }
 }
+
+
+impl From<SymmetricCipherError> for LabraError {
+    fn from(err: SymmetricCipherError) -> Self {
+        match err {
+            SymmetricCipherError::InvalidLength => LabraError::RequestError(format!("加解密错误：InvalidLength")),
+            SymmetricCipherError::InvalidPadding => LabraError::RequestError(format!("加解密错误：InvalidPadding"))
+        }
+    }
+}
+
+
 
 
 // impl From<reqwest::> for LabraError {

@@ -7,6 +7,9 @@ use byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
 use crate::errors::LabraError;
 
 use std::iter::repeat;
+use crypto::buffer::{ReadBuffer, WriteBuffer};
+use crypto::aead::{AeadEncryptor, AeadDecryptor};
+
 use openssl::{symm};
 use openssl::hash::{MessageDigest};
 use openssl::pkey::PKey;
@@ -14,6 +17,14 @@ use openssl::rsa::{Padding, Rsa};
 use openssl::sign::{Signer, Verifier};
 use rustc_serialize::hex::{ToHex, FromHex};
 use crate::LabradorResult;
+
+
+// use aes::cipher::{BlockDecryptMut, KeyIvInit, BlockEncryptMut};
+// use aes::cipher::block_padding::{NoPadding, Pkcs7};
+// type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
+// type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
+// type Aes128CbcEnc = cbc::Encryptor<aes::Aes128>;
+// type Aes128CbcDec = cbc::Decryptor<aes::Aes128>;
 
 #[allow(unused)]
 pub enum HashType {
@@ -46,61 +57,83 @@ impl PrpCrypto {
     }
 
     /// # 加密消息(aes_128_cbc)
-    pub fn aes_128_cbc_encrypt_msg(&self, plaintext: &str, id: Option<&str>) -> LabradorResult<String> {
+    pub fn aes_128_cbc_encrypt_msg(&self, plaintext: &str, _iv: Option<&str>, id: Option<&str>) -> LabradorResult<String> {
         let mut wtr = PrpCrypto::get_random_string().into_bytes();
         wtr.write_u32::<NativeEndian>((plaintext.len() as u32).to_be()).unwrap_or_default();
         wtr.extend(plaintext.bytes());
         if let Some(id) = id {
             wtr.extend(id.bytes());
         }
-        let encrypted = symm::encrypt(symm::Cipher::aes_128_cbc(), &self.key, Some(&self.key[..16]), &wtr)?;
+        let key = &self.key;
+        let mut iv = &self.key[..16];
+        if let Some(v) = _iv {
+            iv = v.as_bytes();
+        }
+        fn encrypt_with_openssl(key: &[u8], iv: &[u8], wtr: &[u8]) -> LabradorResult<Vec<u8>> {
+            let encrypted = symm::encrypt(symm::Cipher::aes_128_cbc(), key, Some(iv), wtr)?;
+            Ok(encrypted)
+        }
+        fn encrypt_with_aesown(key: &[u8], iv: &[u8], wtr: &[u8]) -> LabradorResult<Vec<u8>> {
+            let mut encryptor = crypto::aes::cbc_encryptor(crypto::aes::KeySize::KeySize128, key, iv, crypto::blockmodes::PkcsPadding);
+            let mut final_result = Vec::<u8>::new();
+            let mut read_buffer = crypto::buffer::RefReadBuffer::new(wtr);
+            let mut buffer = [0; 4096];
+            let mut write_buffer = crypto::buffer::RefWriteBuffer::new(&mut buffer);
+            loop {
+                let result = encryptor.encrypt(&mut read_buffer, &mut write_buffer, true)?;
+                final_result.extend(write_buffer.take_read_buffer().take_remaining().iter().map(|&i| i));
+                match result {
+                    crypto::buffer::BufferResult::BufferUnderflow => break,
+                    crypto::buffer::BufferResult::BufferOverflow => { }
+                }
+            }
+            Ok(final_result)
+        }
+        let encrypted = encrypt_with_aesown(key, iv, &wtr)?;
         let b64encoded = base64::encode(&encrypted);
         Ok(b64encoded)
     }
 
     /// # 解密消息(aes_128_cbc)
-    pub fn aes_128_cbc_decrypt_msg(&self, ciphertext: &str, id: Option<&str>) -> LabradorResult<String> {
+    pub fn aes_128_cbc_decrypt_msg(&self, ciphertext: &str, _iv: Option<&str>, id: Option<&str>) -> LabradorResult<String> {
         let b64decoded = base64::decode(ciphertext)?;
-        let text = symm::decrypt(symm::Cipher::aes_128_cbc(), &self.key, Some(&self.key[..16]), &b64decoded)?;
-        let mut rdr = Cursor::new(text[16..20].to_vec());
-        let content_length = u32::from_be(rdr.read_u32::<NativeEndian>().unwrap_or_default()) as usize;
-        let content = &text[20 .. content_length + 20];
-        let from_id = &text[content_length + 20 ..];
-        if let Some(id) = id {
-            if from_id != id.as_bytes() {
-                return Err(LabraError::InvalidAppId);
+        let mut iv = &self.key[..16];
+        if let Some(v) = _iv {
+            iv = v.as_bytes();
+        }
+        let key = &self.key;
+        fn decrypt_with_openssl(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
+            let mut decrypter = symm::Crypter::new(
+                symm::Cipher::aes_128_cbc(),
+                symm::Mode::Decrypt,
+                key,
+                Some(iv))?;
+            decrypter.pad(false);
+            let mut unciphered_data = vec![0; ciphertext.len() + symm::Cipher::aes_128_cbc().block_size()];
+            let count = decrypter.update(ciphertext, &mut unciphered_data)?;
+            let rest = decrypter.finalize(&mut unciphered_data[count..])?;
+            unciphered_data.truncate(count + rest);
+            Ok(unciphered_data)
+        }
+
+        fn decrypt_with_aesown(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
+            let mut decryptor = crypto::aes::cbc_decryptor(crypto::aes::KeySize::KeySize128, key, iv, crypto::blockmodes::NoPadding);
+            let mut final_result = Vec::<u8>::new();
+            let mut read_buffer = crypto::buffer::RefReadBuffer::new(ciphertext);
+            let mut buffer = [0; 4096];
+            let mut write_buffer = crypto::buffer::RefWriteBuffer::new(&mut buffer);
+            loop {
+                let result = decryptor.decrypt(&mut read_buffer, &mut write_buffer, true)?;
+                final_result.extend(write_buffer.take_read_buffer().take_remaining().iter().map(|&i| i));
+                match result {
+                    crypto::buffer::BufferResult::BufferUnderflow => break,
+                    crypto::buffer::BufferResult::BufferOverflow => { }
+                }
             }
+            Ok(final_result)
         }
-        let content_string = String::from_utf8(content.to_vec()).unwrap_or_default();
-        Ok(content_string)
-    }
 
-    /// # 加密消息(aes_256_cbc)
-    pub fn aes_256_cbc_encrypt_msg(&self, plaintext: &str, id: Option<&String>) -> LabradorResult<String> {
-        let mut wtr = PrpCrypto::get_random_string().into_bytes();
-        wtr.write_u32::<NativeEndian>((plaintext.len() as u32).to_be()).unwrap_or_default();
-        wtr.extend(plaintext.bytes());
-        if let Some(id) = id {
-            wtr.extend(id.bytes());
-        }
-        let encrypted = symm::encrypt(symm::Cipher::aes_256_cbc(), &self.key, Some(&self.key[..16]), &wtr)?;
-        let b64encoded = base64::encode(&encrypted);
-        Ok(b64encoded)
-    }
-
-    /// # 解密消息(aes_256_cbc)
-    pub fn aes_256_cbc_decrypt_msg(&self, ciphertext: &str, id: Option<&String>) -> LabradorResult<String> {
-        let b64decoded = base64::decode(ciphertext)?;
-        let mut decrypter = symm::Crypter::new(
-            symm::Cipher::aes_256_cbc(),
-        symm::Mode::Decrypt,
-            &self.key,
-            Some(&self.key[..16]))?;
-        decrypter.pad(false);
-        let mut unciphered_data = vec![0; b64decoded.len() + symm::Cipher::aes_256_cbc().block_size()];
-        let count = decrypter.update(&b64decoded, &mut unciphered_data)?;
-        let rest = decrypter.finalize(&mut unciphered_data[count..])?;
-        unciphered_data.truncate(count + rest);
+        let unciphered_data = decrypt_with_aesown(key, iv, &b64decoded)?;
         let mut rdr = Cursor::new(unciphered_data[16..20].to_vec());
         let content_length = u32::from_be(rdr.read_u32::<NativeEndian>().unwrap_or_default()) as usize;
         let content = &unciphered_data[20 .. content_length + 20];
@@ -114,20 +147,96 @@ impl PrpCrypto {
         Ok(content_string)
     }
 
-
-    /// # 解密数据(aes_128_cbc)
-    pub fn aes_128_cbc_decrypt_data(&self, ciphertext: &str, iv: &str) -> LabradorResult<String> {
-        let data = ciphertext.from_hex()?;
-        let text = symm::decrypt(symm::Cipher::aes_128_cbc(), &self.key, Some(iv.as_bytes()), &data)?;
-        let content_string = String::from_utf8(text).unwrap_or_default();
-        Ok(content_string)
+    /// # 加密消息(aes_256_cbc)
+    pub fn aes_256_cbc_encrypt_msg(&self, plaintext: &str, _iv: Option<&str>, id: Option<&String>) -> LabradorResult<String> {
+        let mut wtr = PrpCrypto::get_random_string().into_bytes();
+        wtr.write_u32::<NativeEndian>((plaintext.len() as u32).to_be()).unwrap_or_default();
+        wtr.extend(plaintext.bytes());
+        if let Some(id) = id {
+            wtr.extend(id.bytes());
+        }
+        let key = &self.key;
+        let mut iv = &self.key[..16];
+        if let Some(v) = _iv {
+            iv = v.as_bytes();
+        }
+        fn encrypt_with_openssl(key: &[u8], iv: &[u8], wtr: &[u8]) -> LabradorResult<Vec<u8>> {
+            let encrypted = symm::encrypt(symm::Cipher::aes_256_cbc(), key, Some(iv), wtr)?;
+            Ok(encrypted)
+        }
+        fn encrypt_with_aesown(key: &[u8], iv: &[u8], wtr: &[u8]) -> LabradorResult<Vec<u8>> {
+            let mut encryptor = crypto::aes::cbc_encryptor(crypto::aes::KeySize::KeySize256, key, iv, crypto::blockmodes::PkcsPadding);
+            let mut final_result = Vec::<u8>::new();
+            let mut read_buffer = crypto::buffer::RefReadBuffer::new(wtr);
+            let mut buffer = [0; 4096];
+            let mut write_buffer = crypto::buffer::RefWriteBuffer::new(&mut buffer);
+            loop {
+                let result = encryptor.encrypt(&mut read_buffer, &mut write_buffer, true)?;
+                final_result.extend(write_buffer.take_read_buffer().take_remaining().iter().map(|&i| i));
+                match result {
+                    crypto::buffer::BufferResult::BufferUnderflow => break,
+                    crypto::buffer::BufferResult::BufferOverflow => { }
+                }
+            }
+            Ok(final_result)
+        }
+        let encrypted = encrypt_with_aesown(key, iv, &wtr)?;
+        let b64encoded = base64::encode(&encrypted);
+        Ok(b64encoded)
     }
 
+    /// # 解密消息(aes_256_cbc)
+    pub fn aes_256_cbc_decrypt_msg(&self, ciphertext: &str, _iv: Option<&str>, id: Option<&String>) -> LabradorResult<String> {
+        let b64decoded = base64::decode(ciphertext)?;
+        let mut iv = &self.key[..16];
+        if let Some(v) = _iv {
+            iv = v.as_bytes();
+        }
+        let key = &self.key;
+        fn decrypt_with_openssl(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
+            let mut decrypter = symm::Crypter::new(
+                symm::Cipher::aes_256_cbc(),
+                symm::Mode::Decrypt,
+                key,
+                Some(iv))?;
+            decrypter.pad(false);
+            let mut unciphered_data = vec![0; ciphertext.len() + symm::Cipher::aes_256_cbc().block_size()];
+            let count = decrypter.update(ciphertext, &mut unciphered_data)?;
+            let rest = decrypter.finalize(&mut unciphered_data[count..])?;
+            unciphered_data.truncate(count + rest);
+            Ok(unciphered_data)
+        }
 
-    /// # 加密数据(aes_128_cbc)
-    pub fn aes_128_cbc_encrypt_data(&self, plaintext: &str, iv: &str) -> LabradorResult<String> {
-        let text = symm::encrypt(symm::Cipher::aes_128_cbc(), &self.key, Some(iv.as_bytes()), plaintext.as_bytes())?;
-        Ok(text.to_hex())
+        fn decrypt_with_aesown(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
+            let mut decryptor = crypto::aes::cbc_decryptor(crypto::aes::KeySize::KeySize256, key, iv, crypto::blockmodes::NoPadding);
+            let mut final_result = Vec::<u8>::new();
+            let mut read_buffer = crypto::buffer::RefReadBuffer::new(ciphertext);
+            let mut buffer = [0; 4096];
+            let mut write_buffer = crypto::buffer::RefWriteBuffer::new(&mut buffer);
+            loop {
+                let result = decryptor.decrypt(&mut read_buffer, &mut write_buffer, true)?;
+                final_result.extend(write_buffer.take_read_buffer().take_remaining().iter().map(|&i| i));
+                match result {
+                    crypto::buffer::BufferResult::BufferUnderflow => break,
+                    crypto::buffer::BufferResult::BufferOverflow => { }
+                }
+            }
+            Ok(final_result)
+        }
+
+        let unciphered_data = decrypt_with_aesown(key, iv, &b64decoded)?;
+        let mut rdr = Cursor::new(unciphered_data[16..20].to_vec());
+        let content_length = u32::from_be(rdr.read_u32::<NativeEndian>().unwrap_or_default()) as usize;
+        let content = &unciphered_data[20 .. content_length + 20];
+        let from_id = &unciphered_data[content_length + 20 ..];
+        if let Some(id) = id {
+            if from_id != id.as_bytes() {
+                return Err(LabraError::InvalidAppId);
+            }
+        }
+        let content_string = String::from_utf8(content.to_vec()).unwrap_or_default();
+        Ok(content_string)
+
     }
 
     /// RSA签名
@@ -216,15 +325,38 @@ impl PrpCrypto {
 
     /// # 加密(aes_256_gcm)
     pub fn aes_256_gcm_encrypt(&self, associated_data: &[u8], nonce: &[u8], plain_text: &[u8]) -> LabradorResult<Vec<u8>> {
+        let key = &self.key;
         let mut out_tag: Vec<u8> = repeat(0).take(16).collect();
-        let encrypted = symm::encrypt_aead(symm::Cipher::aes_256_gcm(), &self.key, Some(&nonce), associated_data, plain_text, &mut out_tag)?;
-        Ok(encrypted)
+        fn encrypt_with_aesown(key: &[u8], associated_data: &[u8], nonce: &[u8], plain_text: &[u8], out_tag: &mut [u8]) -> LabradorResult<Vec<u8>> {
+            let mut encryptor = crypto::aes_gcm::AesGcm::new(crypto::aes::KeySize::KeySize256, key, nonce, associated_data);
+            let mut final_result = Vec::<u8>::new();
+            encryptor.encrypt(plain_text, &mut final_result, out_tag);
+            Ok(final_result)
+        }
+        fn encrypt_with_openssl(key: &[u8], associated_data: &[u8], nonce: &[u8], plain_text: &[u8], out_tag: &mut Vec<u8>) -> LabradorResult<Vec<u8>> {
+            let encrypted = symm::encrypt_aead(symm::Cipher::aes_256_gcm(), key, Some(&nonce), associated_data, plain_text, out_tag)?;
+            Ok(encrypted)
+        }
+
+        encrypt_with_aesown(key, associated_data, nonce, plain_text, &mut out_tag)
+
     }
 
     /// # 解密(aes_256_gcm)
     pub fn aes_256_gcm_decrypt(&self, associated_data: &[u8], nonce: &[u8], ciphertext: &[u8], tag: &[u8]) -> LabradorResult<Vec<u8>> {
-        let decrypted = symm::decrypt_aead(symm::Cipher::aes_256_gcm(), &self.key, Some(&nonce), associated_data, ciphertext, tag)?;
-        Ok(decrypted)
+        let key = &self.key;
+
+        fn decrypt_with_openssl(key: &[u8], associated_data: &[u8], nonce: &[u8], plain_text: &[u8], tag: &[u8]) -> LabradorResult<Vec<u8>> {
+            let decrypted = symm::decrypt_aead(symm::Cipher::aes_256_gcm(), key, Some(&nonce), associated_data, plain_text, tag)?;
+            Ok(decrypted)
+        }
+        fn decrypt_with_aesown(key: &[u8], associated_data: &[u8], nonce: &[u8], ciphertext: &[u8], tag: &[u8]) -> LabradorResult<Vec<u8>> {
+            let mut decryptor = crypto::aes_gcm::AesGcm::new(crypto::aes::KeySize::KeySize256, key, nonce, associated_data);
+            let mut final_result = Vec::<u8>::new();
+            let result = decryptor.decrypt(ciphertext, &mut final_result, tag);
+            Ok(final_result)
+        }
+        decrypt_with_aesown(key, associated_data, nonce, ciphertext, tag)
     }
 }
 

@@ -20,6 +20,10 @@ Features:
 *   ```jd``` - 京东
 *   ```wechat``` - 微信
 
+### OpenSSL
+本项目所有加密都是用openssl进行，后续会支持其他加密库以供挑选，所以需要引入openssl相关，详情见[openssl]相关说明。
+
+[openssl]: https://docs.rs/openssl/0.10.41/openssl/
 ### Supported Platform
 
 | 平台                                                 | 是否支持 |
