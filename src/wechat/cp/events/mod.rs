@@ -25,6 +25,7 @@ mod unlicensed;
 mod licecnse_pay_success;
 mod licecnse_refund;
 mod auto_activate;
+mod customer;
 
 pub use subscribe::CpSubscribeEvent;
 pub use unsubscribe::CpUnsubscribeEvent;
@@ -46,3 +47,4 @@ pub use unlicensed::*;
 pub use licecnse_pay_success::*;
 pub use licecnse_refund::*;
 pub use auto_activate::*;
+pub use customer::*;

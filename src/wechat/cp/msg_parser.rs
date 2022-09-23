@@ -1,4 +1,4 @@
-use crate::{CpAuthCancelEvent, CpAuthChangeEvent, CpAuthCreateEvent, CpBatchJobResultEvent, CpContactCreatePartyEvent, CpContactCreateUserEvent, CpContactDeletePartyEvent, CpContactDeleteUserEvent, CpContactUpdatePartyEvent, CpContactUpdateTagEvent, CpContactUpdateUserEvent, CpEnterAgentEvent, CpImageMessage, CpLinkMessage, CpLocationEvent, CpLocationMessage, CpMenuClickEvent, CpMenuLocationSelectEvent, CpMenuPicPhotoOrAlbumEvent, CpMenuPicSysPhotoEvent, CpMenuPicWeixinEvent, CpMenuScanCodePushEvent, CpMenuScanCodeWaitMsgEvent, CpMenuViewEvent, CpMessage, CpOpenApprovalChangeEvent, CpShareAgentChangeEvent, CpShareChainChangeEvent, CpSubscribeEvent, CpTemplateCardEvent, CpTemplateCardMenuEvent, CpTextMessage, CpTicketEvent, CpTpContactCreatePartyEvent, CpTpContactCreateUserEvent, CpTpContactDeletePartyEvent, CpTpContactDeleteUserEvent, CpTpContactUpdatePartyEvent, CpTpContactUpdateTagEvent, CpTpContactUpdateUserEvent, CpUnknownMessage, CpVideoMessage, CpVoiceMessage, LabradorResult, XmlMessageParser};
+use crate::{CpAddExternalContactEvent, CpAuthCancelEvent, CpAuthChangeEvent, CpAuthCreateEvent, CpBatchJobResultEvent, CpContactCreatePartyEvent, CpContactCreateUserEvent, CpContactDeletePartyEvent, CpContactDeleteUserEvent, CpContactUpdatePartyEvent, CpContactUpdateTagEvent, CpContactUpdateUserEvent, CpEnterAgentEvent, CpImageMessage, CpLinkMessage, CpLocationEvent, CpLocationMessage, CpMenuClickEvent, CpMenuLocationSelectEvent, CpMenuPicPhotoOrAlbumEvent, CpMenuPicSysPhotoEvent, CpMenuPicWeixinEvent, CpMenuScanCodePushEvent, CpMenuScanCodeWaitMsgEvent, CpMenuViewEvent, CpMessage, CpOpenApprovalChangeEvent, CpShareAgentChangeEvent, CpShareChainChangeEvent, CpSubscribeEvent, CpTemplateCardEvent, CpTemplateCardMenuEvent, CpTextMessage, CpTicketEvent, CpTpContactCreatePartyEvent, CpTpContactCreateUserEvent, CpTpContactDeletePartyEvent, CpTpContactDeleteUserEvent, CpTpContactUpdatePartyEvent, CpTpContactUpdateTagEvent, CpTpContactUpdateUserEvent, CpUnknownMessage, CpVideoMessage, CpVoiceMessage, LabradorResult, XmlMessageParser};
 
 pub fn parse_cp_message<S: AsRef<str>>(xml: S) -> LabradorResult<CpMessage> {
     let doc = serde_xml_rs::from_str::<serde_json::Value>(xml.as_ref())?;
@@ -13,27 +13,27 @@ pub fn parse_cp_message<S: AsRef<str>>(xml: S) -> LabradorResult<CpMessage> {
             "change_contact" => {
                 let change_type = doc["ChangeType"]["$value"].as_str().unwrap_or_default();
                 match change_type {
-                    "create_user" =>  CpMessage::TpContactCreateUserEvent(CpTpContactCreateUserEvent::from_xml(xml.as_ref())?),
-                    "update_user" =>  CpMessage::TpContactUpdateUserEvent(CpTpContactUpdateUserEvent::from_xml(xml.as_ref())?),
-                    "delete_user" =>  CpMessage::TpContactDeleteUserEvent(CpTpContactDeleteUserEvent::from_xml(xml.as_ref())?),
-                    "create_party" =>  CpMessage::TpContactCreatePartyEvent(CpTpContactCreatePartyEvent::from_xml(xml.as_ref())?),
-                    "update_party" =>  CpMessage::TpContactUpdatePartyEvent(CpTpContactUpdatePartyEvent::from_xml(xml.as_ref())?),
-                    "delete_party" =>  CpMessage::TpContactDeletePartyEvent(CpTpContactDeletePartyEvent::from_xml(xml.as_ref())?),
-                    "update_tag" =>  CpMessage::TpContactUpdateTagEvent(CpTpContactUpdateTagEvent::from_xml(xml.as_ref())?),
+                    "create_user" => CpMessage::TpContactCreateUserEvent(CpTpContactCreateUserEvent::from_xml(xml.as_ref())?),
+                    "update_user" => CpMessage::TpContactUpdateUserEvent(CpTpContactUpdateUserEvent::from_xml(xml.as_ref())?),
+                    "delete_user" => CpMessage::TpContactDeleteUserEvent(CpTpContactDeleteUserEvent::from_xml(xml.as_ref())?),
+                    "create_party" => CpMessage::TpContactCreatePartyEvent(CpTpContactCreatePartyEvent::from_xml(xml.as_ref())?),
+                    "update_party" => CpMessage::TpContactUpdatePartyEvent(CpTpContactUpdatePartyEvent::from_xml(xml.as_ref())?),
+                    "delete_party" => CpMessage::TpContactDeletePartyEvent(CpTpContactDeletePartyEvent::from_xml(xml.as_ref())?),
+                    "update_tag" => CpMessage::TpContactUpdateTagEvent(CpTpContactUpdateTagEvent::from_xml(xml.as_ref())?),
                     _ => {
                         let mut msg = CpUnknownMessage::from_xml(xml.as_ref())?;
                         msg.raw = xml.as_ref().to_string().into();
                         CpMessage::UnknownMessage(msg)
                     }
                 }
-            },
-            _=> {
+            }
+            _ => {
                 let mut msg = CpUnknownMessage::from_xml(xml.as_ref())?;
                 msg.raw = xml.as_ref().to_string().into();
                 CpMessage::UnknownMessage(msg)
             }
         };
-        return Ok(msg)
+        return Ok(msg);
     }
     let msg = match msg_type {
         "text" => CpMessage::TextMessage(CpTextMessage::from_xml(xml.as_ref())?),
@@ -45,8 +45,8 @@ pub fn parse_cp_message<S: AsRef<str>>(xml: S) -> LabradorResult<CpMessage> {
         "event" => {
             let event_str = doc["Event"]["$value"].as_str().unwrap_or_default();
             let change_type = doc["ChangeType"]["$value"].as_str().unwrap_or_default();
-            parse_event(&event_str.to_lowercase(), change_type,xml.as_ref())?
-        },
+            parse_event(&event_str.to_lowercase(), change_type, xml.as_ref())?
+        }
         _ => CpMessage::UnknownMessage(CpUnknownMessage::from_xml(xml.as_ref())?),
     };
     Ok(msg)
@@ -83,6 +83,12 @@ fn parse_event(event: &str, change_type: &str, xml: &str) -> LabradorResult<CpMe
         "share_chain_change" => CpMessage::ShareChainChangeEvent(CpShareChainChangeEvent::from_xml(xml)?),
         "template_card_event" => CpMessage::TemplateCardEvent(CpTemplateCardEvent::from_xml(xml)?),
         "template_card_menu_event" => CpMessage::TemplateCardMenuEvent(CpTemplateCardMenuEvent::from_xml(xml)?),
+        "change_external_contact" => {
+            match change_type {
+                "add_external_contact" => CpMessage::AddExternalContactEvent(CpAddExternalContactEvent::from_xml(xml.as_ref())?),
+                _ => CpMessage::UnknownMessage(CpUnknownMessage::from_xml(xml)?),
+            }
+        }
         _ => CpMessage::UnknownMessage(CpUnknownMessage::from_xml(xml)?),
     };
     Ok(msg)
