@@ -1,6 +1,4 @@
 use base64;
-use openssl::sha::Sha1;
-use openssl::symm;
 use reqwest::header::HeaderMap;
 use rustc_serialize::hex::{FromHex, ToHex};
 
@@ -110,30 +108,42 @@ impl WechatCrypto {
         }
         data.sort();
         let data_str = data.join("");
-        // create a Sha1 object
-        let mut hasher = Sha1::new();
-        // write input message
-        hasher.update( data_str.as_bytes());
-        // read hash digest
-        let signature = hasher.finish();
-        // let signature = hash::hash(MessageDigest::sha1(), data_str.as_bytes())?;
-        signature.to_hex()
+        Self::get_sha1_sign(&data_str)
     }
 
     /// SHA1签名
     pub fn get_sha1_sign(encrypt_str: &str) -> String {
-        // create a Sha1 object
-        let mut hasher = Sha1::new();
-        // write input message
-        hasher.update( encrypt_str.as_bytes());
-        // read hash digest
-        let signature = hasher.finish();
-        // let signature = hash::hash(MessageDigest::sha1(), data_str.as_bytes())?;
-        signature.to_hex()
+
+        #[cfg(feature = "openssl-crypto")]
+        fn sha1(encrypt_str: &str) -> String {
+            // create a Sha1 object
+            let mut hasher = openssl::sha::Sha1::new();
+            // write input message
+            hasher.update( encrypt_str.as_bytes());
+            // read hash digest
+            let signature = hasher.finish();
+            // let signature = hash::hash(MessageDigest::sha1(), data_str.as_bytes())?;
+            signature.to_hex()
+        }
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn sha1(encrypt_str: &str) -> String {
+            use crypto::digest::Digest;
+            // create a Sha1 object
+            let mut hasher = crypto::sha1::Sha1::new();
+            // write input message
+            hasher.input_str("hello world");
+
+            // read hash digest
+            let hex = hasher.result_str();
+            hex
+        }
+        sha1(encrypt_str)
     }
 
+    /// hmac_sha256
     pub fn create_hmac_sha256_sign(key: &str, message: &str) -> LabradorResult<String> {
-        PrpCrypto::hmac_sha256_sign(key, message)
+        let prp = PrpCrypto::new(key.as_bytes().to_vec());
+        prp.hmac_sha256_sign( message)
     }
 
     /// # 数据解密
@@ -144,7 +154,7 @@ impl WechatCrypto {
     pub fn decrypt_data(session_key: &str, encrypted_data: &str, iv: &str) -> LabradorResult<String> {
         let key = base64::decode(&session_key)?;
         let prp = PrpCrypto::new(key);
-        let msg = prp.aes_256_cbc_decrypt_msg(encrypted_data, iv.into(), None)?;
+        let msg = prp.aes_128_cbc_decrypt_msg(encrypted_data, iv.into(), None)?;
         Ok(msg)
     }
 
@@ -158,8 +168,6 @@ impl WechatCrypto {
         if signature != &real_signature {
             return Err(LabraError::InvalidSignature("Unmatched signature.".to_string()));
         }
-        // let prp = PrpCrypto::new(self.key.to_owned());
-        // let msg = prp.aes_128_cbc_decrypt_msg(echo_str, id)?;
         Ok(true)
     }
 
@@ -242,9 +250,9 @@ impl WechatCrypto {
     pub fn decrypt_data_refund(app_key: &str, ciphertext: &str) -> LabradorResult<String> {
         let b64decoded = base64::decode(ciphertext)?;
         let md5_key = md5::md5(app_key);
-        let text = symm::decrypt(symm::Cipher::aes_256_ecb(), md5_key.as_bytes(), None, &b64decoded).unwrap_or_default();
-        let content_string = String::from_utf8(text).unwrap_or_default();
-        Ok(content_string)
+        let key = md5_key.as_bytes();
+        let prp = PrpCrypto::new(key.to_vec());
+        prp.aes_256_ecb_decrypt(&b64decoded)
     }
 }
 
@@ -382,7 +390,7 @@ mod tests {
             </xml>";
         // , "wx49f0ab532d5d035a"
         let crypto = WechatCrypto::new("kWxPEV2UEDyxWpmPdKC3F4dgPDmOvfKX1HGnEUDS1aR");
-        let encrypted = crypto.encrypt_message(msg, timestamp, nonce,"").unwrap();
+        let encrypted = crypto.encrypt_message(msg, timestamp, nonce).unwrap();
         assert_eq!(expected, &encrypted);
     }
 
@@ -406,7 +414,7 @@ mod tests {
         let nonce = "461056294";
         //  "wx49f0ab532d5d035a"
         let crypto = WechatCrypto::new("kWxPEV2UEDyxWpmPdKC3F4dgPDmOvfKX1HGnEUDS1aR");
-        let decrypted = crypto.decrypt_message(xml, signature, timestamp, nonce,"").unwrap();
+        let decrypted = crypto.decrypt_message(xml, signature, timestamp, nonce).unwrap();
         assert_eq!(expected, &decrypted);
     }
 }

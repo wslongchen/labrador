@@ -3,14 +3,15 @@ use crate::{client::{APIClient}, request::{RequestType, Method, LabraRequest}, e
 
 use std::collections::{BTreeMap};
 use std::fs;
+use rustc_serialize::hex::ToHex;
+use serde::Serialize;
+use crate::alipay::method::AlipayMethod;
+
 use openssl::hash::{hash, MessageDigest};
 use openssl::nid::Nid;
 use openssl::pkey::PKey;
 use openssl::sign::{Signer, Verifier};
 use openssl::x509::{X509, X509NameEntries};
-use rustc_serialize::hex::ToHex;
-use serde::Serialize;
-use crate::alipay::method::AlipayMethod;
 
 mod request;
 mod response;
@@ -507,9 +508,7 @@ impl <T: SessionStore> AlipayClient<T> {
                 };
                 let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
                 signer.update(sign_content.as_bytes())?;
-                println!("sign:{}",sign_content);
                 let sign = base64::encode(&signer.sign_to_vec()?);
-                println!("sign:{}",sign);
                 Ok(sign)
             }
             // constants::SIGN_TYPE_RSA => {

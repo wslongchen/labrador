@@ -1,12 +1,13 @@
 use std::net::SocketAddr;
 use bytes::Bytes;
-use openssl::x509::X509;
 use reqwest::{self, multipart, StatusCode, Url};
 use reqwest::header::{HeaderMap, HeaderValue};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use crate::errors::LabraError;
 use crate::LabradorResult;
+
+use x509_parser::der_parser::asn1_rs::ToDer;
 
 /// Parse Data For Response
 pub trait Response <T> where T: Serialize {
@@ -434,9 +435,36 @@ impl LabraIdentity {
 
 impl LabraCertificate {
 
-
+    #[cfg(not(feature = "openssl-crypto"))]
     pub fn from_pem(pem: Vec<u8>) -> LabradorResult<Self> {
-        let x509 = X509::from_pem(&pem).unwrap();
+        let (data, x509) = x509_parser::pem::parse_x509_pem(&pem)?;
+        let x509 = x509.parse_x509()?;
+        let sn = x509.serial.to_string();
+        Ok(Self {
+            serial_no: sn.to_string(),
+            effective_time: "".to_string(),
+            expire_time: "".to_string(),
+            public_key: data.to_der_vec()?,
+            content: pem,
+        })
+    }
+
+    #[cfg(not(feature = "openssl-crypto"))]
+    pub fn from(pem: &str) -> LabradorResult<Self> {
+        let content = pem.as_bytes();
+        let (data, _x509) = x509_parser::pem::parse_x509_pem(content)?;
+        Ok(Self {
+            serial_no: "".to_string(),
+            effective_time: "".to_string(),
+            expire_time: "".to_string(),
+            public_key: data.to_der_vec()?,
+            content: content.to_vec(),
+        })
+    }
+
+    #[cfg(feature = "openssl-crypto")]
+    pub fn from_pem(pem: Vec<u8>) -> LabradorResult<Self> {
+        let x509 = openssl::x509::X509::from_pem(&pem).unwrap();
         let pk = x509.public_key().unwrap();
         let rpk = pk.public_key_to_pem().unwrap();
         let sn = x509.serial_number().to_bn().unwrap().to_string();
@@ -449,9 +477,10 @@ impl LabraCertificate {
         })
     }
 
+    #[cfg(feature = "openssl-crypto")]
     pub fn from(pem: &str) -> LabradorResult<Self> {
         let content = pem.as_bytes();
-        let x509 = X509::from_pem(content).unwrap();
+        let x509 = openssl::x509::X509::from_pem(content).unwrap();
         let pk = x509.public_key().unwrap();
         let rpk = pk.public_key_to_pem().unwrap();
         Ok(Self {
@@ -462,6 +491,7 @@ impl LabraCertificate {
             content: content.to_vec(),
         })
     }
+
 
     pub fn reqwest_cert(&self) -> LabradorResult<reqwest::Certificate> {
         let cert = reqwest::Certificate::from_pem(self.content.as_ref())?;

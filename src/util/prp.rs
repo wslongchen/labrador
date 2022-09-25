@@ -7,24 +7,36 @@ use byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
 use crate::errors::LabraError;
 
 use std::iter::repeat;
-use crypto::buffer::{ReadBuffer, WriteBuffer};
-use crypto::aead::{AeadEncryptor, AeadDecryptor};
-
-use openssl::{symm};
-use openssl::hash::{MessageDigest};
-use openssl::pkey::PKey;
-use openssl::rsa::{Padding, Rsa};
-use openssl::sign::{Signer, Verifier};
 use rustc_serialize::hex::{ToHex, FromHex};
-use crate::LabradorResult;
+use crate::{cfg_if, LabradorResult};
 
+// use crypto::buffer::{WriteBuffer, ReadBuffer};
+// use crypto::digest::Digest;
+// use crypto::aead::{AeadEncryptor, AeadDecryptor};
+// use rsa::pkcs1::DecodeRsaPrivateKey;
+// use rsa::pkcs8::DecodePrivateKey;
+// use rsa::pkcs8::DecodePublicKey;
+// use rsa::PublicKey;
+// use crypto::mac::Mac;
 
-// use aes::cipher::{BlockDecryptMut, KeyIvInit, BlockEncryptMut};
-// use aes::cipher::block_padding::{NoPadding, Pkcs7};
-// type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
-// type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
-// type Aes128CbcEnc = cbc::Encryptor<aes::Aes128>;
-// type Aes128CbcDec = cbc::Decryptor<aes::Aes128>;
+cfg_if! {if #[cfg(feature = "openssl-crypto")]{
+    use openssl::hash::{MessageDigest};
+    use openssl::pkey::PKey;
+    use openssl::rsa::{Padding, Rsa};
+    use openssl::sign::{Signer, Verifier};
+    use openssl::{symm};
+}}
+
+cfg_if! {if #[cfg(not(feature = "openssl-crypto"))]{
+    use crypto::buffer::{WriteBuffer, ReadBuffer};
+    use crypto::digest::Digest;
+    use crypto::aead::{AeadEncryptor, AeadDecryptor};
+    use rsa::pkcs1::DecodeRsaPrivateKey;
+    use rsa::pkcs8::DecodePrivateKey;
+    use rsa::pkcs8::DecodePublicKey;
+    use rsa::PublicKey;
+    use crypto::mac::Mac;
+}}
 
 #[allow(unused)]
 pub enum HashType {
@@ -65,15 +77,21 @@ impl PrpCrypto {
             wtr.extend(id.bytes());
         }
         let key = &self.key;
-        let mut iv = &self.key[..16];
+        let mut iv = Vec::new();
         if let Some(v) = _iv {
-            iv = v.as_bytes();
+            iv = base64::decode(v)?;
+        } else {
+            iv = self.key[..16].to_vec();
         }
-        fn encrypt_with_openssl(key: &[u8], iv: &[u8], wtr: &[u8]) -> LabradorResult<Vec<u8>> {
-            let encrypted = symm::encrypt(symm::Cipher::aes_128_cbc(), key, Some(iv), wtr)?;
+
+        #[cfg(feature = "openssl-crypto")]
+        fn encrypt(key: &[u8], iv: &[u8], wtr: &[u8]) -> LabradorResult<Vec<u8>> {
+            let encrypted = openssl::symm::encrypt(symm::Cipher::aes_128_cbc(), key, Some(iv), wtr)?;
             Ok(encrypted)
         }
-        fn encrypt_with_aesown(key: &[u8], iv: &[u8], wtr: &[u8]) -> LabradorResult<Vec<u8>> {
+
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn encrypt(key: &[u8], iv: &[u8], wtr: &[u8]) -> LabradorResult<Vec<u8>> {
             let mut encryptor = crypto::aes::cbc_encryptor(crypto::aes::KeySize::KeySize128, key, iv, crypto::blockmodes::PkcsPadding);
             let mut final_result = Vec::<u8>::new();
             let mut read_buffer = crypto::buffer::RefReadBuffer::new(wtr);
@@ -89,7 +107,9 @@ impl PrpCrypto {
             }
             Ok(final_result)
         }
-        let encrypted = encrypt_with_aesown(key, iv, &wtr)?;
+
+
+        let encrypted = encrypt(key, &iv, &wtr)?;
         let b64encoded = base64::encode(&encrypted);
         Ok(b64encoded)
     }
@@ -97,27 +117,31 @@ impl PrpCrypto {
     /// # 解密消息(aes_128_cbc)
     pub fn aes_128_cbc_decrypt_msg(&self, ciphertext: &str, _iv: Option<&str>, id: Option<&str>) -> LabradorResult<String> {
         let b64decoded = base64::decode(ciphertext)?;
-        let mut iv = &self.key[..16];
+        let mut iv = Vec::new();
         if let Some(v) = _iv {
-            iv = v.as_bytes();
+            iv = base64::decode(v)?;
+        } else {
+            iv = self.key[..16].to_vec();
         }
         let key = &self.key;
-        fn decrypt_with_openssl(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
-            let mut decrypter = symm::Crypter::new(
-                symm::Cipher::aes_128_cbc(),
-                symm::Mode::Decrypt,
+
+        #[cfg(feature = "openssl-crypto")]
+        fn decrypt(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
+            let mut decrypter = openssl::symm::Crypter::new(
+                openssl::symm::Cipher::aes_128_cbc(),
+                openssl::symm::Mode::Decrypt,
                 key,
                 Some(iv))?;
-            decrypter.pad(false);
-            let mut unciphered_data = vec![0; ciphertext.len() + symm::Cipher::aes_128_cbc().block_size()];
+            let mut unciphered_data = vec![0; ciphertext.len() + openssl::symm::Cipher::aes_128_cbc().block_size()];
             let count = decrypter.update(ciphertext, &mut unciphered_data)?;
             let rest = decrypter.finalize(&mut unciphered_data[count..])?;
             unciphered_data.truncate(count + rest);
             Ok(unciphered_data)
         }
 
-        fn decrypt_with_aesown(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
-            let mut decryptor = crypto::aes::cbc_decryptor(crypto::aes::KeySize::KeySize128, key, iv, crypto::blockmodes::NoPadding);
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn decrypt(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
+            let mut decryptor = crypto::aes::cbc_decryptor(crypto::aes::KeySize::KeySize128, key, iv, crypto::blockmodes::PkcsPadding);
             let mut final_result = Vec::<u8>::new();
             let mut read_buffer = crypto::buffer::RefReadBuffer::new(ciphertext);
             let mut buffer = [0; 4096];
@@ -132,18 +156,8 @@ impl PrpCrypto {
             }
             Ok(final_result)
         }
-
-        let unciphered_data = decrypt_with_aesown(key, iv, &b64decoded)?;
-        let mut rdr = Cursor::new(unciphered_data[16..20].to_vec());
-        let content_length = u32::from_be(rdr.read_u32::<NativeEndian>().unwrap_or_default()) as usize;
-        let content = &unciphered_data[20 .. content_length + 20];
-        let from_id = &unciphered_data[content_length + 20 ..];
-        if let Some(id) = id {
-            if from_id != id.as_bytes() {
-                return Err(LabraError::InvalidAppId);
-            }
-        }
-        let content_string = String::from_utf8(content.to_vec()).unwrap_or_default();
+        let unciphered_data = decrypt(key, &iv, &b64decoded)?;
+        let content_string = String::from_utf8(unciphered_data).unwrap_or_default();
         Ok(content_string)
     }
 
@@ -157,14 +171,20 @@ impl PrpCrypto {
         }
         let key = &self.key;
         let mut iv = &self.key[..16];
+        let mut iv = Vec::new();
         if let Some(v) = _iv {
-            iv = v.as_bytes();
+            iv = base64::decode(v)?;
+        } else {
+            iv = self.key[..16].to_vec();
         }
-        fn encrypt_with_openssl(key: &[u8], iv: &[u8], wtr: &[u8]) -> LabradorResult<Vec<u8>> {
-            let encrypted = symm::encrypt(symm::Cipher::aes_256_cbc(), key, Some(iv), wtr)?;
+
+        #[cfg(feature = "openssl-crypto")]
+        fn encrypt(key: &[u8], iv: &[u8], wtr: &[u8]) -> LabradorResult<Vec<u8>> {
+            let encrypted = openssl::symm::encrypt(openssl::symm::Cipher::aes_256_cbc(), key, Some(iv), wtr)?;
             Ok(encrypted)
         }
-        fn encrypt_with_aesown(key: &[u8], iv: &[u8], wtr: &[u8]) -> LabradorResult<Vec<u8>> {
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn encrypt(key: &[u8], iv: &[u8], wtr: &[u8]) -> LabradorResult<Vec<u8>> {
             let mut encryptor = crypto::aes::cbc_encryptor(crypto::aes::KeySize::KeySize256, key, iv, crypto::blockmodes::PkcsPadding);
             let mut final_result = Vec::<u8>::new();
             let mut read_buffer = crypto::buffer::RefReadBuffer::new(wtr);
@@ -180,7 +200,7 @@ impl PrpCrypto {
             }
             Ok(final_result)
         }
-        let encrypted = encrypt_with_aesown(key, iv, &wtr)?;
+        let encrypted = encrypt(key, &iv, &wtr)?;
         let b64encoded = base64::encode(&encrypted);
         Ok(b64encoded)
     }
@@ -189,25 +209,31 @@ impl PrpCrypto {
     pub fn aes_256_cbc_decrypt_msg(&self, ciphertext: &str, _iv: Option<&str>, id: Option<&String>) -> LabradorResult<String> {
         let b64decoded = base64::decode(ciphertext)?;
         let mut iv = &self.key[..16];
+        let mut iv = Vec::new();
         if let Some(v) = _iv {
-            iv = v.as_bytes();
+            iv = base64::decode(v)?;
+        } else {
+            iv = self.key[..16].to_vec();
         }
         let key = &self.key;
-        fn decrypt_with_openssl(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
-            let mut decrypter = symm::Crypter::new(
-                symm::Cipher::aes_256_cbc(),
-                symm::Mode::Decrypt,
+
+        #[cfg(feature = "openssl-crypto")]
+        fn decrypt(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
+            let mut decrypter = openssl::symm::Crypter::new(
+                openssl::symm::Cipher::aes_256_cbc(),
+                openssl::symm::Mode::Decrypt,
                 key,
                 Some(iv))?;
             decrypter.pad(false);
-            let mut unciphered_data = vec![0; ciphertext.len() + symm::Cipher::aes_256_cbc().block_size()];
+            let mut unciphered_data = vec![0; ciphertext.len() + openssl::symm::Cipher::aes_256_cbc().block_size()];
             let count = decrypter.update(ciphertext, &mut unciphered_data)?;
             let rest = decrypter.finalize(&mut unciphered_data[count..])?;
             unciphered_data.truncate(count + rest);
             Ok(unciphered_data)
         }
 
-        fn decrypt_with_aesown(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn decrypt(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
             let mut decryptor = crypto::aes::cbc_decryptor(crypto::aes::KeySize::KeySize256, key, iv, crypto::blockmodes::NoPadding);
             let mut final_result = Vec::<u8>::new();
             let mut read_buffer = crypto::buffer::RefReadBuffer::new(ciphertext);
@@ -223,8 +249,7 @@ impl PrpCrypto {
             }
             Ok(final_result)
         }
-
-        let unciphered_data = decrypt_with_aesown(key, iv, &b64decoded)?;
+        let unciphered_data = decrypt(key, &iv, &b64decoded)?;
         let mut rdr = Cursor::new(unciphered_data[16..20].to_vec());
         let content_length = u32::from_be(rdr.read_u32::<NativeEndian>().unwrap_or_default()) as usize;
         let content = &unciphered_data[20 .. content_length + 20];
@@ -256,34 +281,89 @@ impl PrpCrypto {
     /// ```
     /// return: 返回base64字符串
     pub fn rsa_sha256_sign(content: &str, private_key: &str) -> LabradorResult<String> {
-        let private_key = openssl::rsa::Rsa::private_key_from_pem(private_key.as_bytes())?;
-        let pkey = PKey::from_rsa(private_key)?;
-        let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
-        signer.set_rsa_padding(Padding::PKCS1)?;
-        signer.update(content.as_bytes())?;
-        let result = signer.sign_to_vec()?;
-        // 签名结果转化为base64
-        Ok(base64::encode(&result))
+
+        #[cfg(feature = "openssl-crypto")]
+        fn rsa(private_key: &str, content: &str) -> LabradorResult<String> {
+            let private_key = openssl::rsa::Rsa::private_key_from_pem(private_key.as_bytes())?;
+            let pkey = PKey::from_rsa(private_key)?;
+            let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
+            signer.set_rsa_padding(Padding::PKCS1)?;
+            signer.update(content.as_bytes())?;
+            let result = signer.sign_to_vec()?;
+            // 签名结果转化为base64
+            Ok(base64::encode(&result))
+        }
+
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn rsa(private_key: &str, content: &str) -> LabradorResult<String> {
+            let der_bytes = base64::decode(private_key)?;
+            let private_key = rsa::RsaPrivateKey::from_pkcs8_der(&der_bytes)?;
+            let mut hasher = crypto::sha2::Sha256::new();
+            hasher.input_str(content);
+            let mut buf: Vec<u8> = repeat(0).take((hasher.output_bits()+7)/8).collect();
+            hasher.result(&mut buf);
+            let hash = rsa::Hash::SHA2_256;
+            let sign_result = private_key.sign(rsa::PaddingScheme::PKCS1v15Sign {hash: Option::from(hash) }, &buf);
+            let vec = sign_result?;
+            Ok(base64::encode(vec))
+        }
+
+        rsa(private_key, content)
     }
 
     pub fn rsa_sha256_sign_pkcs1(content: &str, private_key: Vec<u8>) -> LabradorResult<String> {
-        let private_key = openssl::rsa::Rsa::private_key_from_der(&private_key)?;
-        let pkey = PKey::from_rsa(private_key)?;
-        let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
-        signer.set_rsa_padding(Padding::PKCS1)?;
-        signer.update(content.as_bytes())?;
-        let result = signer.sign_to_vec()?;
-        // 签名结果转化为base64
-        Ok(base64::encode(&result))
+        #[cfg(feature = "openssl-crypto")]
+        fn rsa(private_key: &[u8], content: &str) -> LabradorResult<String> {
+            let private_key = openssl::rsa::Rsa::private_key_from_der(private_key)?;
+            let pkey = PKey::from_rsa(private_key)?;
+            let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
+            signer.set_rsa_padding(Padding::PKCS1)?;
+            signer.update(content.as_bytes())?;
+            let result = signer.sign_to_vec()?;
+            // 签名结果转化为base64
+            Ok(base64::encode(&result))
+        }
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn rsa(private_key: &[u8], content: &str) -> LabradorResult<String> {
+            let private_key = rsa::RsaPrivateKey::from_pkcs1_der(private_key)?;
+            let mut hasher = crypto::sha2::Sha256::new();
+            hasher.input_str(content);
+            let mut buf: Vec<u8> = repeat(0).take((hasher.output_bits()+7)/8).collect();
+            hasher.result(&mut buf);
+            let hash = rsa::Hash::SHA2_256;
+            let sign_result = private_key.sign(rsa::PaddingScheme::PKCS1v15Sign {hash: Option::from(hash) }, &buf);
+            let vec = sign_result?;
+            Ok(base64::encode(vec))
+        }
+
+        rsa(&private_key, content)
     }
 
     pub fn rsa_sha256_sign_pkcs8(content: &str, private_key: Vec<u8>) -> LabradorResult<String> {
-        let pkey = PKey::private_key_from_pkcs8(&private_key)?;
-        let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
-        signer.update(content.as_bytes())?;
-        let result = signer.sign_to_vec()?;
-        // 签名结果转化为base64
-        Ok(base64::encode(&result))
+
+        #[cfg(feature = "openssl-crypto")]
+        fn rsa(private_key: &[u8], content: &str) -> LabradorResult<String> {
+            let pkey = PKey::private_key_from_pkcs8(private_key)?;
+            let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
+            signer.update(content.as_bytes())?;
+            let result = signer.sign_to_vec()?;
+            // 签名结果转化为base64
+            Ok(base64::encode(&result))
+        }
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn rsa(private_key: &[u8], content: &str) -> LabradorResult<String> {
+            let private_key = rsa::RsaPrivateKey::from_pkcs8_der(private_key)?;
+            let mut hasher = crypto::sha2::Sha256::new();
+            hasher.input_str(content);
+            let mut buf: Vec<u8> = repeat(0).take((hasher.output_bits()+7)/8).collect();
+            hasher.result(&mut buf);
+            let hash = rsa::Hash::SHA2_256;
+            let sign_result = private_key.sign(rsa::PaddingScheme::PKCS1v15Sign {hash: Option::from(hash) }, &buf);
+            let vec = sign_result?;
+            Ok(base64::encode(vec))
+        }
+
+        rsa(&private_key, content)
     }
 
     /// RSA签名验证
@@ -305,58 +385,164 @@ impl PrpCrypto {
         let sig = base64::decode(sign)?;
         let sig = sig.to_hex();
         let sig = sig.from_hex()?;
-        // 获取公钥对象
-        let pk = Rsa::public_key_from_pem(public_key.as_bytes())?;
-        let pkey = PKey::from_rsa(pk)?;
-        // 对摘要进行签名
-        let mut verifier = Verifier::new(MessageDigest::sha256(), &pkey)?;
-        verifier.update(content.as_bytes())?;
-        let ver = verifier.verify(&sig)?;
-        Ok(ver)
+        let public_key = public_key.as_bytes();
+        let content = content.as_bytes();
+
+        #[cfg(feature = "openssl-crypto")]
+        fn verify(sig: &[u8], publick_key: &[u8], content: &[u8]) -> LabradorResult<bool> {
+            // 获取公钥对象
+            let pk = Rsa::public_key_from_pem(publick_key)?;
+            let pkey = PKey::from_rsa(pk)?;
+            // 对摘要进行签名
+            let mut verifier = Verifier::new(MessageDigest::sha256(), &pkey)?;
+            verifier.update(content)?;
+            let ver = verifier.verify(sig)?;
+            Ok(ver)
+        }
+
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn verify(sig: &[u8], publick_key: &[u8], content: &[u8]) -> LabradorResult<bool> {
+                // 获取公钥对象
+                let publick_key = rsa::RsaPublicKey::from_public_key_der(publick_key)?;
+                // 创建一个Sha256对象
+                let mut hasher = crypto::sha2::Sha256::new();
+                // 对内容进行摘要
+                hasher.input(content);
+                // 将摘要结果保存到buf中
+                let mut buf: Vec<u8> = repeat(0).take((hasher.output_bits()+7)/8).collect();
+                hasher.result(&mut buf);
+                // 对摘要进行签名
+                let hash = rsa::Hash::SHA2_256;
+                let _verify = publick_key.verify(rsa::PaddingScheme::PKCS1v15Sign {hash: Option::from(hash) }, &buf, &sig)?;
+                Ok(true)
+        }
+        verify(&sig, public_key, content)
     }
 
-    pub fn hmac_sha256_sign(key: &str, message: &str) -> LabradorResult<String> {
-        let pkey = PKey::hmac(key.as_bytes())?;
-        let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
-        signer.update(message.as_bytes())?;
-        let result = signer.sign_to_vec()?;
-        Ok(result.to_hex())
+    pub fn hmac_sha256_sign(&self, message: &str) -> LabradorResult<String> {
+        let key = &self.key;
+        let message = message.as_bytes();
+
+        #[cfg(feature = "openssl-crypto")]
+        fn sign(key: &[u8], message: &[u8]) -> LabradorResult<String> {
+            let pkey = PKey::hmac(key)?;
+            let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
+            signer.update(message)?;
+            let result = signer.sign_to_vec()?;
+            Ok(result.to_hex())
+        }
+
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn sign(key: &[u8], message: &[u8]) -> LabradorResult<String> {
+            let mut signer = crypto::hmac::Hmac::new(crypto::sha1::Sha1::new(), key);
+            signer.input(message);
+            let result = signer.result();
+            Ok(result.code().to_hex())
+        }
+
+        sign(key, message)
     }
 
     /// # 加密(aes_256_gcm)
     pub fn aes_256_gcm_encrypt(&self, associated_data: &[u8], nonce: &[u8], plain_text: &[u8]) -> LabradorResult<Vec<u8>> {
         let key = &self.key;
         let mut out_tag: Vec<u8> = repeat(0).take(16).collect();
-        fn encrypt_with_aesown(key: &[u8], associated_data: &[u8], nonce: &[u8], plain_text: &[u8], out_tag: &mut [u8]) -> LabradorResult<Vec<u8>> {
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn encrypt(key: &[u8], associated_data: &[u8], nonce: &[u8], plain_text: &[u8], out_tag: &mut [u8]) -> LabradorResult<Vec<u8>> {
             let mut encryptor = crypto::aes_gcm::AesGcm::new(crypto::aes::KeySize::KeySize256, key, nonce, associated_data);
             let mut final_result = Vec::<u8>::new();
             encryptor.encrypt(plain_text, &mut final_result, out_tag);
             Ok(final_result)
         }
-        fn encrypt_with_openssl(key: &[u8], associated_data: &[u8], nonce: &[u8], plain_text: &[u8], out_tag: &mut Vec<u8>) -> LabradorResult<Vec<u8>> {
+
+        #[cfg(feature = "openssl-crypto")]
+        fn encrypt(key: &[u8], associated_data: &[u8], nonce: &[u8], plain_text: &[u8], out_tag: &mut Vec<u8>) -> LabradorResult<Vec<u8>> {
             let encrypted = symm::encrypt_aead(symm::Cipher::aes_256_gcm(), key, Some(&nonce), associated_data, plain_text, out_tag)?;
             Ok(encrypted)
         }
-
-        encrypt_with_aesown(key, associated_data, nonce, plain_text, &mut out_tag)
-
+        encrypt(key, associated_data, nonce, plain_text, &mut out_tag)
     }
 
     /// # 解密(aes_256_gcm)
     pub fn aes_256_gcm_decrypt(&self, associated_data: &[u8], nonce: &[u8], ciphertext: &[u8], tag: &[u8]) -> LabradorResult<Vec<u8>> {
         let key = &self.key;
 
-        fn decrypt_with_openssl(key: &[u8], associated_data: &[u8], nonce: &[u8], plain_text: &[u8], tag: &[u8]) -> LabradorResult<Vec<u8>> {
+        #[cfg(feature = "openssl-crypto")]
+        fn decrypt(key: &[u8], associated_data: &[u8], nonce: &[u8], plain_text: &[u8], tag: &[u8]) -> LabradorResult<Vec<u8>> {
             let decrypted = symm::decrypt_aead(symm::Cipher::aes_256_gcm(), key, Some(&nonce), associated_data, plain_text, tag)?;
             Ok(decrypted)
         }
-        fn decrypt_with_aesown(key: &[u8], associated_data: &[u8], nonce: &[u8], ciphertext: &[u8], tag: &[u8]) -> LabradorResult<Vec<u8>> {
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn decrypt(key: &[u8], associated_data: &[u8], nonce: &[u8], ciphertext: &[u8], tag: &[u8]) -> LabradorResult<Vec<u8>> {
             let mut decryptor = crypto::aes_gcm::AesGcm::new(crypto::aes::KeySize::KeySize256, key, nonce, associated_data);
             let mut final_result = Vec::<u8>::new();
             let result = decryptor.decrypt(ciphertext, &mut final_result, tag);
             Ok(final_result)
         }
-        decrypt_with_aesown(key, associated_data, nonce, ciphertext, tag)
+
+        decrypt(key, associated_data, nonce, ciphertext, tag)
+    }
+
+    /// # 加密(aes_256_ecb)
+    pub fn aes_256_ecb_encrypt(&self, data: &[u8]) -> LabradorResult<Vec<u8>> {
+        let key = &self.key;
+        let mut out_tag: Vec<u8> = repeat(0).take(16).collect();
+
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn encrypt(key: &[u8], data: &[u8]) -> LabradorResult<Vec<u8>> {
+            let mut encryptor = crypto::aes::ecb_encryptor(crypto::aes::KeySize::KeySize256, key, crypto::blockmodes::PkcsPadding);
+            let mut final_result = Vec::<u8>::new();
+            let mut read_buffer = crypto::buffer::RefReadBuffer::new(data);
+            let mut buffer = [0; 4096];
+            let mut write_buffer = crypto::buffer::RefWriteBuffer::new(&mut buffer);
+            loop {
+                let result = encryptor.encrypt(&mut read_buffer, &mut write_buffer, true)?;
+                final_result.extend(write_buffer.take_read_buffer().take_remaining().iter().map(|&i| i));
+                match result {
+                    crypto::buffer::BufferResult::BufferUnderflow => break,
+                    crypto::buffer::BufferResult::BufferOverflow => { }
+                }
+            }
+            Ok(final_result)
+        }
+
+        #[cfg(feature = "openssl-crypto")]
+        fn encrypt(key: &[u8], data: &[u8]) -> LabradorResult<Vec<u8>> {
+            let encrypted = symm::encrypt(symm::Cipher::aes_256_ecb(), key, None, data)?;
+            Ok(encrypted)
+        }
+
+        encrypt(key, data)
+    }
+
+    /// # 解密(aes_256_ecb)
+    pub fn aes_256_ecb_decrypt(&self, data: &[u8]) -> LabradorResult<String> {
+        let key = &self.key;
+
+        #[cfg(feature = "openssl-crypto")]
+        fn decrypt(key: &[u8], data: &[u8]) -> LabradorResult<Vec<u8>> {
+            let decrypted = symm::decrypt(symm::Cipher::aes_256_ecb(), key, None, data)?;
+            Ok(decrypted)
+        }
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn decrypt(key: &[u8], data: &[u8]) -> LabradorResult<Vec<u8>> {
+            let mut decryptor = crypto::aes::ecb_decryptor(crypto::aes::KeySize::KeySize256, key, crypto::blockmodes::NoPadding);
+            let mut final_result = Vec::<u8>::new();
+            let mut read_buffer = crypto::buffer::RefReadBuffer::new(data);
+            let mut buffer = [0; 4096];
+            let mut write_buffer = crypto::buffer::RefWriteBuffer::new(&mut buffer);
+            loop {
+                let result = decryptor.decrypt(&mut read_buffer, &mut write_buffer, true)?;
+                final_result.extend(write_buffer.take_read_buffer().take_remaining().iter().map(|&i| i));
+                match result {
+                    crypto::buffer::BufferResult::BufferUnderflow => break,
+                    crypto::buffer::BufferResult::BufferOverflow => {}
+                }
+            }
+            Ok(final_result)
+        }
+        let data = decrypt(key, data)?;
+        Ok(String::from_utf8(data).unwrap_or_default())
     }
 }
 
