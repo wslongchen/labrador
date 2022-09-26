@@ -10,15 +10,6 @@ use std::iter::repeat;
 use rustc_serialize::hex::{ToHex, FromHex};
 use crate::{cfg_if, LabradorResult};
 
-// use crypto::buffer::{WriteBuffer, ReadBuffer};
-// use crypto::digest::Digest;
-// use crypto::aead::{AeadEncryptor, AeadDecryptor};
-// use rsa::pkcs1::DecodeRsaPrivateKey;
-// use rsa::pkcs8::DecodePrivateKey;
-// use rsa::pkcs8::DecodePublicKey;
-// use rsa::PublicKey;
-// use crypto::mac::Mac;
-
 cfg_if! {if #[cfg(feature = "openssl-crypto")]{
     use openssl::hash::{MessageDigest};
     use openssl::pkey::PKey;
