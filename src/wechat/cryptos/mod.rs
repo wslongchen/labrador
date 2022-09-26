@@ -131,7 +131,7 @@ impl WechatCrypto {
             // create a Sha1 object
             let mut hasher = crypto::sha1::Sha1::new();
             // write input message
-            hasher.input_str("hello world");
+            hasher.input_str(encrypt_str);
 
             // read hash digest
             let hex = hasher.result_str();
