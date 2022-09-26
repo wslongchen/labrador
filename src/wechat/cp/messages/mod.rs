@@ -239,7 +239,7 @@ impl CpMessage {
             CpMessage::UnsubscribeEvent(ref msg) => msg.event.to_string(),
             CpMessage::TemplateCardEvent(ref msg) => msg.event.to_string(),
             CpMessage::TemplateCardMenuEvent(ref msg) => msg.event.to_string(),
-            // CpMessage::AddExternalContactEvent(ref msg) => msg.event.to_string(),
+            CpMessage::AddExternalContactEvent(ref msg) => msg.event.to_string(),
             CpMessage::MenuPicWeixinEvent(ref msg) => msg.event.to_string(),
             CpMessage::MenuLocationSelectEvent(ref msg) => msg.event.to_string(),
             CpMessage::MenuPicSysPhotoEvent(ref msg) => msg.event.to_string(),

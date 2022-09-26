@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
 use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCrypto, current_timestamp, LabraError, JsapiTicket, JsapiSignature, get_timestamp, get_nonce_str, APIClient, WechatRequest, LabraResponse, LabraRequest, SimpleStorage, WechatCpProviderToken};
-use crate::wechat::cp::constants::{ACCESS_TOKEN, ACCESS_TOKEN_KEY, AGENT_CONFIG, AUTH_URL_INSTALL, SUITE_ACCESS_TOKEN, TYPE};
+use crate::wechat::cp::constants::{ACCESS_TOKEN, ACCESS_TOKEN_KEY, AGENT_CONFIG, AUTH_URL_INSTALL, PROVIDER_ACCESS_TOKEN, SUITE_ACCESS_TOKEN, TYPE};
 use crate::wechat::cp::method::WechatCpMethod;
 use crate::wechat::cp::AccessTokenResponse;
 
@@ -454,7 +454,9 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let req = json!({
            "corpid": corpid,
         });
-        let v = self.client.post(WechatCpMethod::CorpToOpenCorpid, vec![], req, RequestType::Json).await?.json::<Value>()?;
+        let access_token = self.get_wechat_provider_token().await?;
+        let query = vec![(PROVIDER_ACCESS_TOKEN.to_string(), access_token)];
+        let v = self.client.post(WechatCpMethod::CorpToOpenCorpid, query, req, RequestType::Json).await?.json::<Value>()?;
         let v = WechatCommonResponse::parse::<Value>(v)?;
         let qrcode = v["open_corpid"].as_str().unwrap_or_default();
         Ok(qrcode.to_string())

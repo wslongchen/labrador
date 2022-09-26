@@ -27,4 +27,7 @@ pub struct CpAddExternalContactEvent {
     pub state: Option<String>,
     #[serde(rename = "WelcomeCode")]
     pub welcome_code: Option<String>,
+    /// 事件类型：click
+    #[serde(rename="Event")]
+    pub event: String,
 }
