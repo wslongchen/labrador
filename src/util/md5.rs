@@ -2,7 +2,15 @@
 //! 
 //! MD5加密类
 //!
-use crypto::digest::Digest;
+use crate::cfg_if;
+
+cfg_if! {if #[cfg(feature = "openssl-crypto")]{
+    use rustc_serialize::hex::ToHex;
+}}
+cfg_if! {if #[cfg(not(feature = "openssl-crypto"))]{
+    use crypto::digest::Digest;
+}}
+
 
 #[allow(unused)]
 static SALT: &'static str = "labrador";
@@ -15,7 +23,8 @@ pub fn md5<S:Into<String>>(input: S) -> String {
     let input: String = input.into();
 
     #[cfg(feature = "openssl-crypto")]
-    fn crypto(input: String) -> String {
+    fn crypto_md5(input: String) -> String {
+
         let mut result = String::default();
         if let Ok(mut h) = openssl::hash::Hasher::new(openssl::hash::MessageDigest::md5()) {
             h.update(input.as_bytes()).unwrap();
@@ -26,14 +35,14 @@ pub fn md5<S:Into<String>>(input: S) -> String {
     }
 
     #[cfg(not(feature = "openssl-crypto"))]
-    fn crypto(input: String) -> String {
+    fn crypto_md5(input: String) -> String {
         let mut md5 = crypto::md5::Md5::new();
         let mut input_salt: String = String::new();
         input_salt.push_str(input.as_str());
         md5.input_str(input_salt.as_str());
         md5.result_str()
     }
-    crypto(input)
+    crypto_md5(input)
 }
 
 

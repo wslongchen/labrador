@@ -402,7 +402,7 @@ pub mod redis_store {
 
     pub type RedisPool = Pool<redis::Client>;
     use r2d2::{Pool};
-    use redis::{self, ToRedisArgs, ConnectionLike, Commands};
+    use redis::{self, ToRedisArgs, ConnectionLike, Commands, FromRedisValue};
     use crate::{LabradorResult, LabraError};
 
     use super::{SessionStore, ToStore, FromStore, Store};
@@ -466,6 +466,22 @@ pub mod redis_store {
                 return Err(LabraError::ApiError("error to get redis connection".to_string()))
             }
             client.zadd(key.as_ref(), member, score).map_err(LabraError::from)
+        }
+
+        pub fn xadd<K: AsRef<str>,  F: ToRedisArgs, V: ToRedisArgs, RV: FromRedisValue>(&self, key: K, items: &[(F, V)]) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xadd(key.as_ref(), "*", items).map_err(LabraError::from)
+        }
+
+        pub fn xadd_map<K: AsRef<str>,  BTM: ToRedisArgs, RV: FromRedisValue>(&self, key: K, items: BTM) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xadd_map(key.as_ref(), "*", items).map_err(LabraError::from)
         }
     }
 
