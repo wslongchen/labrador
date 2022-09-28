@@ -29,6 +29,8 @@ pub enum AlipayMethod {
     SystemOauthToken,
     /// 换取应用授权令牌
     OpenAuthTokenApp,
+    /// 应用支付宝公钥证书下载
+    DownloadAlipayCert,
     /// 自定义方法
     Custom { method: String, response_key: String }
 }
@@ -49,6 +51,7 @@ impl RequestMethod for AlipayMethod {
             AlipayMethod::QueryRefund => String::from("alipay.trade.fastpay.refund.query"),
             AlipayMethod::CancelOrder => String::from("alipay.trade.cancel"),
             AlipayMethod::SystemOauthToken => String::from("alipay.system.oauth.token"),
+            AlipayMethod::DownloadAlipayCert => String::from("alipay.open.app.alipaycert.download"),
             AlipayMethod::OpenAuthTokenApp => String::from("alipay.open.auth.token.app"),
             AlipayMethod::Custom{ ref method, .. } => method.to_string()
         }
@@ -69,6 +72,7 @@ impl RequestMethod for AlipayMethod {
             AlipayMethod::CancelOrder => String::from("alipay_trade_cancel_response"),
             AlipayMethod::SystemOauthToken => String::from("alipay_system_oauth_token_response"),
             AlipayMethod::OpenAuthTokenApp => String::from("alipay_open_auth_token_app_response"),
+            AlipayMethod::DownloadAlipayCert => String::from("alipay_open_app_alipaycert_download_response"),
             AlipayMethod::Custom{ ref response_key, .. } => response_key.to_string()
         }
     }

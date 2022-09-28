@@ -276,21 +276,21 @@ impl WechatCryptoV3 {
     pub fn signature_v3(method: &String, url: &String, timestamp: i64, nonce_str: &String, body: &String, private_key: &String) -> LabradorResult<String> {
         let signature_str = [method, url, &timestamp.to_string(), nonce_str, body];
         let sign = signature_str.iter().map(|item| item.to_string()).collect::<Vec<_>>().join("\n") + "\n";
-        PrpCrypto::rsa_sha256_sign(&sign, private_key)
+        PrpCrypto::rsa_sha256_sign_with_pem(&sign, private_key)
     }
 
     /// # V3  SHA256withRSA 签名.
     /// sign                签名
     /// private_key         私钥
     pub fn sign(sign: &String, private_key: &String) -> LabradorResult<String> {
-        PrpCrypto::rsa_sha256_sign(&sign, private_key)
+        PrpCrypto::rsa_sha256_sign_with_pem(&sign, private_key)
     }
 
     /// # V3  验证签名
     /// signature     签名
     /// public_key    公钥
     pub fn verify(message: &str, signature: &str, public_key: &String) -> LabradorResult<bool> {
-        PrpCrypto::rsa_sha256_verify(public_key, message, signature)
+        PrpCrypto::rsa_sha256_verify_with_pem(public_key, message, signature)
     }
 
     /// # V3 消息解密 - 使用V3密钥

@@ -259,7 +259,7 @@ impl<T: SessionStore> WechatPayClient<T> {
         let result = self.certs.contains_key(&serial_no);
         // V3  验证签名
         let verify = if let Some(cert) = self.certs.get(&serial_no) {
-            let content = String::from_utf8_lossy(&cert.public_key).to_string();
+            let content = String::from_utf8_lossy(&cert.public_key).trim().to_string();
             WechatCryptoV3::verify(&before_sign, &header.signature, &content).unwrap_or(false)
         } else {
             false
@@ -270,7 +270,7 @@ impl<T: SessionStore> WechatPayClient<T> {
     /// V3  验证签名
     pub async fn verify(&self, serial_number: &str, message: &str, signature: &str) -> bool {
         if let Some(cert) = self.certs.get(serial_number) {
-            let content = String::from_utf8_lossy(&cert.content).to_string();
+            let content = base64::encode(&cert.public_key);
             WechatCryptoV3::verify(message, signature, &content).unwrap_or(false)
         } else {
             false

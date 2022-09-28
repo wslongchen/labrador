@@ -1,4 +1,5 @@
 use std::{collections::BTreeMap, time::{SystemTime, UNIX_EPOCH}};
+use std::time::Duration;
 use uuid::Uuid;
 use crate::prp::PrpCrypto;
 
@@ -118,7 +119,8 @@ pub fn get_sign_with_rsa(pairs: &BTreeMap<String, String>, private_key: &str) ->
         params.add_form_params(key.as_str(), &pairs[&key].as_str());
     }
     // generate RSA string
-    let sign = PrpCrypto::rsa_sha256_sign_pkcs8(&params, base64::decode(private_key).unwrap()).unwrap();
+    let prp = PrpCrypto::new(base64::decode(private_key).unwrap_or_default());
+    let sign = prp.rsa_sha256_sign_pkcs8(&params).unwrap_or_default();
     sign
 }
 
@@ -179,7 +181,7 @@ pub fn get_nonce_str() -> String {
 
 #[allow(unused)]
 pub fn current_timestamp() -> i64 {
-    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64
+    SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or(Duration::from_secs(0)).as_secs() as i64
 }
 
 

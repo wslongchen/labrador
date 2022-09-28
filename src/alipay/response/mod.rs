@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde::de::{DeserializeOwned};
 
 use crate::{errors::LabraError, AlipayResponse, LabradorResult, RequestMethod};
-use crate::alipay::constants::{ERROR_RESPONSE_KEY, SIGN};
+use crate::alipay::constants::{ALIPAY_CERT_SN, ERROR_RESPONSE_KEY, SIGN};
 
 //----------------------------------------------------------------------------------------------------------------------------
 #[derive(Debug, Deserialize,Serialize)]
@@ -22,6 +22,7 @@ pub struct AlipayBaseResponse {
     pub sub_msg: Option<String>,
     pub body: Option<String>,
     pub sign: Option<String>,
+    pub alipay_cert_sn: Option<String>,
     pub params: Option<BTreeMap<String, String>>,
 }
 
@@ -58,6 +59,7 @@ impl AlipayBaseResponse {
             sub_msg: None,
             body: None,
             sign: None,
+            alipay_cert_sn: None,
             params: None,
         }
     }
@@ -65,6 +67,7 @@ impl AlipayBaseResponse {
     pub fn parse(str: &str,method: impl RequestMethod) -> LabradorResult<Self> {
         let v= json::parse(str).unwrap_or(JsonValue::Null);
         let sign = v[SIGN].as_str().unwrap_or_default();
+        let alipay_cert_sn = v[ALIPAY_CERT_SN].as_str().unwrap_or_default();
         // 判断是否异常
         let err= &v[ERROR_RESPONSE_KEY];
         if !err.is_empty() && !err.is_null() {
@@ -78,9 +81,15 @@ impl AlipayBaseResponse {
                     resp.code = "10000".to_string().into();
                 }
                 resp.sign = sign.to_string().into();
+                resp.alipay_cert_sn = alipay_cert_sn.to_string().into();
                 resp.body = response.to_string().into();
                 Ok(resp)
             } else {
+                let str = if str.len() > 1024 {
+                    &str[0..1024]
+                } else {
+                    str
+                };
                 Err(LabraError::MissingField(format!("无法获取解析返回结果：【{}】", str)))
             }
         }
@@ -128,6 +137,10 @@ impl AlipayResponse for AlipayBaseResponse {
 
     fn get_sign(&self) -> String {
         self.sign.to_owned().unwrap_or_default()
+    }
+
+    fn get_alipay_cert_sn(&self) -> String {
+        self.alipay_cert_sn.to_owned().unwrap_or_default()
     }
 
     fn set_msg(&mut self, msg: String) {
@@ -849,5 +862,17 @@ pub struct AppTokenExchangeSubElement {
     /// 授权token开始时间，作为有效期计算的起点
     pub user_id: Option<String>,
 }
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+
+//----------------------------------------------------------------------------------------------------------------------------
+/// 应用支付宝公钥证书下载
+#[derive(Debug, Deserialize,Serialize)]
+pub struct AlipayOpenAppAlipaycertDownloadResponse {
+    /// 公钥证书Base64后的字符串
+    pub alipay_cert_content: String,
+}
+
 
 //----------------------------------------------------------------------------------------------------------------------------

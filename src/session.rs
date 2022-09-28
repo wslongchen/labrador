@@ -51,7 +51,7 @@ impl ToRedisArgs for Store {
     fn write_redis_args<W>(&self, out: &mut W)
     where
         W: ?Sized + redis::RedisWrite {
-        let encoded: Vec<u8> = bincode::serialize(&self).unwrap();
+        let encoded: Vec<u8> = bincode::serialize(&self).unwrap_or_default();
         // let encoded = serde_json::to_string(&self).unwrap_or_default();
         out.write_arg(&encoded[..])
     }
@@ -416,7 +416,7 @@ pub mod redis_store {
     #[allow(unused)]
     impl RedisStorage {
         pub fn new(client: redis::Client) -> RedisStorage {
-            let pool = Pool::builder().max_size(4).build(client).unwrap();
+            let pool = Pool::builder().max_size(4).build(client).expect("can not get the redis client");
             RedisStorage {
                 client_pool: pool,
             }
@@ -429,8 +429,8 @@ pub mod redis_store {
         }
 
         pub fn from_url<U: AsRef<str>>(url: U) -> RedisStorage {
-            let client = redis::Client::open(url.as_ref()).unwrap();
-            let pool = Pool::builder().max_size(4).build(client).unwrap();
+            let client = redis::Client::open(url.as_ref()).expect("can not get the redis pool");
+            let pool = Pool::builder().max_size(4).build(client).expect("can not get the redis pool");
             RedisStorage {
                 client_pool: pool,
             }

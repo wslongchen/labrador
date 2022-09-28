@@ -105,7 +105,8 @@ impl<'a, T: SessionStore> WechatMpCustomService<'a, T> {
         let mut result = WechatCommonResponse::from_value(res.clone())?;
         if result.is_success() {
             let kf_list = &res["kf_list"];
-            let kf_list = kf_list.as_array().unwrap();
+            let empty = &vec![];
+            let kf_list = kf_list.as_array().unwrap_or(empty);
             let mut accounts = vec![];
             for kf in kf_list {
                 let kf_id = &kf["kf_id"];
@@ -140,7 +141,8 @@ impl<'a, T: SessionStore> WechatMpCustomService<'a, T> {
         let mut result = WechatCommonResponse::from_value(res.clone())?;
         if result.is_success() {
             let kf_list = &res["kf_online_list"];
-            let kf_list = kf_list.as_array().unwrap();
+            let empty = &vec![];
+            let kf_list = kf_list.as_array().unwrap_or(empty);
             let mut accounts = vec![];
             for kf in kf_list {
                 let kf_id = &kf["kf_id"];
@@ -148,11 +150,11 @@ impl<'a, T: SessionStore> WechatMpCustomService<'a, T> {
                 let kf_account = &kf["kf_account"];
                 let kf_account = kf_account.as_str().unwrap_or_default().to_owned();
                 let status = &kf["status"];
-                let status = status.as_u64().unwrap();
+                let status = status.as_u64().unwrap_or_default();
                 let auto_accept = &kf["auto_accept"];
-                let auto_accept = auto_accept.as_u64().unwrap();
+                let auto_accept = auto_accept.as_u64().unwrap_or_default();
                 let accepted_case = &kf["accepted_case"];
-                let accepted_case = accepted_case.as_u64().unwrap();
+                let accepted_case = accepted_case.as_u64().unwrap_or_default();
                 let account = OnlineKFAccount {
                     id: kf_id.to_owned(),
                     account: kf_account.to_owned(),

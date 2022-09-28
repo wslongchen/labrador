@@ -25,10 +25,20 @@ Features:
 *   ```jd``` - Jingdong related services
 *   ```wechat``` - Wechat related services
 
-### OpenSSL
+### Crypto Features
+
++ openssl-crypto
+If you enable `openssl-crypto` feature.
 All encryption in this project is done with openssl. Later, other encryption databases will be supported for selection. Therefore, openssl needs to be introduced. See [openssl] for details.
 
 [openssl]: https://docs.rs/openssl/0.10.41/openssl/
+
++ default crpto
+
+the default encryption in this project is [rust-crypto] & [x509_parser] & [rsa]
+[rust-crypto]: https://docs.rs/rust-crypto/0.2.36/crypto/
+[x509_parser]: https://docs.rs/x509-parser/0.14.0/x509_parser/
+[rsa]: https://docs.rs/rsa/0.6.1/rsa/
 
 ### Supported Platform
 

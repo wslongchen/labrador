@@ -94,8 +94,8 @@ impl WechatCpMessageRouter {
         } else {
             let mut res = None;
             for rule in match_rules {
-                res = rule.service(&msg, &mut ctx, &self.client).await.unwrap();
-                res = rule.handlers(&msg, &mut ctx, &self.client).unwrap();
+                res = rule.service(&msg, &mut ctx, &self.client).await.unwrap_or(None);
+                res = rule.handlers(&msg, &mut ctx, &self.client).unwrap_or(None);
             }
             res
         }

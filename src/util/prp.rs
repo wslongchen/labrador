@@ -273,6 +273,39 @@ impl PrpCrypto {
     /// return: 返回base64字符串
     pub fn rsa_sha256_sign(content: &str, private_key: &str) -> LabradorResult<String> {
 
+        println!("private_key:{}", private_key);
+        #[cfg(feature = "openssl-crypto")]
+        fn rsa(private_key: &str, content: &str) -> LabradorResult<String> {
+            let r = base64::decode(&private_key)?;
+            let private_key = openssl::rsa::Rsa::private_key_from_der(&r)?;
+            let pkey = PKey::from_rsa(private_key)?;
+            let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
+            signer.set_rsa_padding(Padding::PKCS1)?;
+            signer.update(content.as_bytes())?;
+            let result = signer.sign_to_vec()?;
+            // 签名结果转化为base64
+            Ok(base64::encode(&result))
+        }
+
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn rsa(private_key: &str, content: &str) -> LabradorResult<String> {
+            let key = base64::decode(private_key)?;
+            let private_key = rsa::RsaPrivateKey::from_pkcs1_der(&key)?;
+            let mut hasher = crypto::sha2::Sha256::new();
+            hasher.input_str(content);
+            let mut buf: Vec<u8> = repeat(0).take((hasher.output_bits()+7)/8).collect();
+            hasher.result(&mut buf);
+            let hash = rsa::Hash::SHA2_256;
+            let sign_result = private_key.sign(rsa::PaddingScheme::PKCS1v15Sign {hash: Option::from(hash) }, &buf);
+            let vec = sign_result?;
+            Ok(base64::encode(vec))
+        }
+
+        rsa(private_key, content)
+    }
+
+    pub fn rsa_sha256_sign_with_pem(content: &str, private_key: &str) -> LabradorResult<String> {
+
         #[cfg(feature = "openssl-crypto")]
         fn rsa(private_key: &str, content: &str) -> LabradorResult<String> {
             let private_key = openssl::rsa::Rsa::private_key_from_pem(private_key.as_bytes())?;
@@ -287,8 +320,7 @@ impl PrpCrypto {
 
         #[cfg(not(feature = "openssl-crypto"))]
         fn rsa(private_key: &str, content: &str) -> LabradorResult<String> {
-            let der_bytes = base64::decode(private_key)?;
-            let private_key = rsa::RsaPrivateKey::from_pkcs8_der(&der_bytes)?;
+            let private_key = rsa::RsaPrivateKey::from_pkcs8_pem(private_key)?;
             let mut hasher = crypto::sha2::Sha256::new();
             hasher.input_str(content);
             let mut buf: Vec<u8> = repeat(0).take((hasher.output_bits()+7)/8).collect();
@@ -302,7 +334,8 @@ impl PrpCrypto {
         rsa(private_key, content)
     }
 
-    pub fn rsa_sha256_sign_pkcs1(content: &str, private_key: Vec<u8>) -> LabradorResult<String> {
+    pub fn rsa_sha256_sign_pkcs1(&self, content: &str) -> LabradorResult<String> {
+        let private_key = &self.key;
         #[cfg(feature = "openssl-crypto")]
         fn rsa(private_key: &[u8], content: &str) -> LabradorResult<String> {
             let private_key = openssl::rsa::Rsa::private_key_from_der(private_key)?;
@@ -330,8 +363,8 @@ impl PrpCrypto {
         rsa(&private_key, content)
     }
 
-    pub fn rsa_sha256_sign_pkcs8(content: &str, private_key: Vec<u8>) -> LabradorResult<String> {
-
+    pub fn rsa_sha256_sign_pkcs8(&self, content: &str) -> LabradorResult<String> {
+        let private_key = &self.key;
         #[cfg(feature = "openssl-crypto")]
         fn rsa(private_key: &[u8], content: &str) -> LabradorResult<String> {
             let pkey = PKey::private_key_from_pkcs8(private_key)?;
@@ -376,25 +409,27 @@ impl PrpCrypto {
         let sig = base64::decode(sign)?;
         let sig = sig.to_hex();
         let sig = sig.from_hex()?;
-        let public_key = public_key.as_bytes();
         let content = content.as_bytes();
 
         #[cfg(feature = "openssl-crypto")]
-        fn verify(sig: &[u8], publick_key: &[u8], content: &[u8]) -> LabradorResult<bool> {
+        fn verify(sig: &[u8], public_key: &str, content: &[u8]) -> LabradorResult<bool> {
             // 获取公钥对象
-            let pk = Rsa::public_key_from_pem(publick_key)?;
+            let r = base64::decode(public_key)?;
+            let pk = Rsa::public_key_from_pem(&r)?;
             let pkey = PKey::from_rsa(pk)?;
             // 对摘要进行签名
             let mut verifier = Verifier::new(MessageDigest::sha256(), &pkey)?;
             verifier.update(content)?;
             let ver = verifier.verify(sig)?;
+            println!("ver:{}", ver);
             Ok(ver)
         }
 
         #[cfg(not(feature = "openssl-crypto"))]
-        fn verify(sig: &[u8], publick_key: &[u8], content: &[u8]) -> LabradorResult<bool> {
+        fn verify(sig: &[u8], public_key: &str, content: &[u8]) -> LabradorResult<bool> {
                 // 获取公钥对象
-                let publick_key = rsa::RsaPublicKey::from_public_key_der(publick_key)?;
+                let public_key = base64::decode(public_key)?;
+                let public_key = rsa::RsaPublicKey::from_public_key_der(&public_key)?;
                 // 创建一个Sha256对象
                 let mut hasher = crypto::sha2::Sha256::new();
                 // 对内容进行摘要
@@ -404,8 +439,47 @@ impl PrpCrypto {
                 hasher.result(&mut buf);
                 // 对摘要进行签名
                 let hash = rsa::Hash::SHA2_256;
-                let _verify = publick_key.verify(rsa::PaddingScheme::PKCS1v15Sign {hash: Option::from(hash) }, &buf, &sig)?;
+                let _verify = public_key.verify(rsa::PaddingScheme::PKCS1v15Sign {hash: Option::from(hash) }, &buf, &sig)?;
                 Ok(true)
+        }
+        verify(&sig, public_key, content)
+    }
+
+    pub fn rsa_sha256_verify_with_pem(public_key: &str, content: &str, sign: &str) -> LabradorResult<bool> {
+        let sig = base64::decode(sign)?;
+        let sig = sig.to_hex();
+        let sig = sig.from_hex()?;
+        let content = content.as_bytes();
+        println!("publick_key:{}", public_key);
+
+        #[cfg(feature = "openssl-crypto")]
+        fn verify(sig: &[u8], public_key: &str, content: &[u8]) -> LabradorResult<bool> {
+            // 获取公钥对象
+            let pk = Rsa::public_key_from_pem(public_key.as_bytes())?;
+            let pkey = PKey::from_rsa(pk)?;
+            // 对摘要进行签名
+            let mut verifier = Verifier::new(MessageDigest::sha256(), &pkey)?;
+            verifier.update(content)?;
+            let ver = verifier.verify(sig)?;
+            Ok(ver)
+        }
+
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn verify(sig: &[u8], public_key: &str, content: &[u8]) -> LabradorResult<bool> {
+            // 获取公钥对象
+            let public_key = base64::decode(public_key)?;
+            let public_key = rsa::RsaPublicKey::from_public_key_der(&public_key)?;
+            // 创建一个Sha256对象
+            let mut hasher = crypto::sha2::Sha256::new();
+            // 对内容进行摘要
+            hasher.input(content);
+            // 将摘要结果保存到buf中
+            let mut buf: Vec<u8> = repeat(0).take((hasher.output_bits()+7)/8).collect();
+            hasher.result(&mut buf);
+            // 对摘要进行签名
+            let hash = rsa::Hash::SHA2_256;
+            let _verify = public_key.verify(rsa::PaddingScheme::PKCS1v15Sign {hash: Option::from(hash) }, &buf, &sig)?;
+            Ok(true)
         }
         verify(&sig, public_key, content)
     }
@@ -466,7 +540,7 @@ impl PrpCrypto {
         #[cfg(not(feature = "openssl-crypto"))]
         fn decrypt(key: &[u8], associated_data: &[u8], nonce: &[u8], ciphertext: &[u8], tag: &[u8]) -> LabradorResult<Vec<u8>> {
             let mut decryptor = crypto::aes_gcm::AesGcm::new(crypto::aes::KeySize::KeySize256, key, nonce, associated_data);
-            let mut final_result = Vec::<u8>::new();
+            let mut final_result = vec![0; ciphertext.len()];
             let result = decryptor.decrypt(ciphertext, &mut final_result, tag);
             Ok(final_result)
         }

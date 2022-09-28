@@ -1,3 +1,4 @@
+use std::convert::Infallible;
 use std::fmt;
 use std::io;
 use std::string::FromUtf8Error;
@@ -175,6 +176,13 @@ impl From<rsa::pkcs1::Error> for LabraError {
 
 impl From<rsa::pkcs8::spki::Error> for LabraError {
     fn from(err: rsa::pkcs8::spki::Error) -> Self {
+        LabraError::RequestError(err.to_string())
+    }
+}
+
+
+impl From<Infallible> for LabraError {
+    fn from(err: Infallible) -> Self {
         LabraError::RequestError(err.to_string())
     }
 }

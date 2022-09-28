@@ -401,7 +401,7 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
         if header.is_none() {
             return Err(LabraError::RequestError("非法请求，头部信息为空".to_string()));
         }
-        let header = header.to_owned().unwrap().to_owned();
+        let header = header.unwrap();
         if !self.client.verify_notify_sign(&header, notify_data).await {
             return Err(LabraError::RequestError("非法请求，头部信息验证失败".to_string()));
         }
@@ -429,8 +429,8 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
         if header.is_none() {
             return Err(LabraError::RequestError("非法请求，头部信息验证为空".to_string()));
         }
-        let header = &header.to_owned().unwrap().to_owned();
-        if !self.client.verify_notify_sign(header, notify_data).await {
+        let header = header.to_owned().unwrap();
+        if !self.client.verify_notify_sign(&header, notify_data).await {
             return Err(LabraError::RequestError("非法请求，头部信息验证失败".to_string()));
         }
         let origin = serde_json::from_str::<OriginNotifyResponse>(notify_data)?;

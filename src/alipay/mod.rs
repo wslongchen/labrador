@@ -3,25 +3,23 @@ use crate::{client::{APIClient}, request::{RequestType, Method, LabraRequest}, e
 
 use std::collections::{BTreeMap};
 use std::fs;
-use rustc_serialize::hex::ToHex;
+use std::sync::Arc;
+use dashmap::{DashMap};
 use serde::Serialize;
-use tracing::error;
 
 use crate::alipay::method::AlipayMethod;
 
 cfg_if! {if #[cfg(feature = "openssl-crypto")]{
+    use rustc_serialize::hex::ToHex;
     use openssl::hash::{hash, MessageDigest};
     use openssl::nid::Nid;
-    use openssl::pkey::PKey;
-    use openssl::sign::{Signer, Verifier};
     use openssl::x509::{X509, X509NameEntries};
 }}
 
 
 cfg_if! {if #[cfg(not(feature = "openssl-crypto"))]{
-    use x509_parser::der_parser::asn1_rs::ToDer;
-    use x509_parser::num_bigint::ToBigInt;
-    use x509_parser::signature_algorithm::SignatureAlgorithm;
+    use x509_parser::parse_x509_certificate;
+    use x509_parser::x509::X509Name;
 }}
 
 mod request;
@@ -32,6 +30,7 @@ mod constants;
 
 pub use request::*;
 pub use response::*;
+
 use crate::alipay::constants::{ENCRYPT_TYPE_AES, FORMAT_JSON, SIGN_TYPE_RSA2};
 use crate::md5::md5;
 use crate::prp::PrpCrypto;
@@ -41,6 +40,8 @@ pub struct AlipayClient<T: SessionStore> {
     api_client: APIClient<T>,
     /// 加密类型
     encrypt_type: String,
+    /// 是否使用证书模式
+    use_cert: bool,
     /// 格式类型
     format: String,
     /// 签名类型
@@ -50,12 +51,16 @@ pub struct AlipayClient<T: SessionStore> {
     encrypt_key: Option<String>,
     /// 应用私钥
     private_key: Option<String>,
+    /// 支付宝公钥
+    alipay_public_key: Option<String>,
     /// 应用公钥证书路径
     app_cert: Option<String>,
     /// 设置支付宝公钥证书路径
     alipay_public_cert: Option<String>,
     /// 设置支付宝根证书路径
     alipay_root_cert: Option<String>,
+    /// 缓存的公钥证书文件
+    cache_certs: Arc<DashMap<String, String>>,
 
 }
 
@@ -81,6 +86,9 @@ pub trait AlipayResponse {
 
     /// 签名
     fn get_sign(&self) -> String;
+
+    /// 支付宝公钥证书
+    fn get_alipay_cert_sn(&self) -> String;
 
     /// 响应是否成功
     fn is_success(&self) -> bool {
@@ -194,14 +202,17 @@ impl <T: SessionStore> AlipayClient<T> {
         AlipayClient {
             api_client,
             encrypt_type: ENCRYPT_TYPE_AES.to_string(),
+            use_cert: false,
             format: FORMAT_JSON.to_string(),
             sign_type: SIGN_TYPE_RSA2.to_string(),
             charset: constants::CHARSET_UTF8.to_string(),
             encrypt_key: None,
             private_key: None,
+            alipay_public_key: None,
             app_cert: None,
             alipay_public_cert: None,
             alipay_root_cert: None,
+            cache_certs: Arc::new(DashMap::new())
         }
     }
 
@@ -219,24 +230,27 @@ impl <T: SessionStore> AlipayClient<T> {
             format: FORMAT_JSON.to_string(),
             encrypt_key: None,
             private_key: None,
+            alipay_public_key: None,
             app_cert: None,
             alipay_public_cert: None,
             alipay_root_cert: None,
+            use_cert: false,
+            cache_certs: Arc::new(DashMap::new())
         }
     }
 
     /// 获取应用证书SN
     pub fn get_app_cert_sn(&self) -> LabradorResult<String> {
         let pem = self.app_cert.to_owned().unwrap_or_default();
-
         #[cfg(not(feature = "openssl-crypto"))]
         fn get_cert_sn(pem: &[u8]) -> LabradorResult<String> {
-            let (data, x509) = x509_parser::pem::parse_x509_pem(content)?;
+            let (data, x509) = x509_parser::pem::parse_x509_pem(pem)?;
             let cert = x509.parse_x509()?;
-            let issuer = cert.issuer().to_string();
-            let serial_number = String::from_utf8_lossy(cert.raw_serial());
+            let issuer = iter2string(cert.issuer())?;
+            let serial_number = cert.serial.to_string();
             let data = issuer + &serial_number;
-            Ok(md5(data))
+            let app_cert_sn = md5(data);
+            Ok(app_cert_sn)
         }
 
         #[cfg(feature = "openssl-crypto")]
@@ -253,7 +267,6 @@ impl <T: SessionStore> AlipayClient<T> {
     /// 获取根证书SN
     pub fn get_root_cert_sn(&self) -> LabradorResult<String> {
         let pem = self.alipay_root_cert.to_owned().unwrap_or_default();
-
         #[cfg(not(feature = "openssl-crypto"))]
         fn get_cert_sn(pem: &[u8]) -> LabradorResult<String> {
             let mut sns = Vec::new();
@@ -261,23 +274,20 @@ impl <T: SessionStore> AlipayClient<T> {
                 match pem {
                     Ok(pem) => {
                         let cert = pem.parse_x509()?;
-                        // let s = &cert.signature_algorithm.algorithm.to_id_string();
-                        // TODO: 过滤算法
-                        let algorithm: SignatureAlgorithm = cert.signature_algorithm.into();
-                        let issuer = cert.issuer().to_string();
-                        let serial_number = String::from_utf8_lossy(cert.raw_serial());
+                        let algorithm = cert.signature_algorithm.oid().to_string();
+                        if algorithm.ne("1.2.840.113549.1.1.11") && algorithm.ne("1.2.840.113549.1.1.5") {
+                            continue;
+                        }
+                        let issuer = iter2string(cert.issuer())?;
+                        let serial_number = cert.serial.to_string();
                         let data = issuer + &serial_number;
                         sns.push(md5(data));
                     }
                     Err(e) => {
-                        error!("Error while decoding PEM entry {}: {:?}", n, e);
+                        tracing::error!("Error while decoding PEM entry {:?}", e);
                     }
                 }
             }
-            let cert = x509.parse_x509()?;
-            let issuer = cert.issuer().to_string();
-            let serial_number = String::from_utf8_lossy(cert.raw_serial());
-            let data = issuer + &serial_number;
             Ok(sns.join("_"))
         }
 
@@ -298,6 +308,93 @@ impl <T: SessionStore> AlipayClient<T> {
 
         get_cert_sn(pem.as_bytes())
 
+    }
+
+    /// 初始化支付宝公钥
+    pub fn init_alipay_public_cert(&self) -> LabradorResult<()> {
+        if !self.cache_certs.is_empty() {
+            return Ok(())
+        }
+        let pem = self.alipay_public_cert.to_owned().unwrap_or_default();
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn get_cert_sn(pem: &[u8]) -> LabradorResult<Vec<(String, String)>> {
+            let mut resp = Vec::new();
+            for pem in x509_parser::pem::Pem::iter_from_buffer(pem) {
+                match pem {
+                    Ok(pem) => {
+                        let (_, cert) = parse_x509_certificate(&pem.contents)?;
+                        let algorithm = cert.signature_algorithm.oid().to_string();
+                        let public_key = cert.public_key();
+                        let issuer = iter2string(cert.issuer())?;
+                        let serial_number = cert.serial.to_string();
+                        let data = issuer + &serial_number;
+                        let sn = md5(data);
+                        resp.push((sn, base64::encode(public_key.raw)));
+                    }
+                    Err(e) => {
+                        tracing::error!("Error while decoding PEM entry {:?}", e);
+                    }
+                }
+            }
+            Ok(resp)
+        }
+
+        #[cfg(feature = "openssl-crypto")]
+        fn get_cert_sn(pem: &[u8]) -> LabradorResult<Vec<(String, String)>> {
+            let x509s = X509::stack_from_pem(pem)?;
+            let mut resp = Vec::new();
+            for x509 in x509s.iter() {
+                let issuer = iter2string(x509.issuer_name().entries())?;
+
+                let serial_number = x509.serial_number().to_bn()?.to_dec_str()?;
+                let data = issuer + &serial_number;
+                let sn = md5(data);
+                let pk = x509.public_key()?;
+                let rpk = pk.public_key_to_pem()?;
+                resp.push((sn, base64::encode(&rpk)));
+            }
+            Ok(resp)
+        }
+        for (sn, cert) in get_cert_sn(pem.as_bytes())? {
+            self.cache_certs.insert(sn, cert);
+        }
+        Ok(())
+    }
+
+    /// 初始化支付宝公钥
+    pub fn get_alipay_public_key(&self) -> LabradorResult<String> {
+        let pem = self.alipay_public_cert.to_owned().unwrap_or_default();
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn get_cert(pem: &[u8]) -> LabradorResult<(String, String)> {
+            let (r, pem) = x509_parser::pem::parse_x509_pem(pem)?;
+            let (_, cert) = parse_x509_certificate(&pem.contents)?;
+            let public_key = cert.public_key();
+            let issuer = iter2string(cert.issuer())?;
+            let serial_number = cert.serial.to_string();
+            let data = issuer + &serial_number;
+            let sn = md5(data);
+            Ok((sn, base64::encode(public_key.raw)))
+        }
+
+        #[cfg(feature = "openssl-crypto")]
+        fn get_cert(pem: &[u8]) -> LabradorResult<(String, String)> {
+            let x509 = X509::from_pem(pem)?;
+            let pk = x509.public_key()?;
+            let issuer = iter2string(x509.issuer_name().entries())?;
+
+            let serial_number = x509.serial_number().to_bn()?.to_dec_str()?;
+            let data = issuer + &serial_number;
+            let sn = md5(data);
+            Ok((sn, base64::encode(pk.public_key_to_pem()?)))
+        }
+        let (sn, pk) = get_cert(pem.as_bytes())?;
+        if let Some(key) = self.cache_certs.get(&sn) {
+            let v = key.value();
+            Ok(v.to_string())
+        } else {
+            self.cache_certs.insert(sn, pk.to_string());
+            Ok(pk.to_string())
+        }
     }
 
     /// 设置应用私钥
@@ -329,9 +426,20 @@ impl <T: SessionStore> AlipayClient<T> {
         self
     }
 
+    /// 设置是否使用证书
+    pub fn use_cert(mut self, use_cert: bool) -> Self {
+        self.use_cert = use_cert;
+        self
+    }
+
     /// 设置加密KEY
     pub fn set_encrypt_key(mut self, encrypt_key: &str) -> Self {
         self.encrypt_key = encrypt_key.to_string().into();
+        self
+    }
+
+    pub fn set_alipay_public_key(mut self, alipay_public_key: &str) -> Self {
+        self.alipay_public_key = alipay_public_key.to_string().into();
         self
     }
 
@@ -360,7 +468,7 @@ impl <T: SessionStore> AlipayClient<T> {
     }
 
     /// 设置阿里公钥证书路径
-    pub fn set_alipay_public_key_path(mut self, cert_path: &str) -> LabradorResult<Self> {
+    pub fn set_alipay_public_cert_path(mut self, cert_path: &str) -> LabradorResult<Self> {
         if cert_path.is_empty() {
             return Err(LabraError::InvalidSignature("证书文件有误！".to_string()));
         }
@@ -368,7 +476,7 @@ impl <T: SessionStore> AlipayClient<T> {
         self.alipay_public_cert = content.into();
         Ok(self)
     }
-    pub fn set_alipay_public_key(mut self, cert: &str) -> Self {
+    pub fn set_alipay_public_cert(mut self, cert: &str) -> Self {
         self.alipay_public_cert = cert.to_string().into();
         self
     }
@@ -392,35 +500,23 @@ impl <T: SessionStore> AlipayClient<T> {
     /// 签名
     fn sign(&self, params: &str) -> LabradorResult<String> {
         let private_key = self.private_key.to_owned().unwrap_or_default();
+        let content = base64::decode(&private_key)?;
         let sign = PrpCrypto::rsa_sha256_sign(params, &private_key)?;
-        //
-        // let content = base64::decode(&private_key)?;
-        //
-        // let pkey = match PKey::private_key_from_der(&content) {
-        //     Ok(k) => k,
-        //     Err(err) => {
-        //         // 用pkcs8进行
-        //         PKey::private_key_from_pkcs8(&content)?
-        //     }
-        // };
-        // // let pkey = PKey::private_key_from_pkcs8(&content)?;
-        // let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
-        // signer.update(params.as_bytes())?;
-        // let sign = base64::encode(&signer.sign_to_vec()?);
-        // Ok(sign)
         Ok(sign)
     }
 
     /// 验签
-    fn verify(&self, source: &str, signature: &str) -> LabradorResult<bool> {
-        let public_key = self.alipay_public_cert.to_owned().unwrap_or_default();
-        // let content = base64::decode(&public_key)?;
-        // let pkey = PKey::public_key_from_der(&content)?;
-        // let sign = base64::decode(signature)?;
-        // let mut verifier = Verifier::new(MessageDigest::sha256(), &pkey)?;
-        // verifier.update(source.as_bytes())?;
-        // Ok(verifier.verify(sign.as_slice())?)
-        PrpCrypto::rsa_sha256_verify(&public_key, source, signature)
+    fn verify(&self, source: &str, signature: &str, cert: Option<&String>) -> LabradorResult<bool> {
+        let mut public_key = cert.map(|v| v.to_string()).unwrap_or_default();
+        if public_key.is_empty() {
+            if self.alipay_public_cert.is_some() && self.use_cert {
+                public_key = self.get_alipay_public_key()?;
+            } else {
+                public_key = self.alipay_public_key.to_owned().unwrap_or_default();
+            }
+        }
+        let _ = PrpCrypto::rsa_sha256_verify(&public_key, source, signature)?;
+        Ok(true)
     }
 
     fn get_redirect_url<>(&self, holder: &RequestParametersHolder) -> LabradorResult<String> {
@@ -564,23 +660,45 @@ impl <T: SessionStore> AlipayClient<T> {
         match self.sign_type.as_str() {
             constants::SIGN_TYPE_RSA2 => {
                 let private_key = self.private_key.to_owned().unwrap_or_default();
-                let content = base64::decode(&private_key)?;
-                let pkey = match PKey::private_key_from_der(&content) {
-                    Ok(k) => k,
-                    Err(err) => {
-                        // 用pkcs8进行
-                        PKey::private_key_from_pkcs8(&content)?
-                    }
-                };
-                let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
-                signer.update(sign_content.as_bytes())?;
-                let sign = base64::encode(&signer.sign_to_vec()?);
+                let sign = PrpCrypto::rsa_sha256_sign(sign_content, &private_key)?;
                 Ok(sign)
             }
             // constants::SIGN_TYPE_RSA => {
             //
             // }
             _ => return Err(LabraError::InvalidSignature("不支持的加密方式".to_string()))
+        }
+    }
+
+    /// 自动加载对应证书
+    pub async fn auto_load_cert(&self, alipay_cert_sn: &str) -> LabradorResult<String> {
+        // 如果已经有证书了，则不用自动获取
+        if self.cache_certs.is_empty() && self.use_cert {
+            self.init_alipay_public_cert();
+        }
+        if let Some(cert) = self.cache_certs.get(alipay_cert_sn) {
+            let data = cert.value();
+            tracing::info!("获取内存中平台证书:{}", data);
+            Ok(data.to_string())
+        } else {
+            let mut req = AlipayOpenAppAlipaycertDownloadRequest::new();
+            let model = AlipayOpenAppAlipaycertDownloadModel { alipay_cert_sn: alipay_cert_sn.to_string() };
+            req.biz_model = model.into();
+            let method = req.get_api_method_name();
+            let holder = self.get_request_holder_with_sign(req, None, None, None)?;
+            let url = self.get_request_url(&holder)?;
+            let req = LabraRequest::new().url(url).method(Method::Get).form(&holder.application_params).req_type(RequestType::Form);
+            let result = self.api_client.request(req).await?.text()?;
+            match AlipayBaseResponse::parse(&result, method) {
+                Ok(mut resp) => {
+                    let response = resp.get_biz_model::<AlipayOpenAppAlipaycertDownloadResponse>()?;
+                    let content = response.alipay_cert_content;
+                    tracing::info!("获取下载平台证书:{}", content);
+                    self.cache_certs.insert(alipay_cert_sn.to_string(), content.to_string());
+                    Ok(content)
+                }
+                Err(err) => Err(err)
+            }
         }
     }
 
@@ -619,8 +737,8 @@ impl <T: SessionStore> AlipayClient<T> {
     async fn excute<D, M>(&self, request: D, access_token: Option<String>, app_auth_token: Option<String>, target_app_id: Option<String>) -> LabradorResult<AlipayBaseResponse>
         where D: AlipayRequest<M>, M: Serialize {
         //如果根证书序列号非空，抛异常提示开发者使用certificateExecute
-        if self.alipay_root_cert.is_some() {
-            return Err(LabraError::ApiError("检测到证书相关参数已初始化，证书模式下请改为调用certificateExecute".to_string()))
+        if self.alipay_root_cert.is_some() || self.use_cert {
+            return self.cert_excute(request, access_token, app_auth_token, target_app_id).await
         }
         let method = request.get_api_method_name();
         let holder = self.get_request_holder_with_sign(request, access_token, app_auth_token, target_app_id)?;
@@ -634,10 +752,40 @@ impl <T: SessionStore> AlipayClient<T> {
                 if !sign.is_empty() || resp.is_success() {
                     let body = resp.body.to_owned().unwrap_or_default();
                     // 对body进行排序
-                    let result = self.verify(&body, &sign)?;
+                    let result = self.verify(&body, &sign, None)?;
                     if !result {
                         return Err(LabraError::InvalidSignature("sign check fail: check Sign and Data Fail!".to_string()))
                     }
+                }
+                Ok(resp)
+            }
+            Err(err) => Err(err)
+        }
+    }
+
+    async fn cert_excute<D, M>(&self, request: D, access_token: Option<String>, app_auth_token: Option<String>, target_app_id: Option<String>) -> LabradorResult<AlipayBaseResponse>
+        where D: AlipayRequest<M>, M: Serialize {
+        let method = request.get_api_method_name();
+        let holder = self.get_request_holder_with_sign(request, access_token, app_auth_token, target_app_id)?;
+        let url = self.get_request_url(&holder)?;
+        let req = LabraRequest::new().url(url).method(Method::Post).form(&holder.application_params).req_type(RequestType::Form);
+        let result = self.api_client.request(req).await?.text()?;
+        match AlipayBaseResponse::parse(&result, method) {
+            Ok(mut resp) => {
+                let sign = resp.get_sign();
+                // 验签请求返回原始串
+                if !sign.is_empty() || resp.is_success() {
+                    let body = resp.body.to_owned().unwrap_or_default();
+                    let alipay_cert_sn = resp.get_alipay_cert_sn();
+                    if !alipay_cert_sn.is_empty() {
+                        let cert: Option<String> = Some(self.auto_load_cert(&alipay_cert_sn).await.unwrap_or_default());
+                        let result = self.verify(&body, &sign, cert.as_ref())?;
+                        if !result {
+                            return Err(LabraError::InvalidSignature("sign check fail: check Sign and Data Fail!".to_string()))
+                        }
+                    }
+
+
                 }
                 Ok(resp)
             }
@@ -1083,8 +1231,9 @@ impl <T: SessionStore> AlipayClient<T> {
         let mut data = serde_urlencoded::from_str::<BTreeMap<String, String>>(notify_data)?;
         let sign_type = data.get(constants::SIGN).map(|v| v.to_owned()).unwrap_or_default();
         let sign = data.get(constants::SIGN).map(|v| urlencoding::decode(v).unwrap_or_default().into_owned()).unwrap_or_default();
+        // let alipay_cert_sn = data.get(constants::ALIPAY_CERT_SN).map(|v| urlencoding::decode(v).unwrap_or_default().into_owned());
         let source = data.into_iter().filter(|(k,v)| !k.is_empty() && !v.is_empty() && k.ne(constants::SIGN) && k.ne(constants::SIGN_TYPE)).map(|(k, v)| format!("{}={}", k, urlencoding::decode(&v).unwrap_or_default().replace("+", " "))).collect::<Vec<String>>().join("&");
-        let result = self.verify(&source, &sign)?;
+        let result = self.verify(&source, &sign, None)?;
         if !result {
             return Err(LabraError::InvalidSignature("回调结果验签失败！".to_string()))
         }
@@ -1111,12 +1260,24 @@ impl <T: SessionStore> AlipayClient<T> {
     }
 }
 
+#[cfg(feature = "openssl-crypto")]
 fn iter2string(iter: X509NameEntries) -> LabradorResult<String> {
     let mut string: String = String::from("");
     for value in iter {
         let data = value.data().as_utf8()?.to_string();
         let key = value.object().nid().short_name()?.to_owned();
         string.insert_str(0, &(key + "=" + &data + ","));
+    }
+    string.pop();
+    Ok(string)
+}
+
+
+#[cfg(not(feature = "openssl-crypto"))]
+fn iter2string(iter: &X509Name) -> LabradorResult<String> {
+    let mut string: String = String::from("");
+    for v in iter.to_string().split(",") {
+        string.insert_str(0, &(v.trim().to_string() + ","));
     }
     string.pop();
     Ok(string)
