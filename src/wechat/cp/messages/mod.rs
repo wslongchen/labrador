@@ -11,7 +11,7 @@ mod location;
 mod link;
 mod unknown;
 
-use crate::{CpAppAdminChangeEvent, CpAuthCancelEvent, CpAuthChangeEvent, CpAuthCreateEvent, CpBatchJobResultEvent, CpChangeExternalContactEvent, CpContactCreatePartyEvent, CpContactCreateUserEvent, CpContactDeletePartyEvent, CpContactDeleteUserEvent, CpContactUpdatePartyEvent, CpContactUpdateTagEvent, CpContactUpdateUserEvent, CpEnterAgentEvent, CpLicensePaySuccessEvent, CpLicenseRefundEvent, CpLocationEvent, CpMenuClickEvent, CpMenuLocationSelectEvent, CpMenuPicPhotoOrAlbumEvent, CpMenuPicSysPhotoEvent, CpMenuPicWeixinEvent, CpMenuScanCodePushEvent, CpMenuScanCodeWaitMsgEvent, CpMenuViewEvent, CpOpenApprovalChangeEvent, CpPermanentCodeEvent, CpShareAgentChangeEvent, CpShareChainChangeEvent, CpSubscribeEvent, CpTemplateCardEvent, CpTemplateCardMenuEvent, CpTicketEvent, CpTpContactCreatePartyEvent, CpTpContactCreateUserEvent, CpTpContactDeletePartyEvent, CpTpContactDeleteUserEvent, CpTpContactUpdatePartyEvent, CpTpContactUpdateTagEvent, CpTpContactUpdateUserEvent, CpUnlicensedNotifyEvent, CpUnsubscribeEvent, LabradorResult, parse_cp_message};
+use crate::{CpAppAdminChangeEvent, CpAuthCancelEvent, CpAuthChangeEvent, CpAuthCreateEvent, CpAutoActivateEvent, CpBatchJobResultEvent, CpChangeExternalContactEvent, CpContactCreatePartyEvent, CpContactCreateUserEvent, CpContactDeletePartyEvent, CpContactDeleteUserEvent, CpContactUpdatePartyEvent, CpContactUpdateTagEvent, CpContactUpdateUserEvent, CpEnterAgentEvent, CpLicensePaySuccessEvent, CpLicenseRefundEvent, CpLocationEvent, CpMenuClickEvent, CpMenuLocationSelectEvent, CpMenuPicPhotoOrAlbumEvent, CpMenuPicSysPhotoEvent, CpMenuPicWeixinEvent, CpMenuScanCodePushEvent, CpMenuScanCodeWaitMsgEvent, CpMenuViewEvent, CpOpenApprovalChangeEvent, CpPermanentCodeEvent, CpShareAgentChangeEvent, CpShareChainChangeEvent, CpSubscribeEvent, CpTemplateCardEvent, CpTemplateCardMenuEvent, CpTicketEvent, CpTpContactCreatePartyEvent, CpTpContactCreateUserEvent, CpTpContactDeletePartyEvent, CpTpContactDeleteUserEvent, CpTpContactUpdatePartyEvent, CpTpContactUpdateTagEvent, CpTpContactUpdateUserEvent, CpUnlicensedNotifyEvent, CpUnsubscribeEvent, LabradorResult, parse_cp_message};
 // export Message types
 pub use self::text::CpTextMessage;
 pub use self::image::CpImageMessage;
@@ -35,6 +35,7 @@ pub enum CpMessage {
     AuthChangeEvent(CpAuthChangeEvent),
     AuthCreateEvent(CpAuthCreateEvent),
     AuthCancelEvent(CpAuthCancelEvent),
+    AutoActivateEvent(CpAutoActivateEvent),
     PermanentCodeEvent(CpPermanentCodeEvent),
     AppAdminChangeEvent(CpAppAdminChangeEvent),
     UnknownMessage(CpUnknownMessage),
@@ -125,6 +126,8 @@ impl CpMessage {
             CpMessage::MenuScanCodePushEvent(ref msg) => msg.source.to_string(),
             CpMessage::MenuPicPhotoOrAlbumEvent(ref msg) => msg.source.to_string(),
             CpMessage::MenuScanCodeWaitMsgEvent(ref msg) => msg.source.to_string(),
+            CpMessage::AppAdminChangeEvent(ref msg) => msg.source.to_string(),
+            CpMessage::UnlicensedNotifyEvent(ref msg) => msg.source.to_string(),
             _ => "".to_string()
         }
     }
@@ -168,6 +171,8 @@ impl CpMessage {
             CpMessage::MenuScanCodePushEvent(ref msg) => msg.target.to_string(),
             CpMessage::MenuPicPhotoOrAlbumEvent(ref msg) => msg.target.to_string(),
             CpMessage::MenuScanCodeWaitMsgEvent(ref msg) => msg.target.to_string(),
+            CpMessage::AppAdminChangeEvent(ref msg) => msg.target.to_string(),
+            CpMessage::UnlicensedNotifyEvent(ref msg) => msg.target.to_string(),
             _ => "".to_string()
         }
     }

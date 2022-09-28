@@ -12,6 +12,8 @@ pub struct CpLicensePaySuccessEvent {
     pub into_type: String,
     #[serde(rename="OrderId")]
     pub order_id: String,
+    #[serde(rename="BuyerUserId")]
+    pub buyer_user_id: String,
     #[serde(rename="TimeStamp")]
     pub timestamp: i64,
 }

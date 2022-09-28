@@ -12,6 +12,9 @@ pub struct CpLicenseRefundEvent {
     pub into_type: String,
     #[serde(rename="OrderId")]
     pub order_id: String,
+    /// 订单状态，1:退款成功，2:退款被拒绝。
+    #[serde(rename="OrderStatus")]
+    pub order_status: u8,
     #[serde(rename="TimeStamp")]
     pub timestamp: i64,
 }
