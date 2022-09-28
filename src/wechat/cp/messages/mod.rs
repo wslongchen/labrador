@@ -11,7 +11,7 @@ mod location;
 mod link;
 mod unknown;
 
-use crate::{CpAddExternalContactEvent, CpAppAdminChangeEvent, CpAuthCancelEvent, CpAuthChangeEvent, CpAuthCreateEvent, CpBatchJobResultEvent, CpContactCreatePartyEvent, CpContactCreateUserEvent, CpContactDeletePartyEvent, CpContactDeleteUserEvent, CpContactUpdatePartyEvent, CpContactUpdateTagEvent, CpContactUpdateUserEvent, CpEnterAgentEvent, CpLicensePaySuccessEvent, CpLicenseRefundEvent, CpLocationEvent, CpMenuClickEvent, CpMenuLocationSelectEvent, CpMenuPicPhotoOrAlbumEvent, CpMenuPicSysPhotoEvent, CpMenuPicWeixinEvent, CpMenuScanCodePushEvent, CpMenuScanCodeWaitMsgEvent, CpMenuViewEvent, CpOpenApprovalChangeEvent, CpPermanentCodeEvent, CpShareAgentChangeEvent, CpShareChainChangeEvent, CpSubscribeEvent, CpTemplateCardEvent, CpTemplateCardMenuEvent, CpTicketEvent, CpTpContactCreatePartyEvent, CpTpContactCreateUserEvent, CpTpContactDeletePartyEvent, CpTpContactDeleteUserEvent, CpTpContactUpdatePartyEvent, CpTpContactUpdateTagEvent, CpTpContactUpdateUserEvent, CpUnlicensedNotifyEvent, CpUnsubscribeEvent, LabradorResult, parse_cp_message};
+use crate::{CpAppAdminChangeEvent, CpAuthCancelEvent, CpAuthChangeEvent, CpAuthCreateEvent, CpBatchJobResultEvent, CpChangeExternalContactEvent, CpContactCreatePartyEvent, CpContactCreateUserEvent, CpContactDeletePartyEvent, CpContactDeleteUserEvent, CpContactUpdatePartyEvent, CpContactUpdateTagEvent, CpContactUpdateUserEvent, CpEnterAgentEvent, CpLicensePaySuccessEvent, CpLicenseRefundEvent, CpLocationEvent, CpMenuClickEvent, CpMenuLocationSelectEvent, CpMenuPicPhotoOrAlbumEvent, CpMenuPicSysPhotoEvent, CpMenuPicWeixinEvent, CpMenuScanCodePushEvent, CpMenuScanCodeWaitMsgEvent, CpMenuViewEvent, CpOpenApprovalChangeEvent, CpPermanentCodeEvent, CpShareAgentChangeEvent, CpShareChainChangeEvent, CpSubscribeEvent, CpTemplateCardEvent, CpTemplateCardMenuEvent, CpTicketEvent, CpTpContactCreatePartyEvent, CpTpContactCreateUserEvent, CpTpContactDeletePartyEvent, CpTpContactDeleteUserEvent, CpTpContactUpdatePartyEvent, CpTpContactUpdateTagEvent, CpTpContactUpdateUserEvent, CpUnlicensedNotifyEvent, CpUnsubscribeEvent, LabradorResult, parse_cp_message};
 // export Message types
 pub use self::text::CpTextMessage;
 pub use self::image::CpImageMessage;
@@ -73,7 +73,11 @@ pub enum CpMessage {
     UnsubscribeEvent(CpUnsubscribeEvent),
     TemplateCardEvent(CpTemplateCardEvent),
     TemplateCardMenuEvent(CpTemplateCardMenuEvent),
-    AddExternalContactEvent(CpAddExternalContactEvent),
+    AddExternalContactEvent(CpChangeExternalContactEvent),
+    EditExternalContact(CpChangeExternalContactEvent),
+    AddHalfExternalContact(CpChangeExternalContactEvent),
+    DelExternalContact(CpChangeExternalContactEvent),
+    DelFollowUser(CpChangeExternalContactEvent),
 }
 
 #[allow(unused)]
@@ -111,6 +115,10 @@ impl CpMessage {
             CpMessage::TemplateCardEvent(ref msg) => msg.source.to_string(),
             CpMessage::TemplateCardMenuEvent(ref msg) => msg.source.to_string(),
             CpMessage::AddExternalContactEvent(ref msg) => msg.source.to_string(),
+            CpMessage::EditExternalContact(ref msg) => msg.source.to_string(),
+            CpMessage::AddHalfExternalContact(ref msg) => msg.source.to_string(),
+            CpMessage::DelExternalContact(ref msg) => msg.source.to_string(),
+            CpMessage::DelFollowUser(ref msg) => msg.source.to_string(),
             CpMessage::MenuPicWeixinEvent(ref msg) => msg.source.to_string(),
             CpMessage::MenuLocationSelectEvent(ref msg) => msg.source.to_string(),
             CpMessage::MenuPicSysPhotoEvent(ref msg) => msg.source.to_string(),
@@ -150,6 +158,10 @@ impl CpMessage {
             CpMessage::TemplateCardEvent(ref msg) => msg.target.to_string(),
             CpMessage::TemplateCardMenuEvent(ref msg) => msg.target.to_string(),
             CpMessage::AddExternalContactEvent(ref msg) => msg.target.to_string(),
+            CpMessage::EditExternalContact(ref msg) => msg.target.to_string(),
+            CpMessage::AddHalfExternalContact(ref msg) => msg.target.to_string(),
+            CpMessage::DelExternalContact(ref msg) => msg.target.to_string(),
+            CpMessage::DelFollowUser(ref msg) => msg.target.to_string(),
             CpMessage::MenuPicWeixinEvent(ref msg) => msg.target.to_string(),
             CpMessage::MenuLocationSelectEvent(ref msg) => msg.target.to_string(),
             CpMessage::MenuPicSysPhotoEvent(ref msg) => msg.target.to_string(),
@@ -240,6 +252,10 @@ impl CpMessage {
             CpMessage::TemplateCardEvent(ref msg) => msg.event.to_string(),
             CpMessage::TemplateCardMenuEvent(ref msg) => msg.event.to_string(),
             CpMessage::AddExternalContactEvent(ref msg) => msg.event.to_string(),
+            CpMessage::EditExternalContact(ref msg) => msg.event.to_string(),
+            CpMessage::AddHalfExternalContact(ref msg) => msg.event.to_string(),
+            CpMessage::DelExternalContact(ref msg) => msg.event.to_string(),
+            CpMessage::DelFollowUser(ref msg) => msg.event.to_string(),
             CpMessage::MenuPicWeixinEvent(ref msg) => msg.event.to_string(),
             CpMessage::MenuLocationSelectEvent(ref msg) => msg.event.to_string(),
             CpMessage::MenuPicSysPhotoEvent(ref msg) => msg.event.to_string(),

@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-/// 通用模板卡片右上角菜单事件推送
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct CpAddExternalContactEvent {
+pub struct CpChangeExternalContactEvent {
     #[serde(rename = "FromUserName")]
     pub source: String,
     #[serde(rename = "ToUserName")]
@@ -28,6 +27,6 @@ pub struct CpAddExternalContactEvent {
     #[serde(rename = "WelcomeCode")]
     pub welcome_code: Option<String>,
     /// 事件类型：click
-    #[serde(rename="Event")]
+    #[serde(rename = "Event")]
     pub event: String,
 }
