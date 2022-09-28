@@ -275,7 +275,7 @@ impl <T: SessionStore> AlipayClient<T> {
                     Ok(pem) => {
                         let cert = pem.parse_x509()?;
                         let algorithm = cert.signature_algorithm.oid().to_string();
-                        if algorithm.ne("1.2.840.113549.1.1.11") && algorithm.ne("1.2.840.113549.1.1.5") {
+                        if algorithm.starts_with("1.2.840.113549.1.1") {
                             continue;
                         }
                         let issuer = iter2string(cert.issuer())?;
