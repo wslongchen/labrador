@@ -187,10 +187,10 @@ pub use wechat::*;
 
 pub type LabradorResult<T, E = LabraError> = Result<T, E>;
 
-#[cfg(feature = "alipay")]
+#[cfg(all(feature = "alipay"))]
 #[cfg_attr(docsrs, doc(cfg(feature = "alipay")))]
 mod alipay;
-#[cfg(feature = "alipay")]
+#[cfg(all(feature = "alipay"))]
 pub use alipay::*;
 
 pub use errors::LabraError;

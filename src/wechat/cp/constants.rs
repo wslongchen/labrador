@@ -20,7 +20,9 @@ pub static EXTERNAL_USERID: &str = "external_userid";
 pub static CURSOR: &str = "cursor";
 pub static USERID: &str = "userid";
 pub static MEDIA_TYPE: &str = "media_type";
+pub static USER_TICKET: &str = "user_ticket";
 pub static TYPE: &str = "type";
+pub static AGENT_CONFIG: &str = "agent_config";
 pub static ATTACHMENT_TYPE: &str = "attachment_type";
 pub static AUTH_URL_INSTALL: &str = "https://open.work.weixin.qq.com/3rdapp/install";
 

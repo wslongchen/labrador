@@ -2408,3 +2408,122 @@ impl <T> AlipayRequest<T> for AlipayOpenAuthTokenAppRequest<T> where T: Serializ
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
+
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+
+
+/// 应用支付宝公钥证书下载
+#[derive(Debug, Serialize, Default, Deserialize)]
+pub struct AlipayOpenAppAlipaycertDownloadRequest<T: Serialize> {
+    /// API版本
+    pub api_version: String,
+    /// 回调地址
+    pub notify_url: Option<String>,
+    /// 跳转地址
+    pub return_url: Option<String>,
+    /// 业务内容
+    pub biz_content: Option<String>,
+    /// 终端类型
+    pub terminal_type: Option<String>,
+    /// 终端信息
+    pub terminal_info: Option<String>,
+    /// 产品编码
+    pub prod_code: Option<String>,
+    /// 是否需要加密
+    pub need_encrypt: bool,
+    /// 参数
+    pub udf_params: BTreeMap<String, String>,
+    /// 业务实体
+    pub biz_model: Option<T>
+}
+
+
+impl <T> AlipayOpenAppAlipaycertDownloadRequest<T> where T: Serialize {
+    pub fn new() -> Self {
+        Self {
+            api_version: "1.0".to_string(),
+            notify_url: None,
+            return_url: None,
+            biz_content: None,
+            terminal_type: None,
+            terminal_info: None,
+            prod_code: None,
+            need_encrypt: false,
+            udf_params: BTreeMap::new(),
+            biz_model: None,
+        }
+    }
+
+    pub fn put_other_text_param(&mut self, key: String, value: String) {
+        self.udf_params.insert(key, value);
+    }
+}
+
+
+
+#[derive(Debug, Serialize, Default, Deserialize)]
+pub struct AlipayOpenAppAlipaycertDownloadModel {
+    /// 支付宝公钥证书序列号
+    pub alipay_cert_sn: String,
+}
+
+impl <T> AlipayRequest<T> for AlipayOpenAppAlipaycertDownloadRequest<T> where T: Serialize {
+    fn get_api_method_name(&self) -> AlipayMethod {
+        AlipayMethod::DownloadAlipayCert
+    }
+
+    fn get_text_params(&self) -> BTreeMap<String, String> {
+        let mut txt_params = BTreeMap::new();
+        txt_params.insert(BIZ_CONTENT_KEY.to_string(), serde_json::to_string(&self.get_biz_model()).unwrap_or_default());
+        if !self.udf_params.is_empty() {
+            for (k, v) in &self.udf_params {
+                txt_params.insert(k.to_string(), v.to_string());
+            }
+        }
+        txt_params
+    }
+
+    fn get_api_version(&self) -> String {
+        if self.api_version.is_empty() {
+            "1.0".to_string()
+        } else {
+            self.api_version.to_string()
+        }
+    }
+
+    fn get_terminal_type(&self) -> String {
+        self.terminal_type.to_owned().unwrap_or_default()
+    }
+
+    fn get_terminal_info(&self) -> String {
+        self.terminal_info.to_owned().unwrap_or_default()
+    }
+
+    fn get_prod_code(&self) -> String {
+        self.prod_code.to_owned().unwrap_or_default()
+    }
+
+    fn get_notify_url(&self) -> String {
+        self.notify_url.to_owned().unwrap_or_default()
+    }
+
+    fn get_return_url(&self) -> String {
+        self.return_url.to_owned().unwrap_or_default()
+    }
+
+    fn is_need_encrypt(&self) -> bool {
+        self.need_encrypt
+    }
+
+    fn get_biz_content(self) -> String {
+        self.biz_content.to_owned().unwrap_or_default()
+    }
+
+    fn get_biz_model(&self) -> Option<&T> {
+        self.biz_model.as_ref()
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------

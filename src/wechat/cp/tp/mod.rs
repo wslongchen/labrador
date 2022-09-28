@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
 use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCrypto, current_timestamp, LabraError, JsapiTicket, JsapiSignature, get_timestamp, get_nonce_str, APIClient, WechatRequest, LabraResponse, LabraRequest, SimpleStorage, WechatCpProviderToken};
-use crate::wechat::cp::constants::{ACCESS_TOKEN, ACCESS_TOKEN_KEY, AUTH_URL_INSTALL, SUITE_ACCESS_TOKEN, TYPE};
+use crate::wechat::cp::constants::{ACCESS_TOKEN, ACCESS_TOKEN_KEY, AGENT_CONFIG, AUTH_URL_INSTALL, PROVIDER_ACCESS_TOKEN, SUITE_ACCESS_TOKEN, TYPE};
 use crate::wechat::cp::method::WechatCpMethod;
 use crate::wechat::cp::AccessTokenResponse;
 
@@ -33,8 +33,6 @@ pub struct WechatCpTpClient<T: SessionStore> {
     corp_id: String,
     /// 第三方应用的EncodingAESKey，用来检查签名
     aes_key: Option<String>,
-    ///企业secret，来自于企微配置
-    corp_secret: String,
     /// 服务商secret
     provider_secret: Option<String>,
     agent_id: Option<i32>,
@@ -50,7 +48,6 @@ impl<T: SessionStore> WechatCpTpClient<T> {
     fn from_client(client: APIClient<T>) -> WechatCpTpClient<T> {
         WechatCpTpClient {
             corp_id: client.app_key.to_owned(),
-            corp_secret: client.secret.to_owned(),
             token: None,
             aes_key: None,
             agent_id: None,
@@ -91,19 +88,23 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         self
     }
 
+    pub fn get_corpid(&self) -> &str {
+        &self.corp_id
+    }
+
     fn key_with_prefix(&self, key: &str) -> String {
         format!("cp:{}:{}", self.suite_id.to_owned().unwrap_or_default(), key)
     }
 
     /// get the wechat client
-    pub fn new<S: Into<String>>(crop_id: S, crop_secret: S) -> WechatCpTpClient<SimpleStorage> {
-        let client = APIClient::<SimpleStorage>::from_session(crop_id.into(), crop_secret.into(), "https://qyapi.weixin.qq.com", SimpleStorage::new());
+    pub fn new<S: Into<String>>(crop_id: S) -> WechatCpTpClient<SimpleStorage> {
+        let client = APIClient::<SimpleStorage>::from_session(crop_id.into(), "", "https://qyapi.weixin.qq.com", SimpleStorage::new());
         WechatCpTpClient::<SimpleStorage>::from_client(client)
     }
 
     /// get the wechat client
-    pub fn from_session<S: Into<String>>(crop_id: S, crop_secret: S, session: T) -> WechatCpTpClient<T> {
-        let client = APIClient::from_session(crop_id.into(), crop_secret.into(), "https://qyapi.weixin.qq.com", session);
+    pub fn from_session<S: Into<String>>(crop_id: S, session: T) -> WechatCpTpClient<T> {
+        let client = APIClient::from_session(crop_id.into(), "", "https://qyapi.weixin.qq.com", session);
         Self::from_client(client)
     }
 
@@ -151,7 +152,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let session = self.client.session();
         let token_key = format!("{}_suite_ticket_key_cp", self.corp_id);
         let expires_key = format!("{}_suite_ticket_expires_at_cp", self.corp_id);
-        session.set(token_key, suite_ticket, Some(expire_second as usize))?;
+        session.set(token_key.to_string(), suite_ticket, Some(expire_second as usize))?;
         session.set(expires_key, expires_at, Some(expire_second as usize))?;
         Ok(())
     }
@@ -192,7 +193,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let timestamp = current_timestamp();
         let expires_at: i64 = session.get(&expires_key, Some(timestamp))?.unwrap_or_default();
         if expires_at <= timestamp || force_refresh {
-            let suite_ticket = self.get_suite_ticket()?;
+            let suite_ticket = self.get_suite_ticket().unwrap_or_default();
             let req = json!({
                 "suite_id": self.suite_id,
                 "suite_secret": self.suite_secret,
@@ -231,7 +232,8 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let timestamp = current_timestamp();
         let expires_at: i64 = session.get(&expires_key, Some(timestamp))?.unwrap_or_default();
         if expires_at <= timestamp || force_refresh {
-            let res = self.client.get(WechatCpMethod::GetSuiteJsapiTicket, vec![(TYPE.to_string(), "agent_config".to_string()), (ACCESS_TOKEN.to_string(), self.get_access_token(auth_corp_id))], RequestType::Json).await?.json::<JsapiTicket>()?;
+            let v = self.client.get(WechatCpMethod::GetSuiteJsapiTicket, vec![(TYPE.to_string(), AGENT_CONFIG.to_string()), (ACCESS_TOKEN.to_string(), self.get_access_token(auth_corp_id))], RequestType::Json).await?.json::<Value>()?;
+            let res = WechatCommonResponse::parse::<JsapiTicket>(v)?;
             let ticket = res.ticket;
             let expires_in = res.expires_in;
             // 预留200秒的时间
@@ -294,7 +296,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let token_key = format!("{}_corp_access_token_cp", auth_corpid);
         let expires_key = format!("{}_corp_access_token_expires_at_cp", auth_corpid);
         let token: String = session.get(&token_key, Some("".to_owned()))?.unwrap_or_default();
-        let timestamp = current_timestamp();
+        let timestamp = get_timestamp();
         let expires_at: i64 = session.get(&expires_key, Some(timestamp))?.unwrap_or_default();
         if expires_at <= timestamp || force_refresh {
             let suite_ticket = self.get_suite_ticket()?;
@@ -302,11 +304,12 @@ impl<T: SessionStore> WechatCpTpClient<T> {
                 "auth_corpid": auth_corpid,
                 "permanent_code": permanent_code,
             });
-            let result = self.client.post(WechatCpMethod::GetCorpToken, vec![], req, RequestType::Json).await?.json::<AccessTokenResponse>()?;
+            let v = self.client.post(WechatCpMethod::GetCorpToken, vec![], req, RequestType::Json).await?.json::<Value>()?;
+            let result = WechatCommonResponse::parse::<AccessTokenResponse>(v)?;
             let token = result.access_token.to_string();
             let expires_in = result.expires_in;
             // 预留200秒的时间
-            let expires_at = current_timestamp() + expires_in - 200;
+            let expires_at = get_timestamp() + expires_in - 200;
             session.set(&token_key, token.to_owned(), Some(expires_in as usize));
             session.set(&expires_key, expires_at, Some(expires_in as usize));
             Ok(result)
@@ -323,18 +326,19 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let token_key = format!("{}_provider_access_token_cp", self.corp_id);
         let expires_key = format!("{}_provider_access_token_expires_at_cp", self.corp_id);
         let token: String = session.get(&token_key, Some("".to_owned()))?.unwrap_or_default();
-        let timestamp = current_timestamp();
+        let timestamp = get_timestamp();
         let expires_at: i64 = session.get(&expires_key, Some(timestamp))?.unwrap_or_default();
         if expires_at <= timestamp {
             let req = json!({
                 "corpid": self.corp_id,
                 "provider_secret": self.provider_secret,
             });
-            let result = self.client.post(WechatCpMethod::GetProviderToken, vec![], req, RequestType::Json).await?.json::<WechatCpProviderToken>()?;
+            let v = self.client.post(WechatCpMethod::GetProviderToken, vec![], req, RequestType::Json).await?.json::<Value>()?;
+            let result = WechatCommonResponse::parse::<WechatCpProviderToken>(v)?;
             let token = result.provider_access_token.to_string();
             let expires_in = result.expires_in;
             // 预留200秒的时间
-            let expires_at = current_timestamp() + expires_in - 200;
+            let expires_at = get_timestamp() + expires_in - 200;
             session.set(&token_key, token.to_owned(), Some(expires_in as usize));
             session.set(&expires_key, expires_at, Some(expires_in as usize));
             Ok(token)
@@ -450,7 +454,9 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let req = json!({
            "corpid": corpid,
         });
-        let v = self.client.post(WechatCpMethod::CorpToOpenCorpid, vec![], req, RequestType::Json).await?.json::<Value>()?;
+        let access_token = self.get_wechat_provider_token().await?;
+        let query = vec![(PROVIDER_ACCESS_TOKEN.to_string(), access_token)];
+        let v = self.client.post(WechatCpMethod::CorpToOpenCorpid, query, req, RequestType::Json).await?.json::<Value>()?;
         let v = WechatCommonResponse::parse::<Value>(v)?;
         let qrcode = v["open_corpid"].as_str().unwrap_or_default();
         Ok(qrcode.to_string())
@@ -556,6 +562,11 @@ impl<T: SessionStore> WechatCpTpClient<T> {
     pub fn user(&self) -> WechatCpTpUser<T> {
         WechatCpTpUser::new(self)
     }
+
+    /// 第三方应用
+    pub fn agent(&self) -> WechatCpTpAgent<T> {
+        WechatCpTpAgent::new(self)
+    }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -569,7 +580,7 @@ pub struct WechatCpSuiteAccessTokenResponse {
 /// 服务商模式获取永久授权码信息
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WechatCpThirdPermanentCodeInfo {
-    pub access_token: String,
+    pub access_token: Option<String>,
     pub permanent_code: String,
     /// 授权企业信息
     pub auth_corp_info: AuthCorpInfo,
@@ -579,7 +590,9 @@ pub struct WechatCpThirdPermanentCodeInfo {
     pub auth_user_info: Option<AuthUserInfo>,
     /// 企业当前生效的版本信息
     pub edition_info: Option<EditionInfo>,
-    pub expires_in: i64,
+    pub expires_in: Option<i64>,
+    /// 安装应用时，扫码或者授权链接中带的state值。详见state说明
+    pub state: Option<String>
 }
 
 
@@ -590,8 +603,8 @@ pub struct AuthCorpInfo {
     pub corp_type: Option<String>,
     pub corp_square_logo_url: Option<String>,
     pub corp_round_logo_url: Option<String>,
-    pub corp_user_max: Option<String>,
-    pub corp_agent_max: Option<String>,
+    pub corp_user_max: Option<i32>,
+    pub corp_agent_max: Option<i32>,
     /// 所绑定的企业微信主体名称(仅认证过的企业有)
     pub corp_full_name: Option<String>,
     /// 授权企业在微工作台（原企业号）的二维码，可用于关注微工作台
@@ -669,11 +682,11 @@ pub struct Agent {
     /// 授权模式，0为管理员授权；1为成员授权
     pub auth_mode: Option<u8>,
     /// 是否为代开发自建应用
-    pub is_customized_app: Option<u8>,
+    pub is_customized_app: Option<bool>,
     /// 是否虚拟版本
-    pub is_virtual_version: Option<u8>,
+    pub is_virtual_version: Option<bool>,
     /// 是否由互联企业分享安装。详见 <a href='https://developer.work.weixin.qq.com/document/path/93360#24909'>企业互联</a>
-    pub is_shared_from_other_corp: Option<u8>,
+    pub is_shared_from_other_corp: Option<bool>,
     /// 用户上限。
     /// <p>特别注意, 以下情况该字段无意义，可以忽略：</p>
     /// <ul>

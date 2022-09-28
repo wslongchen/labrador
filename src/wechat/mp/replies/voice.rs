@@ -1,5 +1,4 @@
-use crate::current_timestamp;
-use super::ReplyRenderer;
+use crate::{current_timestamp, ReplyRenderer};
 
 
 #[derive(Debug, Eq, PartialEq, Clone)]

@@ -15,7 +15,6 @@ mod constants;
 
 pub use request::*;
 pub use response::*;
-use tracing::info;
 use crate::wechat::cryptos::{SignatureHeader, WechatCryptoV3};
 use crate::wechat::pay::api::WxPay;
 use crate::wechat::pay::constants::{ACCEPT, AUTHORIZATION, CONTENT_TYPE_JSON};
@@ -260,7 +259,7 @@ impl<T: SessionStore> WechatPayClient<T> {
         let result = self.certs.contains_key(&serial_no);
         // V3  验证签名
         let verify = if let Some(cert) = self.certs.get(&serial_no) {
-            let content = String::from_utf8_lossy(&cert.public_key).to_string();
+            let content = String::from_utf8_lossy(&cert.public_key).trim().to_string();
             WechatCryptoV3::verify(&before_sign, &header.signature, &content).unwrap_or(false)
         } else {
             false
@@ -271,7 +270,7 @@ impl<T: SessionStore> WechatPayClient<T> {
     /// V3  验证签名
     pub async fn verify(&self, serial_number: &str, message: &str, signature: &str) -> bool {
         if let Some(cert) = self.certs.get(serial_number) {
-            let content = String::from_utf8_lossy(&cert.content).to_string();
+            let content = base64::encode(&cert.public_key);
             WechatCryptoV3::verify(message, signature, &content).unwrap_or(false)
         } else {
             false
@@ -286,7 +285,7 @@ impl<T: SessionStore> WechatPayClient<T> {
             let status_code = response.status().as_u16();
             if status_code == 200 {
                 let body = response.json::<Value>()?;
-                info!("获取平台证书:{}", serde_json::to_string(&body).unwrap_or_default());
+                tracing::info!("获取平台证书:{}", serde_json::to_string(&body).unwrap_or_default());
                 let bodys = serde_json::from_value::<Vec<PlatformCertificateResponse>>(body["data"].to_owned())?;
                 for body in bodys {
                     let data =body.encrypt_certificate;

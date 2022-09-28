@@ -20,6 +20,21 @@ Features:
 *   ```jd``` - 京东
 *   ```wechat``` - 微信
 
+### Crypto Features
+
++ openssl-crypto
+  如果你开起来了 `openssl-crypto` feature，
+  则本项目所有加密都是用openssl进行，后续会支持其他加密库以供挑选，所以需要引入openssl相关，详情见[openssl]相关说明。
+
+[openssl]: https://docs.rs/openssl/0.10.41/openssl/
+
++ 默认加密
+
+默认加密主要采用 [rust-crypto] & [x509_parser] & [rsa]，感兴趣的可以去相关文档查看。
+[rust-crypto]: https://docs.rs/rust-crypto/0.2.36/crypto/
+[x509_parser]: https://docs.rs/x509-parser/0.14.0/x509_parser/
+[rsa]: https://docs.rs/rsa/0.6.1/rsa/
+
 ### Supported Platform
 
 | 平台                                                 | 是否支持 |

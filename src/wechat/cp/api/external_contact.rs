@@ -614,7 +614,7 @@ impl<'a, T: SessionStore> WechatCpExternalContact<'a, T> {
     /// </pre>
     pub async fn add_group_welcome_template(&self, req: WechatCpGroupWelcomeTemplateInfo) -> LabradorResult<String> {
         let v = self.client.post(WechatCpMethod::ExternalContact(CpExternalContactMethod::AddGroupWelcomeTemplate), vec![], req, RequestType::Json).await?.json::<Value>()?;
-        let v= WechatCommonResponse::parse::<Value>(v)?;
+        let v = WechatCommonResponse::parse::<Value>(v)?;
         let template_id = v["template_id"].as_str().unwrap_or_default().to_string();
         Ok(template_id)
     }
@@ -812,7 +812,7 @@ pub struct FollowedUser {
     pub state: Option<String>,
     pub remark_company: Option<String>,
     pub remark_corp_name: Option<String>,
-    pub add_way: Option<String>,
+    pub add_way: Option<u8>,
     pub oper_userid: Option<String>,
     /// 获取客户详情  接口专用
     pub tags: Option<Vec<FollowedUserTag>>,
@@ -1329,7 +1329,6 @@ pub struct ExternalContactGroupMsgSendInfo {
 }
 
 
-
 /// 获取企业群发成员执行结果
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WechatCpGroupMsgResult {
@@ -1350,7 +1349,6 @@ pub struct ExternalContactGroupMsgDetailInfo {
     /// 发送时间，发送状态为1时返回
     pub send_time: Option<u64>,
 }
-
 
 
 /// 获取群发成员发送任务列表

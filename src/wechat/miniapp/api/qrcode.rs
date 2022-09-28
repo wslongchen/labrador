@@ -115,13 +115,13 @@ impl<'a, T: SessionStore> WechatMaQrcode<'a, T> {
 //----------------------------------------------------------------------------------------------------------------------------
 
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MiniQRCodeRequest {
     scene: String,
     page: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QRCodeRequest {
     width: i32,
     path: String,

@@ -1,9 +1,8 @@
-use crate::current_timestamp;
-use super::ReplyRenderer;
+use crate::{current_timestamp, ReplyRenderer};
 
 /// 更新点击用户的按钮文案
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub struct UpdateButtonReply {
+pub struct CpUpdateButtonReply {
     pub source: String,
     pub target: String,
     pub time: i64,
@@ -12,10 +11,10 @@ pub struct UpdateButtonReply {
 }
 
 #[allow(unused)]
-impl UpdateButtonReply {
+impl CpUpdateButtonReply {
     #[inline]
-    pub fn new<S: Into<String>>(source: S, target: S) -> UpdateButtonReply {
-        UpdateButtonReply {
+    pub fn new<S: Into<String>>(source: S, target: S) -> CpUpdateButtonReply {
+        CpUpdateButtonReply {
             source: source.into(),
             target: target.into(),
             time: current_timestamp(),
@@ -29,7 +28,7 @@ impl UpdateButtonReply {
     }
 }
 
-impl ReplyRenderer for UpdateButtonReply {
+impl ReplyRenderer for CpUpdateButtonReply {
     #[inline]
     fn render(&self) -> String {
         format!("<xml>\n\
@@ -44,20 +43,5 @@ impl ReplyRenderer for UpdateButtonReply {
             time=self.time,
             replace_name=self.replace_name,
         )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::ReplyRenderer;
-    use super::TransferCustomerServiceReply;
-
-    #[test]
-    fn test_render_transfer_customer_service_reply() {
-        let reply = TransferCustomerServiceReply::new("test1", "test2");
-        let rendered = reply.render();
-        assert!(rendered.contains("test1"));
-        assert!(rendered.contains("test2"));
-        assert!(rendered.contains("transfer_customer_service"));
     }
 }

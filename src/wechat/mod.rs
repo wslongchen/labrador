@@ -13,9 +13,14 @@ mod constants;
 
 pub use cp::*;
 pub use mp::*;
+pub use miniapp::*;
 pub use pay::*;
 pub use cryptos::*;
 use crate::{LabradorResult, LabraError, Method, RequestBody, RequestType};
+
+pub trait ReplyRenderer {
+    fn render(&self) -> String;
+}
 
 pub trait XmlMessageParser {
     type WechatXmlMessage;

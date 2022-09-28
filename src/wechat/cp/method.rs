@@ -327,7 +327,9 @@ impl CpMessageMethod {
 pub enum CpOauth2Method {
     Oauth2Authorize,
     GetUserDetail,
+    GetAuthUserDetail,
     GetUserInfo,
+    GetAuthUserInfo,
 }
 
 #[allow(unused)]
@@ -337,6 +339,8 @@ impl CpOauth2Method {
             CpOauth2Method::Oauth2Authorize => String::from("https://open.weixin.qq.com/connect/oauth2/authorize"),
             CpOauth2Method::GetUserDetail => String::from("/cgi-bin/user/getuserdetail"),
             CpOauth2Method::GetUserInfo => String::from("/cgi-bin/user/getuserinfo"),
+            CpOauth2Method::GetAuthUserInfo => String::from("/cgi-bin/auth/getuserinfo"),
+            CpOauth2Method::GetAuthUserDetail => String::from("/cgi-bin/auth/getuserdetail"),
         }
     }
 }

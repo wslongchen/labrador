@@ -1,28 +1,53 @@
-use crate::{CpAuthCancelEvent, CpAuthChangeEvent, CpAuthCreateEvent, CpBatchJobResultEvent, CpContactCreatePartyEvent, CpContactCreateUserEvent, CpContactDeletePartyEvent, CpContactDeleteUserEvent, CpContactUpdatePartyEvent, CpContactUpdateTagEvent, CpContactUpdateUserEvent, CpEnterAgentEvent, CpImageMessage, CpLinkMessage, CpLocationEvent, CpLocationMessage, CpMenuClickEvent, CpMenuLocationSelectEvent, CpMenuPicPhotoOrAlbumEvent, CpMenuPicSysPhotoEvent, CpMenuPicWeixinEvent, CpMenuScanCodePushEvent, CpMenuScanCodeWaitMsgEvent, CpMenuViewEvent, CpMessage, CpOpenApprovalChangeEvent, CpShareAgentChangeEvent, CpShareChainChangeEvent, CpSubscribeEvent, CpTemplateCardEvent, CpTemplateCardMenuEvent, CpTextMessage, CpTicketEvent, CpTpContactCreatePartyEvent, CpTpContactCreateUserEvent, CpTpContactDeletePartyEvent, CpTpContactDeleteUserEvent, CpTpContactUpdatePartyEvent, CpTpContactUpdateTagEvent, CpTpContactUpdateUserEvent, CpUnknownMessage, CpVideoMessage, CpVoiceMessage, LabradorResult, XmlMessageParser};
+use crate::{CpAppAdminChangeEvent, CpAuthCancelEvent, CpAuthChangeEvent, CpAuthCreateEvent, CpAutoActivateEvent, CpBatchJobResultEvent, CpChangeExternalContactEvent, CpContactCreatePartyEvent, CpContactCreateUserEvent, CpContactDeletePartyEvent, CpContactDeleteUserEvent, CpContactUpdatePartyEvent, CpContactUpdateTagEvent, CpContactUpdateUserEvent, CpEnterAgentEvent, CpImageMessage, CpLicensePaySuccessEvent, CpLicenseRefundEvent, CpLinkMessage, CpLocationEvent, CpLocationMessage, CpMenuClickEvent, CpMenuLocationSelectEvent, CpMenuPicPhotoOrAlbumEvent, CpMenuPicSysPhotoEvent, CpMenuPicWeixinEvent, CpMenuScanCodePushEvent, CpMenuScanCodeWaitMsgEvent, CpMenuViewEvent, CpMessage, CpOpenApprovalChangeEvent, CpShareAgentChangeEvent, CpShareChainChangeEvent, CpSubscribeEvent, CpTemplateCardEvent, CpTemplateCardMenuEvent, CpTextMessage, CpTicketEvent, CpTpContactCreatePartyEvent, CpTpContactCreateUserEvent, CpTpContactDeletePartyEvent, CpTpContactDeleteUserEvent, CpTpContactUpdatePartyEvent, CpTpContactUpdateTagEvent, CpTpContactUpdateUserEvent, CpUnknownMessage, CpUnlicensedNotifyEvent, CpVideoMessage, CpVoiceMessage, LabradorResult, XmlMessageParser};
 
 pub fn parse_cp_message<S: AsRef<str>>(xml: S) -> LabradorResult<CpMessage> {
     let doc = serde_xml_rs::from_str::<serde_json::Value>(xml.as_ref())?;
     let msg_type = doc["MsgType"]["$value"].as_str().unwrap_or_default();
     let info_type = doc["InfoType"]["$value"].as_str().unwrap_or_default();
-    match info_type {
-        "suite_ticket" => return Ok(CpMessage::TicketEvent(CpTicketEvent::from_xml(xml.as_ref())?)),
-        "create_auth" => return Ok(CpMessage::AuthCreateEvent(CpAuthCreateEvent::from_xml(xml.as_ref())?)),
-        "change_auth" => return Ok(CpMessage::AuthChangeEvent(CpAuthChangeEvent::from_xml(xml.as_ref())?)),
-        "cancel_auth" => return Ok(CpMessage::AuthCancelEvent(CpAuthCancelEvent::from_xml(xml.as_ref())?)),
-        "change_contact" => {
-            let change_type = doc["ChangeType"]["$value"].as_str().unwrap_or_default();
-            match change_type {
-                "create_user" =>  return Ok(CpMessage::TpContactCreateUserEvent(CpTpContactCreateUserEvent::from_xml(xml.as_ref())?)),
-                "update_user" =>  return Ok(CpMessage::TpContactUpdateUserEvent(CpTpContactUpdateUserEvent::from_xml(xml.as_ref())?)),
-                "delete_user" =>  return Ok(CpMessage::TpContactDeleteUserEvent(CpTpContactDeleteUserEvent::from_xml(xml.as_ref())?)),
-                "create_party" =>  return Ok(CpMessage::TpContactCreatePartyEvent(CpTpContactCreatePartyEvent::from_xml(xml.as_ref())?)),
-                "update_party" =>  return Ok(CpMessage::TpContactUpdatePartyEvent(CpTpContactUpdatePartyEvent::from_xml(xml.as_ref())?)),
-                "delete_party" =>  return Ok(CpMessage::TpContactDeletePartyEvent(CpTpContactDeletePartyEvent::from_xml(xml.as_ref())?)),
-                "update_tag" =>  return Ok(CpMessage::TpContactUpdateTagEvent(CpTpContactUpdateTagEvent::from_xml(xml.as_ref())?)),
-                _ => {}
+    if !info_type.is_empty() {
+        let msg = match info_type {
+            "suite_ticket" => CpMessage::TicketEvent(CpTicketEvent::from_xml(xml.as_ref())?),
+            "create_auth" => CpMessage::AuthCreateEvent(CpAuthCreateEvent::from_xml(xml.as_ref())?),
+            "change_auth" => CpMessage::AuthChangeEvent(CpAuthChangeEvent::from_xml(xml.as_ref())?),
+            "cancel_auth" => CpMessage::AuthCancelEvent(CpAuthCancelEvent::from_xml(xml.as_ref())?),
+            "auto_activate" => CpMessage::AutoActivateEvent(CpAutoActivateEvent::from_xml(xml.as_ref())?),
+            "license_pay_success" => CpMessage::LicensePaySuccessEvent(CpLicensePaySuccessEvent::from_xml(xml.as_ref())?),
+            "license_refund" => CpMessage::LicenseRefundEvent(CpLicenseRefundEvent::from_xml(xml.as_ref())?),
+            "change_external_contact" => {
+                let change_type = doc["ChangeType"]["$value"].as_str().unwrap_or_default();
+                match change_type {
+                    "add_external_contact" => CpMessage::AddExternalContactEvent(CpChangeExternalContactEvent::from_xml(xml.as_ref())?),
+                    "edit_external_contact" => CpMessage::EditExternalContact(CpChangeExternalContactEvent::from_xml(xml.as_ref())?),
+                    "add_half_external_contact" => CpMessage::AddHalfExternalContact(CpChangeExternalContactEvent::from_xml(xml.as_ref())?),
+                    "del_external_contact" => CpMessage::DelExternalContact(CpChangeExternalContactEvent::from_xml(xml.as_ref())?),
+                    "del_follow_user" => CpMessage::DelFollowUser(CpChangeExternalContactEvent::from_xml(xml.as_ref())?),
+                    _ => CpMessage::UnknownMessage(CpUnknownMessage::from_xml(xml.as_ref())?),
+                }
             }
-        },
-        _ => {}
+            "change_contact" => {
+                let change_type = doc["ChangeType"]["$value"].as_str().unwrap_or_default();
+                match change_type {
+                    "create_user" => CpMessage::TpContactCreateUserEvent(CpTpContactCreateUserEvent::from_xml(xml.as_ref())?),
+                    "update_user" => CpMessage::TpContactUpdateUserEvent(CpTpContactUpdateUserEvent::from_xml(xml.as_ref())?),
+                    "delete_user" => CpMessage::TpContactDeleteUserEvent(CpTpContactDeleteUserEvent::from_xml(xml.as_ref())?),
+                    "create_party" => CpMessage::TpContactCreatePartyEvent(CpTpContactCreatePartyEvent::from_xml(xml.as_ref())?),
+                    "update_party" => CpMessage::TpContactUpdatePartyEvent(CpTpContactUpdatePartyEvent::from_xml(xml.as_ref())?),
+                    "delete_party" => CpMessage::TpContactDeletePartyEvent(CpTpContactDeletePartyEvent::from_xml(xml.as_ref())?),
+                    "update_tag" => CpMessage::TpContactUpdateTagEvent(CpTpContactUpdateTagEvent::from_xml(xml.as_ref())?),
+                    _ => {
+                        let mut msg = CpUnknownMessage::from_xml(xml.as_ref())?;
+                        msg.raw = xml.as_ref().to_string().into();
+                        CpMessage::UnknownMessage(msg)
+                    }
+                }
+            }
+            _ => {
+                let mut msg = CpUnknownMessage::from_xml(xml.as_ref())?;
+                msg.raw = xml.as_ref().to_string().into();
+                CpMessage::UnknownMessage(msg)
+            }
+        };
+        return Ok(msg);
     }
     let msg = match msg_type {
         "text" => CpMessage::TextMessage(CpTextMessage::from_xml(xml.as_ref())?),
@@ -34,8 +59,8 @@ pub fn parse_cp_message<S: AsRef<str>>(xml: S) -> LabradorResult<CpMessage> {
         "event" => {
             let event_str = doc["Event"]["$value"].as_str().unwrap_or_default();
             let change_type = doc["ChangeType"]["$value"].as_str().unwrap_or_default();
-            parse_event(&event_str.to_lowercase(), change_type,xml.as_ref())?
-        },
+            parse_event(&event_str.to_lowercase(), change_type, xml.as_ref())?
+        }
         _ => CpMessage::UnknownMessage(CpUnknownMessage::from_xml(xml.as_ref())?),
     };
     Ok(msg)
@@ -46,6 +71,7 @@ fn parse_event(event: &str, change_type: &str, xml: &str) -> LabradorResult<CpMe
         "location" => CpMessage::LocationEvent(CpLocationEvent::from_xml(xml)?),
         "subscribe" => CpMessage::SubscribeEvent(CpSubscribeEvent::from_xml(xml)?),
         "enter_agent" => CpMessage::EnterAgentEvent(CpEnterAgentEvent::from_xml(xml)?),
+        "change_app_admin" => CpMessage::AppAdminChangeEvent(CpAppAdminChangeEvent::from_xml(xml)?),
         "batch_job_result" => CpMessage::BatchJobResultEvent(CpBatchJobResultEvent::from_xml(xml)?),
         "change_contact" => {
             match change_type {
@@ -72,6 +98,17 @@ fn parse_event(event: &str, change_type: &str, xml: &str) -> LabradorResult<CpMe
         "share_chain_change" => CpMessage::ShareChainChangeEvent(CpShareChainChangeEvent::from_xml(xml)?),
         "template_card_event" => CpMessage::TemplateCardEvent(CpTemplateCardEvent::from_xml(xml)?),
         "template_card_menu_event" => CpMessage::TemplateCardMenuEvent(CpTemplateCardMenuEvent::from_xml(xml)?),
+        "unlicensed_notify" => CpMessage::UnlicensedNotifyEvent(CpUnlicensedNotifyEvent::from_xml(xml)?),
+        "change_external_contact" => {
+            match change_type {
+                "add_external_contact" => CpMessage::AddExternalContactEvent(CpChangeExternalContactEvent::from_xml(xml.as_ref())?),
+                "edit_external_contact" => CpMessage::EditExternalContact(CpChangeExternalContactEvent::from_xml(xml.as_ref())?),
+                "add_half_external_contact" => CpMessage::AddHalfExternalContact(CpChangeExternalContactEvent::from_xml(xml.as_ref())?),
+                "del_external_contact" => CpMessage::DelExternalContact(CpChangeExternalContactEvent::from_xml(xml.as_ref())?),
+                "del_follow_user" => CpMessage::DelFollowUser(CpChangeExternalContactEvent::from_xml(xml.as_ref())?),
+                _ => CpMessage::UnknownMessage(CpUnknownMessage::from_xml(xml)?),
+            }
+        }
         _ => CpMessage::UnknownMessage(CpUnknownMessage::from_xml(xml)?),
     };
     Ok(msg)

@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, any::type_name, fmt, error, time::{SystemTime, UNIX_EPOCH}};
+use std::{collections::BTreeMap, any::type_name, fmt, error};
 use dashmap::DashMap;
 use once_cell::sync::Lazy;
 
@@ -51,7 +51,7 @@ impl ToRedisArgs for Store {
     fn write_redis_args<W>(&self, out: &mut W)
     where
         W: ?Sized + redis::RedisWrite {
-        let encoded: Vec<u8> = bincode::serialize(&self).unwrap();
+        let encoded: Vec<u8> = bincode::serialize(&self).unwrap_or_default();
         // let encoded = serde_json::to_string(&self).unwrap_or_default();
         out.write_arg(&encoded[..])
     }
@@ -365,7 +365,8 @@ impl SessionStore for SimpleStorage {
             let (ttl, value) = v.value();
             if let Some(ttl) =  ttl {
                 let current_stamp = get_timestamp() as usize;
-                if current_stamp >= *ttl {
+                let exipre_at = current_stamp + *ttl;
+                if current_stamp >= exipre_at {
                     // SIMPLE_STORAGE.remove(key);
                     is_expire = true;
                     None
@@ -387,8 +388,6 @@ impl SessionStore for SimpleStorage {
     fn set<'a, K: AsRef<str>, T: ToStore>(&self, key: K, value: T, ttl: Option<usize>) -> LabradorResult<()> {
         let key = key.as_ref();
         let ttl = if let Some(ttl) = ttl {
-            let current_stamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
-            let ttl = current_stamp as usize + ttl;
             Some(ttl)
         } else {
             None
@@ -403,7 +402,7 @@ pub mod redis_store {
 
     pub type RedisPool = Pool<redis::Client>;
     use r2d2::{Pool};
-    use redis::{self, ToRedisArgs, ConnectionLike, Commands};
+    use redis::{self, ToRedisArgs, ConnectionLike, Commands, FromRedisValue};
     use crate::{LabradorResult, LabraError};
 
     use super::{SessionStore, ToStore, FromStore, Store};
@@ -417,7 +416,7 @@ pub mod redis_store {
     #[allow(unused)]
     impl RedisStorage {
         pub fn new(client: redis::Client) -> RedisStorage {
-            let pool = Pool::builder().max_size(4).build(client).unwrap();
+            let pool = Pool::builder().max_size(4).build(client).expect("can not get the redis client");
             RedisStorage {
                 client_pool: pool,
             }
@@ -430,8 +429,8 @@ pub mod redis_store {
         }
 
         pub fn from_url<U: AsRef<str>>(url: U) -> RedisStorage {
-            let client = redis::Client::open(url.as_ref()).unwrap();
-            let pool = Pool::builder().max_size(4).build(client).unwrap();
+            let client = redis::Client::open(url.as_ref()).expect("can not get the redis pool");
+            let pool = Pool::builder().max_size(4).build(client).expect("can not get the redis pool");
             RedisStorage {
                 client_pool: pool,
             }
@@ -467,6 +466,22 @@ pub mod redis_store {
                 return Err(LabraError::ApiError("error to get redis connection".to_string()))
             }
             client.zadd(key.as_ref(), member, score).map_err(LabraError::from)
+        }
+
+        pub fn xadd<K: AsRef<str>,  F: ToRedisArgs, V: ToRedisArgs, RV: FromRedisValue>(&self, key: K, items: &[(F, V)]) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xadd(key.as_ref(), "*", items).map_err(LabraError::from)
+        }
+
+        pub fn xadd_map<K: AsRef<str>,  BTM: ToRedisArgs, RV: FromRedisValue>(&self, key: K, items: BTM) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xadd_map(key.as_ref(), "*", items).map_err(LabraError::from)
         }
     }
 

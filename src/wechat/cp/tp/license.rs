@@ -28,7 +28,9 @@ impl<'a, T: SessionStore> WechatCpTpLicense<'a, T> {
     /// 文档地址：<a href="https://developer.work.weixin.qq.com/document/path/95644">文档</a>
     /// </pre>
     pub async fn create_order(&self, req: WechatCpTpLicenseNewOrderRequest) -> LabradorResult<String> {
-        let v = self.client.post(WechatCpMethod::License(CpLicenseMethod::CreateOrder), vec![], req, RequestType::Json).await?.json::<Value>()?;
+        let access_token = self.client.get_wechat_provider_token().await?;
+        let query = vec![(PROVIDER_ACCESS_TOKEN.to_string(), access_token)];
+        let v = self.client.post(WechatCpMethod::License(CpLicenseMethod::CreateOrder), query, req, RequestType::Json).await?.json::<Value>()?;
         let v = WechatCommonResponse::parse::<Value>(v)?;
         let order_id = v["order_id"].as_str().unwrap_or_default();
         Ok(order_id.to_string())
@@ -42,7 +44,9 @@ impl<'a, T: SessionStore> WechatCpTpLicense<'a, T> {
     /// 根据步骤1得到的jobid提交订单。
     /// </pre>
     pub async fn create_renew_order_job(&self, req: WechatCpTpLicenseRenewOrderJobRequest) -> LabradorResult<WechatCpTpLicenseRenewOrderJobResponse> {
-        let v = self.client.post(WechatCpMethod::License(CpLicenseMethod::CreateRenewOrderJob), vec![], req, RequestType::Json).await?.json::<Value>()?;
+        let access_token = self.client.get_wechat_provider_token().await?;
+        let query = vec![(PROVIDER_ACCESS_TOKEN.to_string(), access_token)];
+        let v = self.client.post(WechatCpMethod::License(CpLicenseMethod::CreateRenewOrderJob), query, req, RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse::<WechatCpTpLicenseRenewOrderJobResponse>(v)
     }
 
@@ -54,7 +58,9 @@ impl<'a, T: SessionStore> WechatCpTpLicense<'a, T> {
     /// 文档地址：<a href="https://developer.work.weixin.qq.com/document/path/95646">文档</a>
     /// </pre>
     pub async fn submit_renew_order(&self, req: WechatCpTpLicenseRenewOrderRequest) -> LabradorResult<String> {
-        let v = self.client.post(WechatCpMethod::License(CpLicenseMethod::SubmitOrderJob), vec![], req, RequestType::Json).await?.json::<Value>()?;
+        let access_token = self.client.get_wechat_provider_token().await?;
+        let query = vec![(PROVIDER_ACCESS_TOKEN.to_string(), access_token)];
+        let v = self.client.post(WechatCpMethod::License(CpLicenseMethod::SubmitOrderJob), query, req, RequestType::Json).await?.json::<Value>()?;
         let v = WechatCommonResponse::parse::<Value>(v)?;
         let order_id = v["order_id"].as_str().unwrap_or_default();
         Ok(order_id.to_string())

@@ -138,12 +138,12 @@ impl<'a, T: SessionStore> WechatMpUser<'a, T> {
             let count = count.as_u64().unwrap_or_default();
             let next_id = &res["next_openid"];
             let next_id = next_id.as_str().unwrap_or_default().to_owned();
-            let s = res.as_object().unwrap();
             // res.find_path(&["data", "openid"])
             let openids = match res["data"].as_object() {
                 Some(data) => {
                     if let Some(ids) = data.get("openid") {
-                        let openids_array = ids.as_array().unwrap();
+                        let empty = &vec![];
+                        let openids_array = ids.as_array().unwrap_or(empty);
                         openids_array.iter()
                             .map(|x| x.as_str().unwrap_or_default().to_owned())
                             .collect::<Vec<String>>()
@@ -249,7 +249,8 @@ impl<'a, T: SessionStore> WechatMpUser<'a, T> {
         let mut result = WechatCommonResponse::from_value(res.clone())?;
         if result.is_success() {
             let info_list = &res["user_info_list"];
-            let info_list = info_list.as_array().unwrap();
+            let empty = &vec![];
+            let info_list = info_list.as_array().unwrap_or(empty);
             let mut users = vec![];
             for info in info_list {
                 users.push(self.json_to_user(&info));

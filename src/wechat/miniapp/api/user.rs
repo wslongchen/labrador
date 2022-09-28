@@ -68,11 +68,11 @@ impl<'a, T: SessionStore> WechatMaUser<'a, T> {
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WechatMaUserResponse {
     pub nick_name: String,
-    pub gender: String,
+    pub gender: u8,
     pub language: String,
     pub city: String,
     pub province: String,
@@ -80,10 +80,11 @@ pub struct WechatMaUserResponse {
     pub avatar_url: String,
     /// 不绑定开放平台不会返回这个字段
     pub union_id: Option<String>,
+    pub watermark: Option<serde_json::Value>,
 }
 
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PhoneInfo {
     /// 用户绑定的手机号（国外手机号会有区号）

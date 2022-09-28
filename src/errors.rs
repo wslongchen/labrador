@@ -1,13 +1,15 @@
+use std::convert::Infallible;
 use std::fmt;
 use std::io;
 use std::string::FromUtf8Error;
 use base64::DecodeError;
-use openssl::error::ErrorStack;
+use crypto::symmetriccipher::SymmetricCipherError;
 use redis::RedisError;
 use reqwest::header::InvalidHeaderValue;
 use rustc_serialize::hex::FromHexError;
 use serde_json::{ error::Error as JsonError};
 use tracing::error;
+use x509_parser::der_parser::asn1_rs::SerializeError;
 
 #[allow(unused)]
 #[derive(Debug)]
@@ -84,8 +86,9 @@ impl From<serde_xml_rs::Error> for LabraError {
     }
 }
 
-impl From<ErrorStack> for LabraError {
-    fn from(err: ErrorStack) -> Self {
+#[cfg(feature = "openssl-crypto")]
+impl From<openssl::error::ErrorStack> for LabraError {
+    fn from(err: openssl::error::ErrorStack) -> Self {
         LabraError::InvalidSignature(format!("加解密出错：{}", err.to_string()))
     }
 }
@@ -147,8 +150,62 @@ impl From<RedisError> for LabraError {
 }
 
 
-// impl From<reqwest::> for LabraError {
-//     fn from(err: url::parser::ParseError) -> Self {
-//         LabraError::InvalidSignature(format!("URL解析出错：{}", err.to_string()))
-//     }
-// }
+impl From<SymmetricCipherError> for LabraError {
+    fn from(err: SymmetricCipherError) -> Self {
+        match err {
+            SymmetricCipherError::InvalidLength => LabraError::RequestError(format!("加解密错误：InvalidLength")),
+            SymmetricCipherError::InvalidPadding => LabraError::RequestError(format!("加解密错误：InvalidPadding"))
+        }
+    }
+}
+
+
+impl From<rsa::pkcs8::Error> for LabraError {
+    fn from(err: rsa::pkcs8::Error) -> Self {
+        LabraError::RequestError(err.to_string())
+    }
+}
+
+
+impl From<rsa::pkcs1::Error> for LabraError {
+    fn from(err: rsa::pkcs1::Error) -> Self {
+        LabraError::RequestError(err.to_string())
+    }
+}
+
+
+impl From<rsa::pkcs8::spki::Error> for LabraError {
+    fn from(err: rsa::pkcs8::spki::Error) -> Self {
+        LabraError::RequestError(err.to_string())
+    }
+}
+
+
+impl From<Infallible> for LabraError {
+    fn from(err: Infallible) -> Self {
+        LabraError::RequestError(err.to_string())
+    }
+}
+
+
+impl From<rsa::errors::Error> for LabraError {
+    fn from(err: rsa::errors::Error) -> Self {
+        LabraError::RequestError(err.to_string())
+    }
+}
+impl From<x509_parser::nom::Err<x509_parser::prelude::PEMError>> for LabraError {
+    fn from(err: x509_parser::nom::Err<x509_parser::prelude::PEMError>) -> Self {
+        LabraError::RequestError(err.to_string())
+    }
+}
+
+impl From<x509_parser::nom::Err<x509_parser::prelude::X509Error>> for LabraError {
+    fn from(err: x509_parser::nom::Err<x509_parser::prelude::X509Error>) -> Self {
+        LabraError::RequestError(err.to_string())
+    }
+}
+impl From<SerializeError> for LabraError {
+    fn from(err: SerializeError) -> Self {
+        LabraError::RequestError(err.to_string())
+    }
+}

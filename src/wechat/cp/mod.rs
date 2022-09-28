@@ -11,6 +11,7 @@ mod messages;
 mod msg_parser;
 mod events;
 mod replies;
+mod msg_router;
 
 pub use api::*;
 pub use tp::*;
@@ -18,6 +19,7 @@ pub use messages::*;
 pub use replies::*;
 pub use events::*;
 pub use msg_parser::*;
+pub use msg_router::*;
 use crate::wechat::cp::constants::{ACCESS_TOKEN, CORPID, CORPSECRET};
 use crate::wechat::cp::method::{WechatCpMethod};
 
@@ -117,14 +119,15 @@ impl<T: SessionStore> WechatCpClient<T> {
     }
 
     /// get the wechat client
-    pub fn new<S: Into<String>>(crop_id: S, crop_secret: S) -> WechatCpClient<SimpleStorage> {
-        let client = APIClient::<SimpleStorage>::from_session(crop_id.into(), crop_secret.into(), "https://qyapi.weixin.qq.com", SimpleStorage::new());
-        WechatCpClient::<SimpleStorage>::from_client(client)
+    pub fn new<S: Into<String>>(corp_id: S, corp_secret: S) -> WechatCpClient<SimpleStorage> {
+        let session = SimpleStorage::new();
+        let client = APIClient::from_session(corp_id.into(), corp_secret.into(), "https://qyapi.weixin.qq.com", session);
+        WechatCpClient::from_client(client)
     }
 
     /// get the wechat client
-    pub fn from_session<S: Into<String>>(crop_id: S, crop_secret: S, session: T) -> WechatCpClient<T> {
-        let client = APIClient::from_session(crop_id.into(), crop_secret.into(), "https://qyapi.weixin.qq.com", session);
+    pub fn from_session<S: Into<String>>(corp_id: S, corp_secret: S, session: T) -> WechatCpClient<T> {
+        let client = APIClient::from_session(corp_id.into(), corp_secret.into(), "https://qyapi.weixin.qq.com", session);
         Self::from_client(client)
     }
 

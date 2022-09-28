@@ -10,7 +10,8 @@ pub struct CpUnknownMessage {
     #[serde(rename="CreateTime")]
     pub create_time: i64,
     #[serde(rename="MsgId")]
-    pub id: i64,
+    pub id: Option<i64>,
     #[serde(rename="AgentID")]
-    pub agent_id: i64,
+    pub agent_id: Option<i64>,
+    pub raw: Option<String>,
 }

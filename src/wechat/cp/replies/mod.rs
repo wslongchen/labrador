@@ -1,7 +1,3 @@
-pub trait ReplyRenderer {
-    fn render(&self) -> String;
-}
-
 mod text;
 mod image;
 mod voice;
@@ -10,38 +6,39 @@ mod articles;
 mod update_button;
 mod template_card;
 
-pub use self::text::TextReply;
-pub use self::image::ImageReply;
-pub use self::voice::VoiceReply;
-pub use self::video::VideoReply;
-pub use self::articles::ArticlesReply;
+use crate::ReplyRenderer;
+pub use self::text::CpTextReply;
+pub use self::image::CpImageReply;
+pub use self::voice::CpVoiceReply;
+pub use self::video::CpVideoReply;
+pub use self::articles::CpArticlesReply;
 pub use self::update_button::*;
 pub use self::template_card::*;
 
 
 #[allow(unused)]
 #[derive(Debug, Clone)]
-pub enum Reply {
-    TextReply(TextReply),
-    ImageReply(ImageReply),
-    VoiceReply(VoiceReply),
-    VideoReply(VideoReply),
-    ArticlesReply(ArticlesReply),
-    UpdateButtonReply(UpdateButtonReply),
-    TemplateCard(TemplateCardTextReply),
+pub enum CpReply {
+    TextReply(CpTextReply),
+    ImageReply(CpImageReply),
+    VoiceReply(CpVoiceReply),
+    VideoReply(CpVideoReply),
+    ArticlesReply(CpArticlesReply),
+    UpdateButtonReply(CpUpdateButtonReply),
+    TemplateCard(CpTemplateCardTextReply),
 }
 
 #[allow(unused)]
-impl Reply {
+impl CpReply {
     pub fn render(&self) -> String {
         let reply = match *self {
-            Reply::TextReply(ref r) => r.render(),
-            Reply::ImageReply(ref r) => r.render(),
-            Reply::VoiceReply(ref r) => r.render(),
-            Reply::VideoReply(ref r) => r.render(),
-            Reply::ArticlesReply(ref r) => r.render(),
-            Reply::TemplateCard(ref r) => r.render(),
-            Reply::UpdateButtonReply(ref r) => r.render(),
+            CpReply::TextReply(ref r) => r.render(),
+            CpReply::ImageReply(ref r) => r.render(),
+            CpReply::VoiceReply(ref r) => r.render(),
+            CpReply::VideoReply(ref r) => r.render(),
+            CpReply::ArticlesReply(ref r) => r.render(),
+            CpReply::TemplateCard(ref r) => r.render(),
+            CpReply::UpdateButtonReply(ref r) => r.render(),
         };
         reply
     }
