@@ -325,10 +325,7 @@ impl <T> LabraRequest <T> where T: Serialize {
             client = client.add_root_certificate(cert.reqwest_cert()?);
         }
         let client = client.build()?;
-        let mut request = client.request(self.method.clone().into(), http_url.to_owned()).header(
-            reqwest::header::CONTENT_TYPE,
-            self.req_type.get_content_type(),
-        );
+        let mut request = client.request(self.method.clone().into(), http_url.to_owned());
         let mut data = &self.body.to_string();
         match self.body {
             RequestBody::Json(v) => {
@@ -351,28 +348,6 @@ impl <T> LabraRequest <T> where T: Serialize {
             }
             RequestBody::Null => {}
         }
-        // if let Some(data) = &self.data {
-        //     match self.req_type {
-        //         RequestType::Json => {
-        //             request = request.json(data);
-        //         }
-        //         RequestType::Form => {
-        //             let value = serde_json::to_value(data.clone()).unwrap_or(Value::Null);
-        //             if value.is_string() {
-        //                 let v = value.to_string();
-        //                 request = request.body(v.replace("\"",""));
-        //             } {
-        //                 request = request.form(data);
-        //             }
-        //         }
-        //         RequestType::Multipart => {
-        //
-        //         }
-        //         _ => {
-        //             request = request.body(serde_json::to_string(data).unwrap_or_default())
-        //         }
-        //     }
-        // }
         if let Some(headers) = &self.headers {
             for (k, v) in headers.into_iter() {
                 request = request.header(k, HeaderValue::from_str(v)?);

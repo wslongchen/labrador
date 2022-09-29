@@ -188,7 +188,7 @@ pub struct WechatCpMediaResponse {
     #[serde(rename="type")]
     pub r#type: Option<String>,
     pub thumb_media_id: Option<String>,
-    pub created_at: Option<i64>,
+    pub created_at: Option<String>,
 }
 
 
