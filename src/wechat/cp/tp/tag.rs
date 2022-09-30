@@ -1,6 +1,6 @@
 use serde_json::{json, Value};
 
-use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCpTpClient, WechatCpTagAddOrRemoveUsersResponse, WechatCpTagGetResponse, WechatCpTagInfo};
+use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCpTpClient, WechatCpTagAddOrRemoveUsersResponse, WechatCpTagGetResponse, WechatCpTagInfo, LabraError};
 use crate::wechat::cp::method::{CpTagMethod, WechatCpMethod};
 
 /// 企业微信第三方开发-标签相关
@@ -80,7 +80,8 @@ impl<'a, T: SessionStore> WechatCpTpTag<'a, T> {
     /// 获得标签列表.
     pub async fn list_all(&self) -> LabradorResult<Vec<WechatCpTagInfo>> {
         let v = self.client.get(WechatCpMethod::Tag(CpTagMethod::List), vec![], RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<Vec<WechatCpTagInfo>>(v)
+        let v = WechatCommonResponse::parse::<Value>(v)?;
+        serde_json::from_value::<Vec<WechatCpTagInfo>>(v["taglist"].to_owned()).map_err(LabraError::from)
     }
 }
 
