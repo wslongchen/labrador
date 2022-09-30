@@ -107,7 +107,7 @@ pub struct WechatCpTagAddOrRemoveUsersResponse {
 
 #[derive(Debug, Clone,Serialize, Deserialize)]
 pub struct WechatCpTagInfo {
-    pub tagid: Option<String>,
+    pub tagid: Option<i32>,
     pub tagname: Option<Vec<String>>,
 }
 
