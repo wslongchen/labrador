@@ -91,7 +91,7 @@ impl<'a, T: SessionStore> WechatCpTag<'a, T> {
 #[derive(Debug, Clone,Serialize, Deserialize)]
 pub struct WechatCpTagGetResponse {
     /// 用户列表
-    pub userid: Vec<WechatCpUserInfo>,
+    pub userlist: Vec<WechatCpUserInfo>,
     /// 部门列表
     pub partylist: Vec<i32>,
     pub tagname: Option<String>,
