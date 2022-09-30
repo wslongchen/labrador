@@ -1266,7 +1266,7 @@ pub struct WechatCpWelcomeMsg {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WechatCpUserExternalTagGroupInfo {
-    pub tag_group: Option<TagGroup>,
+    pub tag_group: Option<Vec<TagGroup>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
