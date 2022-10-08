@@ -330,6 +330,7 @@ pub enum CpOauth2Method {
     GetAuthUserDetail,
     GetUserInfo,
     GetAuthUserInfo,
+    GetAuthUserInfo3rd,
 }
 
 #[allow(unused)]
@@ -340,6 +341,7 @@ impl CpOauth2Method {
             CpOauth2Method::GetUserDetail => String::from("/cgi-bin/user/getuserdetail"),
             CpOauth2Method::GetUserInfo => String::from("/cgi-bin/user/getuserinfo"),
             CpOauth2Method::GetAuthUserInfo => String::from("/cgi-bin/auth/getuserinfo"),
+            CpOauth2Method::GetAuthUserInfo3rd => String::from("/cgi-bin/service/auth/getuserinfo3rd"),
             CpOauth2Method::GetAuthUserDetail => String::from("/cgi-bin/auth/getuserdetail"),
         }
     }
