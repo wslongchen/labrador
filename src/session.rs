@@ -402,7 +402,7 @@ pub mod redis_store {
 
     pub type RedisPool = Pool<redis::Client>;
     use r2d2::{Pool};
-    use redis::{self, ToRedisArgs, ConnectionLike, Commands, FromRedisValue};
+    use redis::{self, ToRedisArgs, ConnectionLike, Commands, FromRedisValue, streams};
     use crate::{LabradorResult, LabraError};
 
     use super::{SessionStore, ToStore, FromStore, Store};
@@ -482,6 +482,166 @@ pub mod redis_store {
                 return Err(LabraError::ApiError("error to get redis connection".to_string()))
             }
             client.xadd_map(key.as_ref(), "*", items).map_err(LabraError::from)
+        }
+
+        pub fn xread<'a, K: ToRedisArgs,  ID: ToRedisArgs, RV: FromRedisValue>(&self, keys: &'a [K], ids: &'a [ID]) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xread(keys, ids).map_err(LabraError::from)
+        }
+
+        pub fn xinfo_consumers<'a, K: ToRedisArgs,  G: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xinfo_consumers(key, group).map_err(LabraError::from)
+        }
+
+        pub fn xinfo_groups<'a, K: ToRedisArgs, RV: FromRedisValue>(&self, key: K) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xinfo_groups(key).map_err(LabraError::from)
+        }
+
+        pub fn xinfo_stream<'a, K: ToRedisArgs, RV: FromRedisValue>(&self, key: K) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xinfo_stream(key).map_err(LabraError::from)
+        }
+
+        pub fn xread_options<'a, K: ToRedisArgs,  ID: ToRedisArgs, RV: FromRedisValue>(&self, keys: &'a [K], ids: &'a [ID], options: &'a streams::StreamReadOptions) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xread_options(keys, ids, options).map_err(LabraError::from)
+        }
+
+        pub fn xgroup_create<'a, K: ToRedisArgs, G: ToRedisArgs,  ID: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G, id: ID) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xgroup_create(key, group, id).map_err(LabraError::from)
+        }
+
+        pub fn xgroup_delconsumer<'a, K: ToRedisArgs, G: ToRedisArgs,  C: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G, consumer: C) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xgroup_delconsumer(key, group, consumer).map_err(LabraError::from)
+        }
+
+        pub fn xack<'a, K: ToRedisArgs, G: ToRedisArgs,  I: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G, ids: &'a [I]) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xack(key, group, ids).map_err(LabraError::from)
+        }
+
+        pub fn xgroup_create_mkstream<'a, K: ToRedisArgs, G: ToRedisArgs, ID: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G, id: ID) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xgroup_create_mkstream(key, group, id).map_err(LabraError::from)
+        }
+
+        pub fn xgroup_destroy<'a, K: ToRedisArgs, G: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xgroup_destroy(key, group).map_err(LabraError::from)
+        }
+
+        pub fn xdel<'a, K: ToRedisArgs, ID: ToRedisArgs, RV: FromRedisValue>(&self, key: K, ids: &'a [ID]) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xdel(key, ids).map_err(LabraError::from)
+        }
+
+        pub fn xpending<'a, K: ToRedisArgs, G: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xpending(key, group).map_err(LabraError::from)
+        }
+
+        pub fn xpending_count<'a, K: ToRedisArgs, G: ToRedisArgs, S: ToRedisArgs, E: ToRedisArgs, C: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G, start: S, end: E, count: C) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xpending_count(key, group, start, end, count).map_err(LabraError::from)
+        }
+
+        pub fn xpending_consumer_count<'a, K: ToRedisArgs, G: ToRedisArgs, S: ToRedisArgs, E: ToRedisArgs, C: ToRedisArgs, CN: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G, start: S, end: E, count: C, consumer: CN) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xpending_consumer_count(key, group, start, end, count, consumer).map_err(LabraError::from)
+        }
+
+        pub fn xrevrange<'a, K: ToRedisArgs, E: ToRedisArgs, S: ToRedisArgs, RV: FromRedisValue>(&self, key: K, start: S, end: E) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xrevrange(key, end, start).map_err(LabraError::from)
+        }
+
+        pub fn xrevrange_all<'a, K: ToRedisArgs, RV: FromRedisValue>(&self, key: K) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xrevrange_all(key).map_err(LabraError::from)
+        }
+
+        pub fn xrevrange_count<'a, K: ToRedisArgs, E: ToRedisArgs, S: ToRedisArgs, C: ToRedisArgs,RV: FromRedisValue>(&self, key: K, start: S, end: E, count: C) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xrevrange_count(key, end, start, count).map_err(LabraError::from)
+        }
+
+        pub fn exists<'a, K: ToRedisArgs,RV: FromRedisValue>(&self, key: K) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.exists(key).map_err(LabraError::from)
+        }
+
+        pub fn expire<'a, K: ToRedisArgs,RV: FromRedisValue>(&self, key: K, seconds: usize) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.expire(key, seconds).map_err(LabraError::from)
+        }
+
+        pub fn expire_at<'a, K: ToRedisArgs,RV: FromRedisValue>(&self, key: K, ts: usize) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.expire_at(key, ts).map_err(LabraError::from)
         }
     }
 
