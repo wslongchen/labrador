@@ -13,7 +13,6 @@ pub struct WechatCpOauth2<'a, T: SessionStore> {
 
 #[allow(unused)]
 impl<'a, T: SessionStore> WechatCpOauth2<'a, T> {
-
     #[inline]
     pub fn new(client: &WechatCpClient<T>) -> WechatCpOauth2<T> {
         WechatCpOauth2 {
@@ -116,23 +115,23 @@ impl<'a, T: SessionStore> WechatCpOauth2<'a, T> {
         let v = self.client.post(WechatCpMethod::Oauth2(CpOauth2Method::GetAuthUserDetail), vec![], json!({USER_TICKET: user_ticket}), RequestType::Json).await?.json::<Value>()?;
         WechatCommonResponse::parse::<WechatCpUserDetail>(v)
     }
-
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WechatCpOauth2UserInfo {
-    #[serde(alias="OpenId", alias="openid")]
+    #[serde(alias = "OpenId", alias = "openid")]
     pub openid: Option<String>,
     pub external_userid: Option<String>,
-    #[serde(alias="UserId", alias="userid")]
+    #[serde(alias = "UserId", alias = "userid")]
     pub user_id: Option<String>,
     pub user_ticket: Option<String>,
     pub expires_in: Option<i64>,
-    #[serde(rename="DeviceId")]
+    #[serde(rename = "DeviceId")]
     pub device_id: Option<String>,
 }
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WechatCpUserDetail {
     /// 成员UserID
