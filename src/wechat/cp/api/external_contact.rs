@@ -1151,11 +1151,38 @@ pub struct WechatCpTextMsg {
     pub content: String,
 }
 
+impl WechatCpTextMsg {
+    pub fn new(content: &str) -> Self {
+        Self {
+            content: content.to_string()
+        }
+    }
+}
+
 /// 图片消息
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WechatCpImageMsg {
     pub media_id: String,
     pub pic_url: String,
+}
+
+impl WechatCpImageMsg {
+    pub fn new() -> Self {
+        Self {
+            media_id: "".to_string(),
+            pic_url: "".to_string()
+        }
+    }
+
+    pub fn media_id(mut self, media_id: &str) -> Self {
+        self.media_id = media_id.to_string();
+        self
+    }
+
+    pub fn pic_url(mut self, pic_url: &str) -> Self {
+        self.pic_url = pic_url.to_string();
+        self
+    }
 }
 
 
@@ -1169,6 +1196,43 @@ pub struct WechatCpLinkMsg {
     pub media_id: String,
 }
 
+impl WechatCpLinkMsg {
+    pub fn new() -> Self {
+        Self {
+            title: "".to_string(),
+            picurl: "".to_string(),
+            desc: "".to_string(),
+            url: "".to_string(),
+            media_id: "".to_string(),
+        }
+    }
+
+    pub fn url(mut self, url: &str) -> Self {
+        self.url = url.to_string();
+        self
+    }
+
+    pub fn desc(mut self, desc: &str) -> Self {
+        self.desc = desc.to_string();
+        self
+    }
+
+    pub fn picurl(mut self, picurl: &str) -> Self {
+        self.picurl = picurl.to_string();
+        self
+    }
+
+    pub fn media_id(mut self, media_id: &str) -> Self {
+        self.media_id = media_id.to_string();
+        self
+    }
+
+    pub fn title(mut self, title: &str) -> Self {
+        self.title = title.to_string();
+        self
+    }
+}
+
 /// 小程序消息
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WechatCpMiniProgramMsg {
@@ -1178,11 +1242,65 @@ pub struct WechatCpMiniProgramMsg {
     pub page: String,
 }
 
+
+impl WechatCpMiniProgramMsg {
+    pub fn new() -> Self {
+        Self {
+            title: "".to_string(),
+            pic_media_id: "".to_string(),
+            appid: "".to_string(),
+            page: "".to_string()
+        }
+    }
+
+    pub fn pic_media_id(mut self, pic_media_id: &str) -> Self {
+        self.pic_media_id = pic_media_id.to_string();
+        self
+    }
+
+    pub fn appid(mut self, appid: &str) -> Self {
+        self.appid = appid.to_string();
+        self
+    }
+
+    pub fn page(mut self, page: &str) -> Self {
+        self.page = page.to_string();
+        self
+    }
+
+    pub fn title(mut self, title: &str) -> Self {
+        self.title = title.to_string();
+        self
+    }
+}
+
+
 /// 视频消息
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WechatCpVideoMsg {
     pub media_id: String,
     pub thumb_media_id: String,
+}
+
+
+impl WechatCpVideoMsg {
+    pub fn new() -> Self {
+        Self {
+            media_id: "".to_string(),
+            thumb_media_id: "".to_string()
+        }
+    }
+
+    pub fn media_id(mut self, media_id: &str) -> Self {
+        self.media_id = media_id.to_string();
+        self
+    }
+
+    pub fn thumb_media_id(mut self, thumb_media_id: &str) -> Self {
+        self.thumb_media_id = thumb_media_id.to_string();
+        self
+    }
+
 }
 
 /// 文件消息
@@ -1191,6 +1309,20 @@ pub struct WechatCpFileMsg {
     pub media_id: String,
 }
 
+
+impl WechatCpFileMsg {
+    pub fn new() -> Self {
+        Self {
+            media_id: "".to_string(),
+        }
+    }
+
+    pub fn media_id(mut self, media_id: &str) -> Self {
+        self.media_id = media_id.to_string();
+        self
+    }
+
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WechatCpAttachment {
