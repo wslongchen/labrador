@@ -16,26 +16,3 @@ pub struct ClickEvent {
     pub key: Option<String>,
 }
 
-
-#[cfg(test)]
-mod tests {
-    use crate::XmlMessageParser;
-    use super::ClickEvent;
-
-    #[test]
-    fn test_from_xml() {
-        let xml = "<xml>
-        <ToUserName><![CDATA[toUser]]></ToUserName>
-        <FromUserName><![CDATA[fromUser]]></FromUserName>
-        <CreateTime>123456789</CreateTime>
-        <MsgType><![CDATA[event]]></MsgType>
-        <Event><![CDATA[CLICK]]></Event>
-        <EventKey><![CDATA[EVENTKEY]]></EventKey>
-        </xml>";
-        let msg = ClickEvent::from_xml(xml).unwrap();
-
-        assert_eq!("fromUser", &msg.source);
-        assert_eq!("toUser", &msg.target);
-        assert_eq!("click", &msg.event);
-    }
-}

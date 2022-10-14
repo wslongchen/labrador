@@ -16,25 +16,3 @@ pub struct CpUnsubscribeEvent {
     #[serde(rename="AgentID")]
     pub agent_id: i64,
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::wechat::cp::events::unsubscribe::CpUnsubscribeEvent;
-    use crate::XmlMessageParser;
-
-    #[test]
-    fn test_from_xml() {
-        let xml = "<xml>\
-        <ToUserName><![CDATA[toUser]]></ToUserName>\
-        <FromUserName><![CDATA[fromUser]]></FromUserName>\
-        <CreateTime>123456789</CreateTime>\
-        <MsgType><![CDATA[event]]></MsgType>\
-        <Event><![CDATA[unsubscribe]]></Event>\
-        </xml>";
-        let msg = CpUnsubscribeEvent::from_xml(xml).unwrap();
-
-        assert_eq!("fromUser", &msg.source);
-        assert_eq!("toUser", &msg.target);
-        assert_eq!("unsubscribe", &msg.event);
-    }
-}

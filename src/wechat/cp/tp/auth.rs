@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value};
 
 use crate::{LabradorResult, request::RequestType, session::SessionStore, WechatCommonResponse, WechatCpTpClient};
-use crate::wechat::cp::constants::{CODE, PROVIDER_ACCESS_TOKEN};
+use crate::wechat::cp::constants::{CODE};
 use crate::wechat::cp::method::WechatCpMethod;
 
 #[derive(Debug, Clone)]

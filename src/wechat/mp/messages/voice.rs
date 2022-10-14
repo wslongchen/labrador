@@ -19,30 +19,3 @@ pub struct VoiceMessage {
     pub recognition: String,
 }
 
-
-#[cfg(test)]
-mod tests {
-    use crate::XmlMessageParser;
-    use super::VoiceMessage;
-
-    #[test]
-    fn test_from_xml() {
-        let xml = "<xml>\
-        <ToUserName><![CDATA[toUser]]></ToUserName>\
-        <FromUserName><![CDATA[fromUser]]></FromUserName>\
-        <CreateTime>1348831860</CreateTime>\
-        <MsgType><![CDATA[voice]]></MsgType>\
-        <MediaId><![CDATA[media_id]]></MediaId>\
-        <Format><![CDATA[Format]]></Format>\
-        <MsgId>1234567890123456</MsgId>\
-        </xml>";
-        let msg = VoiceMessage::from_xml(xml).unwrap();
-
-        assert_eq!("fromUser", &msg.source);
-        assert_eq!("toUser", &msg.target);
-        assert_eq!(1234567890123456, msg.id);
-        assert_eq!("media_id", &msg.media_id);
-        assert_eq!("Format", &msg.format);
-        assert_eq!("", &msg.recognition);
-    }
-}

@@ -888,10 +888,10 @@ impl <T: SessionStore> AlipayClient<T> {
     ///  # use labrador::AlipayClient;
     ///  # use labrador::AlipayTradeAppPayRequest;
     ///
-    ///   # async fn main() {
+    ///   # fn main() {
     ///         let param = AlipayTradeAppPayRequest::default();
     ///         let client = AlipayClient::new("appKey", false);
-    ///         match client.app_pay(param).await {
+    ///         match client.app_pay(param) {
     ///             Ok(res) => {}
     ///             Err(err) => {}
     ///         }

@@ -21,25 +21,3 @@ pub struct CpSubscribeEvent {
     pub agent_id: i64,
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::XmlMessageParser;
-    use super::CpSubscribeEvent;
-
-    #[test]
-    fn test_from_xml() {
-        let xml = "<xml>
-        <ToUserName><![CDATA[toUser]]></ToUserName>
-        <FromUserName><![CDATA[fromUser]]></FromUserName>
-        <CreateTime>123456789</CreateTime>
-        <MsgType><![CDATA[event]]></MsgType>
-        <Event><![CDATA[CLICK]]></Event>
-        <EventKey><![CDATA[EVENTKEY]]></EventKey>
-        </xml>";
-        let msg = CpSubscribeEvent::from_xml(xml).unwrap();
-
-        assert_eq!("fromUser", &msg.source);
-        assert_eq!("toUser", &msg.target);
-        assert_eq!("click", &msg.event);
-    }
-}

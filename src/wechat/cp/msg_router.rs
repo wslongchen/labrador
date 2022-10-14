@@ -211,9 +211,8 @@ impl WechatCpMessageRouterRule {
 #[cfg(test)]
 mod test {
     use std::sync::Arc;
-    use crate::{CpReply, CpTextReply, CpUnknownMessage, SimpleStorage, WechatCpClient, WechatCpMessageContext, WechatCpMessageRouter};
+    use crate::{CpReply, CpUnknownMessage, SimpleStorage, WechatCpClient, WechatCpMessageContext, WechatCpMessageRouter};
     use serde_json::Value;
-    use tokio_test::block_on;
     use crate::{CpMessage, WechatCpClientWrapper, WechatCpMessageHandler};
 
     pub struct A;
@@ -252,11 +251,10 @@ mod test {
             source: "".to_string(),
             target: "".to_string(),
             create_time: 0,
-            id: 0,
-            agent_id: 0
+            id: None,
+            agent_id: None,
+            raw: None
         }), Value::Null);
-        let result = block_on(result);
-        println!("{:?}！", result);
 
     }
 }
