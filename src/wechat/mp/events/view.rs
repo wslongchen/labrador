@@ -16,27 +16,3 @@ pub struct ViewEvent {
     pub url: String,
 }
 
-
-#[cfg(test)]
-mod tests {
-    use crate::XmlMessageParser;
-    use super::ViewEvent;
-
-    #[test]
-    fn test_from_xml() {
-        let xml = "<xml>
-        <ToUserName><![CDATA[toUser]]></ToUserName>
-        <FromUserName><![CDATA[fromUser]]></FromUserName>
-        <CreateTime>123456789</CreateTime>
-        <MsgType><![CDATA[event]]></MsgType>
-        <Event><![CDATA[VIEW]]></Event>
-        <EventKey><![CDATA[www.qq.com]]></EventKey>
-        </xml>";
-        let msg = ViewEvent::from_xml(xml).unwrap();
-
-        assert_eq!("fromUser", &msg.source);
-        assert_eq!("toUser", &msg.target);
-        assert_eq!("view", &msg.event);
-        assert_eq!("www.qq.com", &msg.url);
-    }
-}

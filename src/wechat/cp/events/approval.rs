@@ -133,8 +133,6 @@ pub struct ApprovalNodeItem {
 
 #[cfg(test)]
 mod tests {
-    use crate::XmlMessageParser;
-    use super::CpSubscribeEvent;
 
     #[test]
     fn test_from_xml() {

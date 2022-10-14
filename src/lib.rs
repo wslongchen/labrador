@@ -40,7 +40,7 @@
 //!
 //!  #[tokio::main]
 //!  async fn main() {
-//!      let c =  WechatPayClient::new("appid", "secret", SimpleStorage::new());
+//!      let c =  WechatPayClient::new("appid", "secret");
 //!      let mut client =c.wxpay();
 //!      let date = Local::now().to_rfc3339_opts(SecondsFormat::Secs, false);
 //!      let result = client.unified_order_v3(TradeType::Jsapi, WechatPayRequestV3 {

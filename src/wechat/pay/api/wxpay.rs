@@ -602,7 +602,11 @@ mod tests {
     fn test_close_order_v3() {
         let rt = tokio::runtime::Runtime::new().unwrap();
         let mut private_key = Vec::new();
-        File::open("src/wechat/pay/sec/apiclient_key.pem").unwrap().read_to_end(&mut private_key).unwrap();
+        let s = File::open("src/wechat/pay/sec/apiclient_key.pem");
+        if s.is_err() {
+            return;
+        }
+        s.unwrap().read_to_end(&mut private_key);
         let r = rt.spawn(async {
             let c =  WechatPayClient::<SimpleStorage>::new("appid", "secret");
             let mut client =c.wxpay();
@@ -628,7 +632,11 @@ mod tests {
     fn test_callback_v3() {
         let rt = tokio::runtime::Runtime::new().unwrap();
         let mut private_key = Vec::new();
-        File::open("src/wechat/pay/sec/apiclient_key.pem").unwrap().read_to_end(&mut private_key).unwrap();
+        let s = File::open("src/wechat/pay/sec/apiclient_key.pem");
+        if s.is_err() {
+            return;
+        }
+        s.unwrap().read_to_end(&mut private_key);
         let r = rt.spawn(async {
             let c =  WechatPayClient::<SimpleStorage>::new("appid", "secret");
             let mut client =c.wxpay();
@@ -680,7 +688,11 @@ mod tests {
     fn test_create_order_v3() {
         let rt = tokio::runtime::Runtime::new().unwrap();
         let mut private_key = Vec::new();
-        File::open("src/wechat/pay/sec/apiclient_key.pem").unwrap().read_to_end(&mut private_key).unwrap();
+        let s = File::open("src/wechat/pay/sec/apiclient_key.pem");
+        if s.is_err() {
+            return;
+        }
+        s.unwrap().read_to_end(&mut private_key);
         let r = rt.spawn(async {
             let c =  WechatPayClient::<SimpleStorage>::new("appid", "secret");
             let mut client =c.wxpay();

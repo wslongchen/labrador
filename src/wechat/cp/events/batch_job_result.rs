@@ -11,7 +11,7 @@ pub struct CpBatchJobResultEvent {
     #[serde(rename="CreateTime")]
     pub create_time: i64,
     #[serde(rename="MsgId")]
-    pub id: i64,
+    pub id: Option<i64>,
     #[serde(rename="Event")]
     pub event: String,
     #[serde(rename="AgentID")]
@@ -30,27 +30,4 @@ pub struct BatchJob {
     pub err_msg: String,
     #[serde(rename="ErrCode")]
     pub err_code: i32,
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::XmlMessageParser;
-    use super::CpBatchJobResultEvent;
-
-    #[test]
-    fn test_from_xml() {
-        let xml = "<xml>
-        <ToUserName><![CDATA[toUser]]></ToUserName>
-        <FromUserName><![CDATA[fromUser]]></FromUserName>
-        <CreateTime>123456789</CreateTime>
-        <MsgType><![CDATA[event]]></MsgType>
-        <Event><![CDATA[CLICK]]></Event>
-        <EventKey><![CDATA[EVENTKEY]]></EventKey>
-        </xml>";
-        let msg = CpBatchJobResultEvent::from_xml(xml).unwrap();
-
-        assert_eq!("fromUser", &msg.source);
-        assert_eq!("toUser", &msg.target);
-        assert_eq!("click", &msg.event);
-    }
 }

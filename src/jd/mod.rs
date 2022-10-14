@@ -428,7 +428,6 @@ mod tests {
     use reqwest::Url;
     use serde::{Deserializer, Deserialize, Serialize};
     use serde_json::{json, Value};
-    use crate::ResponseType::Text;
     use crate::{SimpleStorage, JDClient, JdPromotionUrlGenerateRequest, JdPromotionUrlGenerateParam, JdOrderRecentQueryParam, JdOrderRawQueryParam};
     use crate::jd::request::{JdGoodsInfoQueryRequest, JdJFGoodsParam};
 

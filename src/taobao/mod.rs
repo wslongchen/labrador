@@ -405,7 +405,6 @@ mod tests {
     use reqwest::Url;
     use serde::{Deserializer, Deserialize, Serialize};
     use serde_json::{json, Value};
-    use crate::ResponseType::Text;
     use crate::{SimpleStorage, TaobaoClient};
     use crate::taobao::request::{TbItemDetailRequest, TbJhsSearchRequest, TbMaterialSearchRequest, TbMaterialSelectRequest};
 
