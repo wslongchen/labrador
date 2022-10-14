@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
-use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCpClient};
+use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCpClient, LabraError};
 use crate::wechat::cp::method::{CpTagMethod, WechatCpMethod};
 
 /// 标签相关
@@ -81,7 +81,8 @@ impl<'a, T: SessionStore> WechatCpTag<'a, T> {
     /// 获得标签列表.
     pub async fn list_all(&self) -> LabradorResult<Vec<WechatCpTagInfo>> {
         let v = self.client.get(WechatCpMethod::Tag(CpTagMethod::List), vec![], RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<Vec<WechatCpTagInfo>>(v)
+        let v = WechatCommonResponse::parse::<Value>(v)?;
+        serde_json::from_value::<Vec<WechatCpTagInfo>>(v["taglist"].to_owned()).map_err(LabraError::from)
     }
 }
 
@@ -90,7 +91,7 @@ impl<'a, T: SessionStore> WechatCpTag<'a, T> {
 #[derive(Debug, Clone,Serialize, Deserialize)]
 pub struct WechatCpTagGetResponse {
     /// 用户列表
-    pub userid: Vec<WechatCpUserInfo>,
+    pub userlist: Vec<WechatCpUserInfo>,
     /// 部门列表
     pub partylist: Vec<i32>,
     pub tagname: Option<String>,
@@ -106,8 +107,8 @@ pub struct WechatCpTagAddOrRemoveUsersResponse {
 
 #[derive(Debug, Clone,Serialize, Deserialize)]
 pub struct WechatCpTagInfo {
-    pub tagid: Option<String>,
-    pub tagname: Option<Vec<String>>,
+    pub tagid: Option<i32>,
+    pub tagname: Option<String>,
 }
 
 /// 微信用户信息

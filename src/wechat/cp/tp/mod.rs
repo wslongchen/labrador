@@ -14,6 +14,7 @@ mod department;
 mod user;
 mod order;
 mod agent;
+mod auth;
 
 pub use tag::*;
 pub use license::*;
@@ -22,6 +23,7 @@ pub use department::*;
 pub use user::*;
 pub use order::*;
 pub use agent::*;
+use crate::wechat::cp::tp::auth::WechatCpTpAuth;
 
 
 /// 企业微信第三方应用API
@@ -44,7 +46,6 @@ pub struct WechatCpTpClient<T: SessionStore> {
 
 #[allow(unused)]
 impl<T: SessionStore> WechatCpTpClient<T> {
-
     fn from_client(client: APIClient<T>) -> WechatCpTpClient<T> {
         WechatCpTpClient {
             corp_id: client.app_key.to_owned(),
@@ -54,7 +55,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
             suite_id: None,
             suite_secret: None,
             client,
-            provider_secret: None
+            provider_secret: None,
         }
     }
 
@@ -111,7 +112,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
     /// 授权企业的access token相关
     fn get_access_token(&self, auth_corp_id: &str) -> String {
         let session = self.client.session();
-        session.get::<_,String>(self.key_with_prefix(auth_corp_id) + ACCESS_TOKEN_KEY, None).unwrap_or(None).unwrap_or_default()
+        session.get::<_, String>(self.key_with_prefix(auth_corp_id) + ACCESS_TOKEN_KEY, None).unwrap_or(None).unwrap_or_default()
     }
 
     /// <pre>
@@ -140,7 +141,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let timestamp = current_timestamp();
         let expires_at: i64 = session.get(&expires_key, Some(timestamp))?.unwrap_or_default();
         if expires_at <= timestamp {
-            return Err(LabraError::ApiError("invaild suite ticket".to_string()))
+            return Err(LabraError::ApiError("invaild suite ticket".to_string()));
         }
         Ok(token)
     }
@@ -199,7 +200,8 @@ impl<T: SessionStore> WechatCpTpClient<T> {
                 "suite_secret": self.suite_secret,
                 "suite_ticket": suite_ticket
             });
-            let result = self.client.post(WechatCpMethod::GetSuiteToken, vec![], req, RequestType::Json).await?.json::<WechatCpSuiteAccessTokenResponse>()?;
+            let result = self.client.post(WechatCpMethod::GetSuiteToken, vec![], req, RequestType::Json).await?.json::<Value>()?;
+            let result = WechatCommonResponse::parse::<WechatCpSuiteAccessTokenResponse>(result)?;
             let token = result.suite_access_token;
             let expires_in = result.expires_in;
             // 预留200秒的时间
@@ -280,12 +282,11 @@ impl<T: SessionStore> WechatCpTpClient<T> {
     }
 
 
-
     /// <pre>
     /// 获取企业凭证
     /// </pre>
     pub async fn get_corp_token(&self, auth_corpid: &str, permanent_code: &str) -> LabradorResult<AccessTokenResponse> {
-        self.get_corp_token_force(auth_corpid, permanent_code,false).await
+        self.get_corp_token_force(auth_corpid, permanent_code, false).await
     }
 
     /// <pre>
@@ -314,7 +315,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
             session.set(&expires_key, expires_at, Some(expires_in as usize));
             Ok(result)
         } else {
-            Ok(AccessTokenResponse{ access_token: token.to_string(), expires_in: expires_at })
+            Ok(AccessTokenResponse { access_token: token.to_string(), expires_in: expires_at })
         }
     }
 
@@ -485,8 +486,8 @@ impl<T: SessionStore> WechatCpTpClient<T> {
         let noncestr = get_nonce_str();
         let signature = WechatCrypto::get_sha1_sign(&vec!["jsapi_ticket=".to_string() + &jsapi_ticket,
                                                           "noncestr=".to_string() + &noncestr,
-                                                          "timestamp=".to_string() + &timestamp.to_string(),"url=".to_string() + &url].join("&"));
-        JsapiSignature{
+                                                          "timestamp=".to_string() + &timestamp.to_string(), "url=".to_string() + &url].join("&"));
+        JsapiSignature {
             app_id: auth_corp_id.to_string(),
             nonce_str: noncestr,
             url: url.to_string(),
@@ -567,6 +568,11 @@ impl<T: SessionStore> WechatCpTpClient<T> {
     pub fn agent(&self) -> WechatCpTpAgent<T> {
         WechatCpTpAgent::new(self)
     }
+
+    /// 身份
+    pub fn auth(&self) -> WechatCpTpAuth<T> {
+        WechatCpTpAuth::new(self)
+    }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -592,7 +598,7 @@ pub struct WechatCpThirdPermanentCodeInfo {
     pub edition_info: Option<EditionInfo>,
     pub expires_in: Option<i64>,
     /// 安装应用时，扫码或者授权链接中带的state值。详见state说明
-    pub state: Option<String>
+    pub state: Option<String>,
 }
 
 
@@ -731,7 +737,6 @@ pub struct WechatCpThirdPreauthCode {
 }
 
 
-
 /// 服务商模式获取授权信息
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WechatCpThirdAuthInfo {
@@ -744,8 +749,6 @@ pub struct WechatCpThirdAuthInfo {
     /// 企业当前生效的版本信息
     pub edition_info: Option<EditionInfo>,
 }
-
-
 
 
 /// 服务商模式获取授权信息

@@ -204,3 +204,4 @@ pub use bytes;
 pub use serde_urlencoded;
 pub use urlencoding;
 pub use dashmap;
+pub use redis;

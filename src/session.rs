@@ -402,7 +402,7 @@ pub mod redis_store {
 
     pub type RedisPool = Pool<redis::Client>;
     use r2d2::{Pool};
-    use redis::{self, ToRedisArgs, ConnectionLike, Commands, FromRedisValue};
+    use redis::{self, ToRedisArgs, ConnectionLike, Commands, FromRedisValue, streams};
     use crate::{LabradorResult, LabraError};
 
     use super::{SessionStore, ToStore, FromStore, Store};
@@ -452,7 +452,7 @@ pub mod redis_store {
             Ok(())
         }
 
-        pub fn zlcount<K: AsRef<str>, T: ToRedisArgs>(&self, key: K, min: T, max: T) -> LabradorResult<Option<u32>> {
+        pub fn zlcount<K: AsRef<str>, M: ToRedisArgs, MM: ToRedisArgs, RV: FromRedisValue>(&self, key: K, min: M, max: MM) -> LabradorResult<RV> {
             let mut client = self.client_pool.get()?;
             if !client.check_connection() {
                 return Err(LabraError::ApiError("error to get redis connection".to_string()))
@@ -460,12 +460,119 @@ pub mod redis_store {
             client.zcount(key.as_ref(), min, max).map_err(LabraError::from)
         }
 
-        pub fn zadd<K: AsRef<str>, T: ToRedisArgs>(&self, key: K, member: T, score: T) -> LabradorResult<Option<u32>> {
+        /// 在zsetname集合中增加序号为n的value
+        pub fn zadd<K: AsRef<str>, S: ToRedisArgs, M: ToRedisArgs, RV: FromRedisValue>(&self, key: K, member: M, score: S) -> LabradorResult<RV> {
             let mut client = self.client_pool.get()?;
             if !client.check_connection() {
                 return Err(LabraError::ApiError("error to get redis connection".to_string()))
             }
             client.zadd(key.as_ref(), member, score).map_err(LabraError::from)
+        }
+
+        /// 排序指定的rank(排名)范围内的元素并输出
+        pub fn zrange<K: AsRef<str>, RV: FromRedisValue>(&self, key: K, start: isize, stop: isize) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.zrange(key.as_ref(), start, stop).map_err(LabraError::from)
+        }
+
+        pub fn zadd_multiple<K: AsRef<str>, S: ToRedisArgs, M: ToRedisArgs, RV: FromRedisValue>(&self, key: K, items: &[(S, M)]) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.zadd_multiple(key.as_ref(), items).map_err(LabraError::from)
+        }
+
+        /// 反向排序
+        pub fn zrevrange<K: AsRef<str>, RV: FromRedisValue>(&self, key: K, start: isize, stop: isize) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.zrevrange(key.as_ref(), start, stop).map_err(LabraError::from)
+        }
+
+        /// 获取指定的score范围内的元素
+        pub fn zrangebyscore<K: AsRef<str>, M: ToRedisArgs, MM: ToRedisArgs, RV: FromRedisValue>(&self, key: K, min: M, max: MM) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.zrangebyscore(key.as_ref(), min, max).map_err(LabraError::from)
+        }
+
+        /// 获取a<=x<=b范围的数据，如果分页加上limit
+        pub fn zrangebylex<K: AsRef<str>, M: ToRedisArgs, MM: ToRedisArgs, RV: FromRedisValue>(&self, key: K, min: M, max: MM) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.zrangebylex(key.as_ref(), min, max).map_err(LabraError::from)
+        }
+
+        /// 为score累加n，新元素score基数为0
+        pub fn zincr<K: AsRef<str>, M: ToRedisArgs, D: ToRedisArgs, RV: FromRedisValue>(&self, key: K, member: M, delta: D) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.zincr(key.as_ref(), member, delta).map_err(LabraError::from)
+        }
+
+        /// 删除zsetname集合中指定的元素
+        pub fn zrem<K: AsRef<str>, M: ToRedisArgs, RV: FromRedisValue>(&self, key: K, members: M) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.zrem(key.as_ref(), members).map_err(LabraError::from)
+        }
+
+        /// 获取zsetname集合的元素个数
+        pub fn zcard<K: AsRef<str>, RV: FromRedisValue>(&self, key: K) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.zcard(key.as_ref()).map_err(LabraError::from)
+        }
+
+        /// 删除下标在start end 范围内的元素
+        pub fn zremrangebyrank<K: AsRef<str>, RV: FromRedisValue>(&self, key: K, start: isize, stop: isize) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.zremrangebyrank(key.as_ref(), start, stop).map_err(LabraError::from)
+        }
+
+        /// 删除score在[min [max 范围内的元素
+        pub fn zrembyscore<K: AsRef<str>, M: ToRedisArgs, MM: ToRedisArgs, RV: FromRedisValue>(&self, key: K, min: M, max: MM) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.zrembyscore(key.as_ref(), min, max).map_err(LabraError::from)
+        }
+
+        pub fn zrembylex<K: AsRef<str>, M: ToRedisArgs, MM: ToRedisArgs, RV: FromRedisValue>(&self, key: K, min: M, max: MM) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.zrembylex(key.as_ref(), min, max).map_err(LabraError::from)
+        }
+
+        /// 查询指定value的排名，注意不是score
+        pub fn zrank<K: AsRef<str>, M: ToRedisArgs, RV: FromRedisValue>(&self, key: K, member: M) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.zrank(key.as_ref(), member).map_err(LabraError::from)
         }
 
         pub fn xadd<K: AsRef<str>,  F: ToRedisArgs, V: ToRedisArgs, RV: FromRedisValue>(&self, key: K, items: &[(F, V)]) -> LabradorResult<RV> {
@@ -482,6 +589,254 @@ pub mod redis_store {
                 return Err(LabraError::ApiError("error to get redis connection".to_string()))
             }
             client.xadd_map(key.as_ref(), "*", items).map_err(LabraError::from)
+        }
+
+        pub fn xread<'a, K: ToRedisArgs,  ID: ToRedisArgs, RV: FromRedisValue>(&self, keys: &'a [K], ids: &'a [ID]) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xread(keys, ids).map_err(LabraError::from)
+        }
+
+        pub fn xinfo_consumers<'a, K: ToRedisArgs,  G: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xinfo_consumers(key, group).map_err(LabraError::from)
+        }
+
+        pub fn xinfo_groups<'a, K: ToRedisArgs, RV: FromRedisValue>(&self, key: K) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xinfo_groups(key).map_err(LabraError::from)
+        }
+
+        pub fn xinfo_stream<'a, K: ToRedisArgs, RV: FromRedisValue>(&self, key: K) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xinfo_stream(key).map_err(LabraError::from)
+        }
+
+        pub fn xread_options<'a, K: ToRedisArgs,  ID: ToRedisArgs, RV: FromRedisValue>(&self, keys: &'a [K], ids: &'a [ID], options: &'a streams::StreamReadOptions) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xread_options(keys, ids, options).map_err(LabraError::from)
+        }
+
+        pub fn xgroup_create<'a, K: ToRedisArgs, G: ToRedisArgs,  ID: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G, id: ID) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xgroup_create(key, group, id).map_err(LabraError::from)
+        }
+
+        pub fn xgroup_delconsumer<'a, K: ToRedisArgs, G: ToRedisArgs,  C: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G, consumer: C) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xgroup_delconsumer(key, group, consumer).map_err(LabraError::from)
+        }
+
+        pub fn xack<'a, K: ToRedisArgs, G: ToRedisArgs,  I: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G, ids: &'a [I]) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xack(key, group, ids).map_err(LabraError::from)
+        }
+
+        pub fn xgroup_create_mkstream<'a, K: ToRedisArgs, G: ToRedisArgs, ID: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G, id: ID) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xgroup_create_mkstream(key, group, id).map_err(LabraError::from)
+        }
+
+        pub fn xgroup_destroy<'a, K: ToRedisArgs, G: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xgroup_destroy(key, group).map_err(LabraError::from)
+        }
+
+        pub fn xdel<'a, K: ToRedisArgs, ID: ToRedisArgs, RV: FromRedisValue>(&self, key: K, ids: &'a [ID]) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xdel(key, ids).map_err(LabraError::from)
+        }
+
+        pub fn xpending<'a, K: ToRedisArgs, G: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xpending(key, group).map_err(LabraError::from)
+        }
+
+        pub fn xpending_count<'a, K: ToRedisArgs, G: ToRedisArgs, S: ToRedisArgs, E: ToRedisArgs, C: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G, start: S, end: E, count: C) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xpending_count(key, group, start, end, count).map_err(LabraError::from)
+        }
+
+        pub fn xpending_consumer_count<'a, K: ToRedisArgs, G: ToRedisArgs, S: ToRedisArgs, E: ToRedisArgs, C: ToRedisArgs, CN: ToRedisArgs, RV: FromRedisValue>(&self, key: K, group: G, start: S, end: E, count: C, consumer: CN) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xpending_consumer_count(key, group, start, end, count, consumer).map_err(LabraError::from)
+        }
+
+        pub fn xrevrange<'a, K: ToRedisArgs, E: ToRedisArgs, S: ToRedisArgs, RV: FromRedisValue>(&self, key: K, start: S, end: E) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xrevrange(key, end, start).map_err(LabraError::from)
+        }
+
+        pub fn xrevrange_all<'a, K: ToRedisArgs, RV: FromRedisValue>(&self, key: K) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xrevrange_all(key).map_err(LabraError::from)
+        }
+
+        pub fn xrevrange_count<'a, K: ToRedisArgs, E: ToRedisArgs, S: ToRedisArgs, C: ToRedisArgs,RV: FromRedisValue>(&self, key: K, start: S, end: E, count: C) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.xrevrange_count(key, end, start, count).map_err(LabraError::from)
+        }
+
+        pub fn exists<'a, K: ToRedisArgs,RV: FromRedisValue>(&self, key: K) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.exists(key).map_err(LabraError::from)
+        }
+
+        pub fn expire<'a, K: ToRedisArgs,RV: FromRedisValue>(&self, key: K, seconds: usize) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.expire(key, seconds).map_err(LabraError::from)
+        }
+
+        pub fn expire_at<'a, K: ToRedisArgs,RV: FromRedisValue>(&self, key: K, ts: usize) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.expire_at(key, ts).map_err(LabraError::from)
+        }
+
+        pub fn lpush<'a, K: ToRedisArgs, V: ToRedisArgs, RV: FromRedisValue>(&self, key: K, value: V) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.lpush(key, value).map_err(LabraError::from)
+        }
+
+        pub fn lpush_exists<'a, K: ToRedisArgs, V: ToRedisArgs, RV: FromRedisValue>(&self, key: K, value: V) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.lpush_exists(key, value).map_err(LabraError::from)
+        }
+
+        /// 移出并获取列表的第一个元素， 如果列表没有元素会阻塞列表直到等待超时或发现可弹出元素为止。
+        pub fn blpop<'a, K: ToRedisArgs, RV: FromRedisValue>(&self, key: K, timeout: usize) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.blpop(key, timeout).map_err(LabraError::from)
+        }
+
+        /// 移出并获取列表的最后一个元素， 如果列表没有元素会阻塞列表直到等待超时或发现可弹出元素为止。
+        pub fn brpop<'a, K: ToRedisArgs, RV: FromRedisValue>(&self, key: K, timeout: usize) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.brpop(key, timeout).map_err(LabraError::from)
+        }
+
+        /// 移出并获取列表的第一个元素
+        pub fn lpop<'a, K: ToRedisArgs, RV: FromRedisValue>(&self, key: K, count: Option<core::num::NonZeroUsize>) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.lpop(key, count).map_err(LabraError::from)
+        }
+
+        /// 通过索引获取列表中的元素
+        pub fn lindex<'a, K: ToRedisArgs, RV: FromRedisValue>(&self, key: K, index: isize) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.lindex(key, index).map_err(LabraError::from)
+        }
+
+        /// 获取列表长度
+        pub fn llen<'a, K: ToRedisArgs, RV: FromRedisValue>(&self, key: K) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.llen(key).map_err(LabraError::from)
+        }
+
+        /// 获取列表指定范围内的元素
+        pub fn lrange<'a, K: ToRedisArgs, RV: FromRedisValue>(&self, key: K, start: isize, stop: isize) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.lrange(key, start, stop).map_err(LabraError::from)
+        }
+
+        /// 在列表中添加一个或多个值
+        pub fn rpush<'a, K: ToRedisArgs, V: ToRedisArgs, RV: FromRedisValue>(&self, key: K, value: V) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.rpush(key, value).map_err(LabraError::from)
+        }
+
+        /// 在列表中添加一个或多个值
+        pub fn rpush_exists<'a, K: ToRedisArgs, V: ToRedisArgs, RV: FromRedisValue>(&self, key: K, value: V) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.rpush_exists(key, value).map_err(LabraError::from)
         }
     }
 

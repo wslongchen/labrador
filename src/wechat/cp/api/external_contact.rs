@@ -503,9 +503,8 @@ impl<'a, T: SessionStore> WechatCpExternalContact<'a, T> {
     /// 企业可通过此接口向客户标签库中添加新的标签组和标签，每个企业最多可配置3000个企业标签。
     /// 暂不支持第三方调用。
     /// </pre>
-    pub async fn add_corp_tag(&self, req: WechatCpUserExternalTagGroupInfo) -> LabradorResult<WechatCpUserExternalTagGroupInfo> {
-        let v = self.client.post(WechatCpMethod::ExternalContact(CpExternalContactMethod::AddCorpTag), vec![], req, RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<WechatCpUserExternalTagGroupInfo>(v)
+    pub async fn add_corp_tag(&self, req: TagGroup) -> LabradorResult<WechatCommonResponse> {
+        self.client.post(WechatCpMethod::ExternalContact(CpExternalContactMethod::AddCorpTag), vec![], req, RequestType::Json).await?.json::<WechatCommonResponse>()
     }
 
     /// <pre>
@@ -1266,7 +1265,7 @@ pub struct WechatCpWelcomeMsg {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WechatCpUserExternalTagGroupInfo {
-    pub tag_group: Option<TagGroup>,
+    pub tag_group: Option<Vec<TagGroup>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
