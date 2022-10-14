@@ -158,7 +158,6 @@
 //! We will gradually improve the corresponding API
 //!
 //!
-#![feature(doc_cfg)]
 mod session;
 mod request;
 mod errors;
