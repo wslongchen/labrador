@@ -1,6 +1,6 @@
 # Labrador &emsp; [![Docs][docs-image]][docs-url] [![Build Status]][actions] [![Latest Version]][crates.io] [![labrador: rustc 1.13+]][Rust 1.13]
 
-[Build Status]: https://img.shields.io/docsrs/labrador/0.1.0?style=plastic
+[Build Status]: https://img.shields.io/docsrs/labrador/0.2.0?style=plastic
 [actions]: https://github.com/wslongchen/labrador/actions?query=branch%3Amaster
 [Latest Version]: https://img.shields.io/crates/v/labrador?style=plastic
 [crates.io]: https://crates.io/crates/labrador
