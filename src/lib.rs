@@ -164,22 +164,18 @@ mod errors;
 mod client;
 mod util;
 #[cfg(feature = "jd")]
-#[cfg_attr(docsrs, doc(cfg(feature = "jd")))]
 mod jd;
 #[cfg(feature = "jd")]
 pub use jd::*;
 #[cfg(feature = "taobao")]
-#[cfg_attr(docsrs, doc(cfg(feature = "taobao")))]
 mod taobao;
 #[cfg(feature = "taobao")]
 pub use taobao::*;
 #[cfg(feature = "pdd")]
-#[cfg_attr(docsrs, doc(cfg(feature = "pdd")))]
 mod pdd;
 #[cfg(feature = "pdd")]
 pub use pdd::*;
 #[cfg(feature = "wechat")]
-#[cfg_attr(docsrs, doc(cfg(feature = "wechat")))]
 mod wechat;
 #[cfg(feature = "wechat")]
 pub use wechat::*;
@@ -187,7 +183,6 @@ pub use wechat::*;
 pub type LabradorResult<T, E = LabraError> = Result<T, E>;
 
 #[cfg(all(feature = "alipay"))]
-#[cfg_attr(docsrs, doc(cfg(feature = "alipay")))]
 mod alipay;
 #[cfg(all(feature = "alipay"))]
 pub use alipay::*;
