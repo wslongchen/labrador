@@ -10,7 +10,6 @@ use serde::Serialize;
 use crate::alipay::method::AlipayMethod;
 
 cfg_if! {if #[cfg(feature = "openssl-crypto")]{
-    use rustc_serialize::hex::ToHex;
     use openssl::hash::{hash, MessageDigest};
     use openssl::nid::Nid;
     use openssl::x509::{X509, X509NameEntries};
@@ -301,7 +300,7 @@ impl <T: SessionStore> AlipayClient<T> {
                 let issuer = iter2string(x509.issuer_name().entries())?;
                 let serial_number = x509.serial_number().to_bn()?.to_dec_str()?;
                 let data = issuer + &serial_number;
-                Ok(hash(MessageDigest::md5(), data.as_ref())?.to_hex())
+                Ok( hex::encode(hash(MessageDigest::md5(), data.as_ref())?))
             }).map(|cert: LabradorResult<String>| cert.unwrap_or_default()).collect::<Vec<String>>().join("_");
             Ok(alipay_root_cert_sn)
         }
@@ -581,7 +580,8 @@ impl <T: SessionStore> AlipayClient<T> {
             }
             let key = self.encrypt_key.to_owned().unwrap_or_default();
             let prp = PrpCrypto::new(key.into_bytes());
-            let encrypt_content = prp.aes_128_cbc_encrypt_msg(biz_content, Some(&get_nonce_str()), None)?;
+            let encrypt_content = prp.aes_128_cbc_encrypt_data(biz_content, Some(&get_nonce_str()))?;
+            let encrypt_content = String::from_utf8_lossy(&encrypt_content).to_string();
             app_params.insert(constants::BIZ_CONTENT_KEY.to_string(), encrypt_content);
         }
 

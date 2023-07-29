@@ -1,6 +1,6 @@
 [package]
 name = "labrador"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["mrpan <1049058427@qq.com>"]
 edition = "2018"
 description = "Labrador - Mini thirdpart client for rust."
@@ -19,17 +19,16 @@ serde_json = "1.0"
 redis = { version = "0.21.0", features = ["r2d2"]}
 reqwest = { version = "0.11.0", features = ["blocking", "json","native-tls","__rustls", "native-tls-crate", "multipart"] }
 bytes = { version = "1.1.0", features = ["serde"] }
-bincode = "1.3.3"
+
 r2d2 = {version = "0.8.9"}
 chrono = { version = "0.4", features = ["serde"]}
-base64 = "0.12"
+
 rand = "0.7.3"
 uuid = { version = "0.7.4", features = ["serde", "v4"] }
 byteorder = {version = "1.3.4"}
 sxd-document = {version = "0.2", optional= true}
 sxd-xpath = {version = "0.2", optional= true}
 serde-xml-rs = "0.6.0"
-rustc-serialize = "^0.3"
 serde_urlencoded = "0.7.1"
 urlencoding = "2.1.0"
 openssl = { version = "0.10.41", features=["vendored"],optional= true }
@@ -39,7 +38,17 @@ dashmap = "5.3.4"
 json = {version = "0.12.4", optional= true }
 once_cell = "1.8"
 
-rust-crypto = {version = "^0.2", optional= true}
+# about crypt
+md5 = { version = "0.7.0" }
+sha-1 = { version = "0.10" }
+sha2 = { version = "0.10" }
+hmac = { version = "0.12" }
+hex = { version = "0.4.3" }
+aes = { version = "0.7.5" }
+aes-gcm = { version = "0.10" }
+base64 = "0.12"
+bincode = "1.3.3"
+block-modes = "0.8.1"
 rsa = {version = "0.6.1", optional= true}
 x509-parser = {version = "0.14.0", features=["verify"], optional= true}
 
@@ -55,7 +64,7 @@ rustdoc-args = [
 ### FEATURES #################################################################
 
 [features]
-default = ["rust-crypto", "rsa", "x509-parser"]
+default = ["rsa", "x509-parser"]
 openssl-crypto = ["openssl"]
 
 # Provide wechat

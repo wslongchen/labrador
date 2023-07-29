@@ -121,7 +121,8 @@ impl<T: SessionStore> WechatMpClient<T> {
                 (APPID.to_string(), self.client.app_key.to_string()),
                 (SECRET.to_string(), self.client.secret.to_string()),
             ]).method(Method::Get).req_type(RequestType::Json);
-            let res = self.client.request(req).await?.json::<AccessTokenResponse>()?;
+            let v = self.client.request(req).await?.json::<Value>()?;
+            let res = WechatCommonResponse::parse::<AccessTokenResponse>(v)?;
             let token = res.access_token;
             let expires_in = res.expires_in;
             // 预留200秒的时间

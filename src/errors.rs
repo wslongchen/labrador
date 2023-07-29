@@ -3,10 +3,8 @@ use std::fmt;
 use std::io;
 use std::string::FromUtf8Error;
 use base64::DecodeError;
-use crypto::symmetriccipher::SymmetricCipherError;
 use redis::RedisError;
 use reqwest::header::InvalidHeaderValue;
-use rustc_serialize::hex::FromHexError;
 use serde_json::{ error::Error as JsonError};
 use tracing::error;
 use x509_parser::der_parser::asn1_rs::SerializeError;
@@ -93,6 +91,35 @@ impl From<openssl::error::ErrorStack> for LabraError {
     }
 }
 
+
+#[cfg(not(feature = "openssl-crypto"))]
+impl From<block_modes::InvalidKeyIvLength> for LabraError {
+    fn from(err: block_modes::InvalidKeyIvLength) -> Self {
+        LabraError::InvalidSignature(format!("加解密出错：{}", err.to_string()))
+    }
+}
+
+#[cfg(not(feature = "openssl-crypto"))]
+impl From<block_modes::BlockModeError> for LabraError {
+    fn from(err: block_modes::BlockModeError) -> Self {
+        LabraError::InvalidSignature(format!("加解密出错：{}", err.to_string()))
+    }
+}
+
+#[cfg(not(feature = "openssl-crypto"))]
+impl From<hmac::digest::InvalidLength> for LabraError {
+    fn from(err: hmac::digest::InvalidLength) -> Self {
+        LabraError::InvalidSignature(format!("加解密出错：{}", err.to_string()))
+    }
+}
+
+#[cfg(not(feature = "openssl-crypto"))]
+impl From<aes_gcm::Error> for LabraError {
+    fn from(err: aes_gcm::Error) -> Self {
+        LabraError::InvalidSignature(format!("加解密出错：{}", err.to_string()))
+    }
+}
+
 impl From<FromUtf8Error> for LabraError {
     fn from(err: FromUtf8Error) -> Self {
         LabraError::InvalidSignature(format!("字符转换错误：{}", err.to_string()))
@@ -106,8 +133,8 @@ impl From<InvalidHeaderValue> for LabraError {
     }
 }
 
-impl From<FromHexError> for LabraError {
-    fn from(err: FromHexError) -> Self {
+impl From<hex::FromHexError> for LabraError {
+    fn from(err: hex::FromHexError) -> Self {
         LabraError::InvalidSignature(format!("字符转码出错：{}", err.to_string()))
     }
 }
@@ -146,16 +173,6 @@ impl From<r2d2::Error> for LabraError {
 impl From<RedisError> for LabraError {
     fn from(err: RedisError) -> Self {
         LabraError::RequestError(format!("redis错误：{}", err.to_string()))
-    }
-}
-
-
-impl From<SymmetricCipherError> for LabraError {
-    fn from(err: SymmetricCipherError) -> Self {
-        match err {
-            SymmetricCipherError::InvalidLength => LabraError::RequestError(format!("加解密错误：InvalidLength")),
-            SymmetricCipherError::InvalidPadding => LabraError::RequestError(format!("加解密错误：InvalidPadding"))
-        }
     }
 }
 
