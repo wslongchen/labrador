@@ -187,9 +187,23 @@ impl<T: SessionStore> WechatPayClient<T> {
     #[inline]
     pub fn token<F: Serialize>(&self, req: &LabraRequest<F>, mch_id: Option<String>) -> LabradorResult<String> {
         let api_path = self.client.api_path.to_owned();
-        let LabraRequest { url, method, body, ..} = req;
+        let LabraRequest { url, method, body, params, ..} = req;
         let method = method.to_string();
         let body = body.to_string();
+        let mut sign_url = url.clone();
+        if let Some(params) = params {
+            if !params.is_empty() {
+                sign_url.push('?');
+                for (index, (key, value)) in params.iter().enumerate() {
+                    if index > 0 {
+                        sign_url.push('&');
+                    }
+                    sign_url.push_str(key);
+                    sign_url.push('=');
+                    sign_url.push_str(value);
+                }
+            }
+        }
         let mut mch_id = mch_id.unwrap_or_default();
         let mut private_key = self.private_key.to_owned().unwrap_or_default();
         let mut serial_no = self.serial_no.to_owned().unwrap_or_default();
@@ -204,7 +218,7 @@ impl<T: SessionStore> WechatPayClient<T> {
         let nonce_str = get_nonce_str().to_uppercase();
 
         let timestamp = get_timestamp() / 1000;
-        let signature = WechatCryptoV3::signature_v3(&method, url, timestamp, &nonce_str, &body, &private_key)?;
+        let signature = WechatCryptoV3::signature_v3(&method, &sign_url, timestamp, &nonce_str, &body, &private_key)?;
         let token = format!("{} mchid=\"{}\",nonce_str=\"{}\",signature=\"{}\",timestamp=\"{}\",serial_no=\"{}\"",
                             SCHEMA, mch_id, nonce_str, signature, timestamp, serial_no);
         Ok(token)

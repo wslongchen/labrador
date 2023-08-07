@@ -196,7 +196,7 @@ pub struct StoreInfo {
 }
 
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Default,Debug, Serialize, Deserialize, Clone)]
 pub struct Payer {
     /// 用户号,用户在直连商户appid下的唯一标识。
     pub openid: String,
