@@ -2,15 +2,7 @@
 //! 
 //! MD5加密类
 //!
-use crate::cfg_if;
-
-cfg_if! {if #[cfg(feature = "openssl-crypto")]{
-    use rustc_serialize::hex::ToHex;
-}}
-cfg_if! {if #[cfg(not(feature = "openssl-crypto"))]{
-    use crypto::digest::Digest;
-}}
-
+use std::ops::Deref;
 
 #[allow(unused)]
 static SALT: &'static str = "labrador";
@@ -29,20 +21,19 @@ pub fn md5<S:Into<String>>(input: S) -> String {
         if let Ok(mut h) = openssl::hash::Hasher::new(openssl::hash::MessageDigest::md5()) {
             h.update(input.as_bytes()).unwrap();
             let res = h.finish().unwrap();
-            result = res.to_hex();
+            result = hex::encode(result).to_string();
         }
         result
     }
 
     #[cfg(not(feature = "openssl-crypto"))]
     fn crypto_md5(input: String) -> String {
-        let mut md5 = crypto::md5::Md5::new();
         let mut input_salt: String = String::new();
         input_salt.push_str(input.as_str());
-        md5.input_str(input_salt.as_str());
-        md5.result_str()
+        let result = md5::compute(input_salt.as_bytes());
+        hex::encode(result.deref()).to_string()
     }
-    crypto_md5(input)
+    crypto_md5(input).to_string()
 }
 
 

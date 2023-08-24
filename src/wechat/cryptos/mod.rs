@@ -1,6 +1,5 @@
 use base64;
 use reqwest::header::HeaderMap;
-use rustc_serialize::hex::{FromHex, ToHex};
 
 use crate::{errors::LabraError, LabradorResult, util::md5};
 use serde::{Deserialize, Serialize};
@@ -123,19 +122,19 @@ impl WechatCrypto {
             // read hash digest
             let signature = hasher.finish();
             // let signature = hash::hash(MessageDigest::sha1(), data_str.as_bytes())?;
-            signature.to_hex()
+            hex::encode(signature)
         }
         #[cfg(not(feature = "openssl-crypto"))]
         fn sha1(encrypt_str: &str) -> String {
-            use crypto::digest::Digest;
+            use sha1::{Sha1, Digest};
             // create a Sha1 object
-            let mut hasher = crypto::sha1::Sha1::new();
+            let mut hasher = Sha1::new();
             // write input message
-            hasher.input_str(encrypt_str);
+            hasher.update(encrypt_str);
 
             // read hash digest
-            let hex = hasher.result_str();
-            hex
+            let hex = hasher.finalize();
+            hex::encode(hex)
         }
         sha1(encrypt_str)
     }
@@ -154,8 +153,9 @@ impl WechatCrypto {
     pub fn decrypt_data(session_key: &str, encrypted_data: &str, iv: &str) -> LabradorResult<String> {
         let key = base64::decode(&session_key)?;
         let prp = PrpCrypto::new(key);
-        let msg = prp.aes_128_cbc_decrypt_msg(encrypted_data, iv.into(), None)?;
-        Ok(msg)
+        // let msg = prp.aes_128_cbc_decrypt_msg(encrypted_data, iv.into(), None)?;
+        todo!("coding...");
+        Ok("".to_string())
     }
 
     /// # 检查签名
@@ -178,7 +178,8 @@ impl WechatCrypto {
     /// msg 加密数据
     pub fn encrypt_message(&self, msg: &str, timestamp: i64, nonce: &str) -> LabradorResult<String> {
         let prp = PrpCrypto::new(self.key.to_owned());
-        let encrypted_msg = prp.aes_128_cbc_encrypt_msg(msg, None, (self.s_receive_id.to_owned().unwrap_or_default().as_str()).into())?;
+        let encrypted_msg = "".to_string();// prp.aes_128_cbc_encrypt_msg(msg, None, (self.s_receive_id.to_owned().unwrap_or_default().as_str()).into())?;
+        todo!("coding...");
         let signature = self.get_signature(timestamp, nonce, &encrypted_msg);
         let msg = format!(
             "<xml>\n\
@@ -211,7 +212,8 @@ impl WechatCrypto {
             return Err(LabraError::InvalidSignature("unmatched signature.".to_string()));
         }
         let prp = PrpCrypto::new(self.key.to_owned());
-        let msg = prp.aes_128_cbc_decrypt_msg(&encrypted_msg, None, (self.s_receive_id.to_owned().unwrap_or_default().as_str()).into())?;
+        let msg = "".to_string(); // prp.aes_128_cbc_decrypt_msg(&encrypted_msg, None, (self.s_receive_id.to_owned().unwrap_or_default().as_str()).into())?;
+        todo!("coding...");
         Ok(msg)
     }
 
@@ -227,7 +229,8 @@ impl WechatCrypto {
             return Err(LabraError::InvalidSignature("unmatched signature.".to_string()));
         }
         let prp = PrpCrypto::new(self.key.to_owned());
-        let msg = prp.aes_256_cbc_decrypt_msg(&encrypted_content, None, self.s_receive_id.as_ref())?;
+        let msg = "".to_string(); //prp.aes_256_cbc_decrypt_msg(&encrypted_content, None, self.s_receive_id.as_ref())?;
+        todo!("coding...");
         Ok(msg)
     }
 
@@ -300,8 +303,8 @@ impl WechatCryptoV3 {
         let nonce = decrypt.nonce.to_owned();
         let ciphertext = decrypt.ciphertext.to_owned().unwrap_or_default();
         let cipher_text = base64::decode(ciphertext)?;
-        let base64_cipher = cipher_text.to_hex();
-        let cipher_text = base64_cipher.from_hex()?;
+        let base64_cipher = hex::encode(cipher_text);
+        let cipher_text = hex::decode(base64_cipher)?;
         let aad= associated_data.as_bytes();
         let iv = nonce.as_bytes();
         let cipherdata_length = cipher_text.len() - 16;
