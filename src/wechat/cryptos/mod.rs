@@ -153,9 +153,11 @@ impl WechatCrypto {
     pub fn decrypt_data(session_key: &str, encrypted_data: &str, iv: &str) -> LabradorResult<String> {
         let key = base64::decode(&session_key)?;
         let prp = PrpCrypto::new(key);
-        // let msg = prp.aes_128_cbc_decrypt_msg(encrypted_data, iv.into(), None)?;
-        todo!("coding...");
-        Ok("".to_string())
+        let encrypted_data = base64::decode(encrypted_data)?;
+        let encrypt_content = prp.aes_128_cbc_decrypt_data(encrypted_data, Some(iv))?;
+        let encrypt_content = String::from_utf8_lossy(&encrypt_content).to_string();
+        println!("{}",encrypt_content);
+        Ok(encrypt_content)
     }
 
     /// # 检查签名
@@ -178,6 +180,8 @@ impl WechatCrypto {
     /// msg 加密数据
     pub fn encrypt_message(&self, msg: &str, timestamp: i64, nonce: &str) -> LabradorResult<String> {
         let prp = PrpCrypto::new(self.key.to_owned());
+        //let encrypt_content = prp.aes_128_cbc_encrypt_data(msg, Some(iv))?;
+        //let encrypt_content = String::from_utf8_lossy(&encrypt_content).to_string();
         let encrypted_msg = "".to_string();// prp.aes_128_cbc_encrypt_msg(msg, None, (self.s_receive_id.to_owned().unwrap_or_default().as_str()).into())?;
         todo!("coding...");
         let signature = self.get_signature(timestamp, nonce, &encrypted_msg);
@@ -229,8 +233,8 @@ impl WechatCrypto {
             return Err(LabraError::InvalidSignature("unmatched signature.".to_string()));
         }
         let prp = PrpCrypto::new(self.key.to_owned());
-        let msg = "".to_string(); //prp.aes_256_cbc_decrypt_msg(&encrypted_content, None, self.s_receive_id.as_ref())?;
-        todo!("coding...");
+        let result = prp.aes_128_cbc_decrypt_data(encrypted_content.as_bytes().to_vec(), None)?;
+        let msg = String::from_utf8_lossy(&result).to_string();
         Ok(msg)
     }
 

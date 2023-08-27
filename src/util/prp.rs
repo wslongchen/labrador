@@ -117,8 +117,8 @@ impl PrpCrypto {
         #[cfg(not(feature = "openssl-crypto"))]
         fn decrypt(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
             type AesCbc = block_modes::Cbc<aes::Aes128, block_modes::block_padding::Pkcs7>;
-            let enc_cipher = AesCbc::new_from_slices(key, iv).unwrap();
-            let result = enc_cipher.decrypt_vec(ciphertext)?;
+            let enc_cipher = AesCbc::new_from_slices(key, iv)?;
+            let result = enc_cipher.decrypt_vec(ciphertext).unwrap();
             Ok(result)
         }
 
@@ -341,6 +341,33 @@ impl PrpCrypto {
             mac.update(message);
             let result = mac.finalize();
             Ok(hex::encode(result.into_bytes()))
+        }
+
+        sign(key, message)
+    }
+
+    pub fn hmac_sha1_sign(&self, message: &str) -> LabradorResult<Vec<u8>> {
+        let key = &self.key;
+        let message = message.as_bytes();
+
+        #[cfg(feature = "openssl-crypto")]
+        fn sign(key: &[u8], message: &[u8]) -> LabradorResult<Vec<u8>> {
+            let pkey = PKey::hmac(key)?;
+            let mut signer = Signer::new(MessageDigest::sha1(), &pkey)?;
+            signer.update(message)?;
+            let result = signer.sign_to_vec()?;
+            Ok(result)
+            // Ok(result.to_hex())
+        }
+
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn sign(key: &[u8], message: &[u8]) -> LabradorResult<Vec<u8>> {
+            type HmacSha1 = hmac::Hmac<sha1::Sha1>;
+
+            let mut mac = HmacSha1::new_from_slice(key)?;
+            mac.update(message);
+            let result = mac.finalize();
+            Ok(result.into_bytes().to_vec())
         }
 
         sign(key, message)
