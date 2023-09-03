@@ -82,9 +82,16 @@ labrador = { version = "0.2.0", features = ["wechat", "alipay"] }
 </details>
 <p></p>
 
-## API Documentation
-
 ## Example
+
+### 猫狗0791商城小程序
+ 
+猫狗0791商城小程序中微信、支付宝等支付、退款功能均基于Labrador，欢迎扫码体验
+
+![小程序](http://img.snackcloud.cn/snackcloud/shop/WechatIMG4566.jpeg)
+
+
+## API Documentation
 
 ### With Wechat（微信开放平台、包含微信支付）
 
@@ -218,7 +225,7 @@ To setup the development envrionment run `cargo run`.
 
 ## Contributers
 
-	MrPan <1049058427@qq.com>
+MrPan <1049058427@qq.com>
 
 ## Getting help
 
