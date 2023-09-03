@@ -184,8 +184,14 @@ pub type LabradorResult<T, E = LabraError> = Result<T, E>;
 
 #[cfg(all(feature = "alipay"))]
 mod alipay;
+
 #[cfg(all(feature = "alipay"))]
 pub use alipay::*;
+
+#[cfg(all(feature = "qiniu"))]
+mod qiniu;
+#[cfg(all(feature = "qiniu"))]
+pub use qiniu::*;
 
 pub use errors::LabraError;
 pub use session::*;

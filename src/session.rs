@@ -549,6 +549,24 @@ pub mod redis_store {
             client.zremrangebyrank(key.as_ref(), start, stop).map_err(LabraError::from)
         }
 
+        /// 命令判断成员元素是否是集合的成员
+        pub fn sismember<K: AsRef<str>,M: ToRedisArgs, RV: FromRedisValue>(&self, key: K, member: M) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.sismember(key.as_ref(), member).map_err(LabraError::from)
+        }
+
+        /// 成员元素添加到集合中
+        pub fn sadd<K: AsRef<str>,M: ToRedisArgs, RV: FromRedisValue>(&self, key: K, member: M) -> LabradorResult<RV> {
+            let mut client = self.client_pool.get()?;
+            if !client.check_connection() {
+                return Err(LabraError::ApiError("error to get redis connection".to_string()))
+            }
+            client.sadd(key.as_ref(), member).map_err(LabraError::from)
+        }
+
         /// 删除score在[min [max 范围内的元素
         pub fn zrembyscore<K: AsRef<str>, M: ToRedisArgs, MM: ToRedisArgs, RV: FromRedisValue>(&self, key: K, min: M, max: MM) -> LabradorResult<RV> {
             let mut client = self.client_pool.get()?;

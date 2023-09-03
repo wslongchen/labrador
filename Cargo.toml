@@ -1,6 +1,6 @@
 [package]
 name = "labrador"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["mrpan <1049058427@qq.com>"]
 edition = "2018"
 description = "Labrador - Mini thirdpart client for rust."
@@ -77,3 +77,5 @@ taobao = []
 pdd = []
 # Provide jingdong
 jd = []
+# Provide qiniu
+qiniu = []
