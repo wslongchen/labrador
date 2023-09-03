@@ -1,7 +1,7 @@
 use crate::{session::SessionStore, errors::LabraError, request::{RequestType}, WechatCommonResponse, WechatMpClient, LabradorResult};
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
-use crate::wechat::mp::constants::{QR_LIMIT_SCENE, QR_SCENE};
+use crate::wechat::mp::constants::{QR_LIMIT_SCENE, QR_LIMIT_STR_SCENE, QR_SCENE, QR_STR_SCENE};
 use crate::wechat::mp::method::{MpQrCodeMethod, WechatMpMethod};
 
 #[derive(Debug, Clone)]
@@ -38,7 +38,7 @@ impl<'a, T: SessionStore> WechatMpQRCode<'a, T> {
         if scene_str.is_empty() {
             return Err(LabraError::RequestError("临时二维码场景值不能为空！".to_string()));
         }
-        self.create_qrcode(QR_SCENE, scene_str.into(), None, expire_seconds.into()).await
+        self.create_qrcode(QR_STR_SCENE, scene_str.into(), None, expire_seconds.into()).await
     }
 
     async fn create_qrcode(&self, action_name: &str, scene_str: Option<&str>, scene_id: Option<i32>, mut expire_seconds: Option<u64>) -> LabradorResult<QRCodeTicket> {
@@ -82,7 +82,7 @@ impl<'a, T: SessionStore> WechatMpQRCode<'a, T> {
     /// 详情请见: <a href="https://mp.weixin.qq.com/wiki?action=doc&id=mp1443433542&t=0.9274944716856435">生成带参数的二维码</a>
     /// </pre>
     pub async fn get_unlimited_scenestr(&self, scene_str: &str) -> LabradorResult<QRCodeTicket> {
-        self.get_qrcode_ticket(QR_LIMIT_SCENE, scene_str.into(), None, None).await
+        self.get_qrcode_ticket(QR_LIMIT_STR_SCENE, scene_str.into(), None, None).await
     }
 
     /// <pre>

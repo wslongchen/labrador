@@ -24,6 +24,7 @@ Features:
 *   ```pdd``` - Pinduoduo related services
 *   ```jd``` - Jingdong related services
 *   ```wechat``` - Wechat related services
+*   ```qiniu``` - Qiniu OSS services
 
 ### Crypto Features
 
@@ -43,13 +44,14 @@ the default encryption in this project is [rust-crypto] & [x509_parser] & [rsa]
 
 ### Supported Platform
 
-| Platform                                                                  | is supported |
-|---------------------------------------------------------------------------|--------------|
-| Wechat:mp(微信公众号),cp(企业微信),miniapp(微信小程序),pay(微信支付)             | √            | 
-| Alipay(支付宝)                                                             | √            |  
-| Taobao(淘宝客)                                                              | √            |
-| JD(京东联盟)                                                                | √            |  
-| PDD(拼多多-多多客)                                                          | √            |
+| Platform                                           | is supported |
+|----------------------------------------------------|--------------|
+| Wechat:mp(微信公众号),cp(企业微信),miniapp(微信小程序),pay(微信支付) | √            | 
+| Alipay(支付宝)                                        | √            |  
+| Taobao(淘宝客)                                        | √            |
+| JD(京东联盟)                                           | √            |  
+| PDD(拼多多-多多客)                                       | √            |
+| Qiniu(七牛云存储)                                       | √            |
 
 
 ---
@@ -73,7 +75,7 @@ Click to show Cargo.toml.
 [dependencies]
 
 # The core APIs
-labrador = { version = "0.1.0", features = ["wechat", "alipay"] }
+labrador = { version = "0.2.0", features = ["wechat", "alipay"] }
 
 ```
 

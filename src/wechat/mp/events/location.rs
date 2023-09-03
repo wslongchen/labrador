@@ -9,7 +9,7 @@ pub struct LocationEvent {
     #[serde(rename="CreateTime")]
     pub create_time: i64,
     #[serde(rename="MsgId")]
-    pub id: i64,
+    pub id: Option<i64>,
     #[serde(rename="Event")]
     pub event: String,
     #[serde(rename="Latitude")]

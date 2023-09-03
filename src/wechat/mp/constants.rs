@@ -18,8 +18,10 @@ pub static REFRESH_TOKEN: &str = "refresh_token";
 
 
 pub static QR_SCENE: &str = "QR_SCENE";
+pub static QR_STR_SCENE: &str = "QR_STR_SCENE";
 pub static QR_CODE: &str = "QR_CODE";
 pub static QR_LIMIT_SCENE: &str = "QR_LIMIT_SCENE";
+pub static QR_LIMIT_STR_SCENE: &str = "QR_LIMIT_STR_SCENE";
 pub static IMG_URL: &str = "img_url";
 
 /// ticket类型
