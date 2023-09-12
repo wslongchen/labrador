@@ -67,8 +67,8 @@ the default encryption in this project is [rust-crypto] & [x509_parser] & [rsa]
 
 You may be looking for:
 
-- [An overview of Labrador](https://crates.io/crates/labrador)
-- [Examples](https://github.com/wslongchen/labrador/blob/0.1.0/example/simple.rs)
+- [An overview of Labrador](https://www.snackcloud.cn/docs/labrador/home.html)
+- [Examples](https://www.snackcloud.cn/docs/labrador/home.html)
 - [API documentation](https://docs.rs/labrador/0.1.0/labrador/)
 - [Release notes](https://github.com/wslongchen/labrador/releases)
 
