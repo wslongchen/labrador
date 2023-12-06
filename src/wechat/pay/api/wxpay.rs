@@ -317,7 +317,8 @@ impl<'a, T: SessionStore> WxPay<'a, T> {
     /// ```
     ///
     pub async fn query_order_v3(&self, params: WechatQueryOrderRequestV3) -> LabradorResult<WechatQueryOrderResponseV3> {
-        self.client.post_v3(params.mchid.to_owned().into(), WechatPayMethod::WxPay(WxPayMethod::QueryOrderV3((params.out_trade_no.to_owned(), params.out_trade_no.to_owned()))), vec![], "", RequestType::Json)
+        let mchid = params.mchid.clone();
+        self.client.get_v3(WechatPayMethod::WxPay(WxPayMethod::QueryOrderV3((params.out_trade_no.to_owned(), params.out_trade_no.to_owned()))), vec![("mchid",mchid.as_str())], RequestType::Json)
             .await?.json::<WechatQueryOrderResponseV3>()
     }
 
