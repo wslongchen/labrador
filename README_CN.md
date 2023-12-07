@@ -1,5 +1,15 @@
 # Labrador &emsp; [![Docs][docs-image]][docs-url] [![Build Status]][actions] [![Latest Version]][crates.io] [![labrador: rustc 1.13+]][Rust 1.13]
 
+<div>
+    <p align="center">
+      <img src="http://img.snackcloud.cn/snackcloud/shop/snack_logo.png" alt="猫狗试验室" width="248" height="248">
+    </p>
+    <p align="center"><strong>猫狗试验室出品</strong></p>
+    <p align="center">
+      这是一个热爱🫶技术，热爱🔥生活的团队. <br>很欢迎大家能够一起学习📑、沟通💬 .
+    </p>
+  </div>
+
 [Build Status]: https://img.shields.io/docsrs/labrador/0.1.0?style=plastic
 [actions]: https://github.com/wslongchen/labrador/actions?query=branch%3Amaster
 [Latest Version]: https://img.shields.io/crates/v/labrador?style=plastic
@@ -75,10 +85,25 @@ labrador = { version = "0.1.0", features = ["wechat", "alipay"] }
 </details>
 <p></p>
 
-## 文档
-
 ## 示例
 
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="middle">
+        <img src="http://img.snackcloud.cn/snackcloud/shop/WechatIMG4566.jpeg" style="width:208px;height:208px;">
+        <p><strong>猫狗0791商城小程序</strong></p>
+        <p>小程序中微信、支付宝等支付、<br/>退款功能均基于Labrador，欢迎扫码体验</p>
+      </td>
+      <td align="center" valign="middle">
+        <img src="https://mp.weixin.qq.com/mp/qrcode?scene=10000005&size=102&__biz=MzkxNTE0MjczNw==&mid=2247483672&idx=1&sn=2982f8afbb126b401e04e921cb582874&send_time=" style="width:208px;height:208px;">
+        <p><strong>猫狗试验室</strong></p>
+        <p>欢迎扫码加入我们</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+## 文档
 ### 微信开放平台、包含微信支付
 
  ```rust

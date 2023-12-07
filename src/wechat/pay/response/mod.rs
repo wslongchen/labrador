@@ -305,49 +305,64 @@ pub struct RefundPromotionDetail {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WechatQueryOrderResponseV3 {
-    pub appid: String,
+    pub appid: String, //1
     /// 商户号
-    pub mch_id: String,
+    #[serde(rename="mchid")]
+    pub mch_id: String, //2 
     /// 商户系统的订单号，与请求一致。
-    pub out_trade_no: String,
+    pub out_trade_no: String, //3 
     /// 交易类型 调用接口提交的交易类型，取值如下：JSAPI，NATIVE，APP，MICROPAY，详细说明见参数规定
+    #[serde(default)]
     pub trade_type: String,
     /// 微信支付订单号
+    #[serde(default)]
     pub transaction_id: String,
     /// SUCCESS—支付成功,REFUND—转入退款,NOTPAY—未支付,CLOSED—已关闭,REVOKED—已撤销（刷卡支付）,USERPAYING--用户支付中,PAYERROR--支付失败(其他原因，如银行返回失败)
-    pub trade_state: String,
+    pub trade_state: String, //5 
     /// 交易状态描述
-    pub trade_state_desc: String,
+    pub trade_state_desc: String, //6 
     /// 付款银行
+    #[serde(default)]
     pub bank_type: String,
     /// 附加数据，原样返回
+    #[serde(default)]
     pub attach: Option<String>,
     /// 支付完成时间，遵循rfc3339标准格式，格式为YYYY-MM-DDTHH:mm:ss+TIMEZONE，YYYY-MM-DD表示年月日，T出现在字符串中，表示time元素的开头，HH:mm:ss表示时分秒，TIMEZONE表示时区（+08:00表示东八区时间，领先UTC 8小时，即北京时间）。例如：2015-05-20T13:29:35+08:00表示，北京时间2015年5月20日 13点29分35秒。
+    #[serde(default)]
     pub success_time: String,
     /// 支付者
+    #[serde(default)]
     pub payer: Payer,
     /// 订单金额信息，当支付成功时返回该字段。
-    pub amount: Option<Amount>,
+    pub amount: Option<Amount>, //4
     /// 场景信息
-    pub scene_info: Option<SceneInfo>,
+    pub scene_info: Option<SceneInfo>, //7 
     /// 优惠功能，享受优惠时返回该字段。
-    pub promotion_detail: Option<PromotionDetail>,
+    #[serde(default)]
+    pub promotion_detail: Vec<Option<PromotionDetail>>, // 8
 
 
 
     /// 货币类型，符合ISO 4217标准的三位字母代码，默认人民币：CNY，其他值列表详见货币类型
+    #[serde(default)]
     pub fee_type: Option<String>,
     /// 订单金额
+    #[serde(default)]
     pub total_fee: i64,
     /// 应结订单金额=订单金额-非充值代金券金额，应结订单金额<=订单金额。
+    #[serde(default)]
     pub settlement_total_fee: Option<i64>,
     /// “代金券”金额<=订单金额，订单金额-“代金券”金额=现金支付金额，详见支付金额
+    #[serde(default)]
     pub coupon_fee: Option<i64>,
     /// 代金券使用数量
+    #[serde(default)]
     pub coupon_count: Option<i64>,
     /// 现金支付金额订单现金支付金额，详见支付金额
+    #[serde(default)]
     pub cash_fee: i64,
     /// 货币类型，符合ISO 4217标准的三位字母代码，默认人民币：CNY，其他值列表详见货币类型
+    #[serde(default)]
     pub cash_fee_type: Option<String>,
 }
 
