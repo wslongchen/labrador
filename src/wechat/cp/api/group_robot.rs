@@ -15,7 +15,7 @@ pub struct WechatCpGroupRobot<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatCpGroupRobot<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatCpClient<T>) -> WechatCpGroupRobot<T> {
+    pub fn new(client: &WechatCpClient<T>) -> WechatCpGroupRobot<'_, T> {
         WechatCpGroupRobot {
             client,
         }
@@ -133,14 +133,14 @@ impl<'a, T: SessionStore> WechatCpGroupRobot<'a, T> {
 //----------------------------------------------------------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WechatCpMenuInfo {
+pub struct WechatCpBootMenuInfo {
     /// 企业编号
-    pub buttons: Vec<WechatCpMenuButton>,
-    pub match_rule: Option<WechatCpMenuRule>,
+    pub buttons: Vec<WechatCpBootMenuButton>,
+    pub match_rule: Option<WechatCpBootMenuRule>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WechatCpMenuButton {
+pub struct WechatCpBootMenuButton {
     /// <pre>
     /// 菜单的响应动作类型.
     /// view表示网页类型，
@@ -182,12 +182,12 @@ pub struct WechatCpMenuButton {
     /// miniprogram类型必须
     /// </pre>
     pub pagepath: Option<String>,
-    pub sub_button: Vec<WechatCpMenuButton>,
+    pub sub_button: Vec<WechatCpBootMenuButton>,
 }
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WechatCpMenuRule {
+pub struct WechatCpBootMenuRule {
     pub tag_id: Option<String>,
     pub sex: Option<String>,
     pub province: Option<String>,

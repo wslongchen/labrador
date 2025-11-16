@@ -19,7 +19,7 @@ pub struct WechatMaMedia<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatMaMedia<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatMaClient<T>) -> WechatMaMedia<T> {
+    pub fn new(client: &WechatMaClient<T>) -> WechatMaMedia<'_, T> {
         WechatMaMedia {
             client,
         }

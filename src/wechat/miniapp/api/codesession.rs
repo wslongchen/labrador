@@ -15,7 +15,7 @@ pub struct WechatMaCodeSession<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatMaCodeSession<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatMaClient<T>) -> WechatMaCodeSession<T> {
+    pub fn new(client: &WechatMaClient<T>) -> WechatMaCodeSession<'_, T> {
         WechatMaCodeSession {
             client,
         }

@@ -14,7 +14,7 @@ pub struct WechatMpSubscribeMessage<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatMpSubscribeMessage<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatMpClient<T>) -> WechatMpSubscribeMessage<T> {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpSubscribeMessage<'_, T> {
         WechatMpSubscribeMessage {
             client,
         }

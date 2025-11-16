@@ -31,7 +31,7 @@ pub struct WechatMpClient<T: SessionStore> {
 
 #[allow(unused)]
 #[derive(Serialize, Deserialize)]
-pub struct AccessTokenResponse{
+pub struct MpAccessTokenResponse{
     pub access_token: String,
     pub expires_in: i64,
 }
@@ -122,7 +122,7 @@ impl<T: SessionStore> WechatMpClient<T> {
                 (SECRET.to_string(), self.client.secret.to_string()),
             ]).method(Method::Get).req_type(RequestType::Json);
             let v = self.client.request(req).await?.json::<Value>()?;
-            let res = WechatCommonResponse::parse::<AccessTokenResponse>(v)?;
+            let res = WechatCommonResponse::parse::<MpAccessTokenResponse>(v)?;
             let token = res.access_token;
             let expires_in = res.expires_in;
             // 预留200秒的时间
@@ -299,52 +299,52 @@ impl<T: SessionStore> WechatMpClient<T> {
     }
 
     /// 用户相关服务
-    pub fn user(&self) -> WechatMpUser<T> {
+    pub fn user(&self) -> WechatMpUser<'_, T> {
         WechatMpUser::new(self)
     }
 
     /// Oauth2授权相关服务
-    pub fn oauth2(&self) -> WechatMpOauth2<T> {
+    pub fn oauth2(&self) -> WechatMpOauth2<'_, T> {
         WechatMpOauth2::new(self)
     }
 
     /// qrcode相关服务
-    pub fn qrcode(&self) -> WechatMpQRCode<T> {
+    pub fn qrcode(&self) -> WechatMpQRCode<'_, T> {
         WechatMpQRCode::new(self)
     }
 
     /// 客服相关服务
-    pub fn custom_service(&self) -> WechatMpCustomService<T> {
+    pub fn custom_service(&self) -> WechatMpCustomService<'_, T> {
         WechatMpCustomService::new(self)
     }
 
     /// 菜单相关服务
-    pub fn menu(&self) -> WechatMpMenu<T> {
+    pub fn menu(&self) -> WechatMpMenu<'_, T> {
         WechatMpMenu::new(self)
     }
 
     /// 多媒体服务
-    pub fn media(&self) -> WechatMpMedia<T> {
+    pub fn media(&self) -> WechatMpMedia<'_, T> {
         WechatMpMedia::new(self)
     }
 
     /// 模板消息服务
-    pub fn template_msg(&self) -> WechatMpTemplateMessage<T> {
+    pub fn template_msg(&self) -> WechatMpTemplateMessage<'_, T> {
         WechatMpTemplateMessage::new(self)
     }
 
     /// 订阅消息服务
-    pub fn subscribe_msg(&self) -> WechatMpSubscribeMessage<T> {
+    pub fn subscribe_msg(&self) -> WechatMpSubscribeMessage<'_, T> {
         WechatMpSubscribeMessage::new(self)
     }
 
     /// Wifi服务
-    pub fn wifi(&self) -> WechatMpWifi<T> {
+    pub fn wifi(&self) -> WechatMpWifi<'_, T> {
         WechatMpWifi::new(self)
     }
 
     /// OCR服务
-    pub fn ocr(&self) -> WechatMpOcr<T> {
+    pub fn ocr(&self) -> WechatMpOcr<'_, T> {
         WechatMpOcr::new(self)
     }
 

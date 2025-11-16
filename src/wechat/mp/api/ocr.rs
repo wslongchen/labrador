@@ -20,7 +20,7 @@ pub struct WechatMpOcr<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatMpOcr<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatMpClient<T>) -> WechatMpOcr<T> {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpOcr<'_, T> {
         WechatMpOcr {
             client,
         }

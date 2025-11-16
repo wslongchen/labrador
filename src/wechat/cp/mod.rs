@@ -38,7 +38,7 @@ pub struct WechatCpClient<T: SessionStore> {
 
 #[allow(unused)]
 #[derive(Serialize, Deserialize)]
-pub struct AccessTokenResponse{
+pub struct CpAccessTokenResponse{
     pub access_token: String,
     pub expires_in: i64,
 }
@@ -144,7 +144,7 @@ impl<T: SessionStore> WechatCpClient<T> {
                 (CORPID.to_string(), self.corp_id.to_string()),
                 (CORPSECRET.to_string(), self.corp_secret.to_string()),
             ]).method(Method::Get).req_type(RequestType::Json);
-            let res = self.client.request(req).await?.json::<AccessTokenResponse>()?;
+            let res = self.client.request(req).await?.json::<CpAccessTokenResponse>()?;
             let token = res.access_token;
             let expires_in = res.expires_in;
             // 预留200秒的时间
@@ -338,57 +338,57 @@ impl<T: SessionStore> WechatCpClient<T> {
     }
 
     /// codesssion相关服务
-    pub fn code_session(&self) -> WechatCpCodeSession<T> {
+    pub fn code_session(&self) -> WechatCpCodeSession<'_, T> {
         WechatCpCodeSession::new(self)
     }
 
     /// 媒体操作接口
-    pub fn media(&self) -> WechatCpMedia<T> {
+    pub fn media(&self) -> WechatCpMedia<'_, T> {
         WechatCpMedia::new(self)
     }
 
     /// 自建应用
-    pub fn agent(&self) -> WechatCpAgent<T> {
+    pub fn agent(&self) -> WechatCpAgent<'_, T> {
         WechatCpAgent::new(self)
     }
 
     /// 部门
-    pub fn department(&self) -> WechatCpDepartment<T> {
+    pub fn department(&self) -> WechatCpDepartment<'_, T> {
         WechatCpDepartment::new(self)
     }
 
     /// 外部联系人
-    pub fn external_contact(&self) -> WechatCpExternalContact<T> {
+    pub fn external_contact(&self) -> WechatCpExternalContact<'_, T> {
         WechatCpExternalContact::new(self)
     }
 
     /// 群机器人
-    pub fn group_robot(&self) -> WechatCpGroupRobot<T> {
+    pub fn group_robot(&self) -> WechatCpGroupRobot<'_, T> {
         WechatCpGroupRobot::new(self)
     }
 
     /// 菜单
-    pub fn menu(&self) -> WechatCpMenu<T> {
+    pub fn menu(&self) -> WechatCpMenu<'_, T> {
         WechatCpMenu::new(self)
     }
 
     /// 消息
-    pub fn message(&self) -> WechatCpMessage<T> {
+    pub fn message(&self) -> WechatCpMessage<'_, T> {
         WechatCpMessage::new(self)
     }
 
     /// 认证
-    pub fn oauth2(&self) -> WechatCpOauth2<T> {
+    pub fn oauth2(&self) -> WechatCpOauth2<'_, T> {
         WechatCpOauth2::new(self)
     }
 
     /// 标签
-    pub fn tag(&self) -> WechatCpTag<T> {
+    pub fn tag(&self) -> WechatCpTag<'_, T> {
         WechatCpTag::new(self)
     }
 
     /// 用户
-    pub fn user(&self) -> WechatCpUser<T> {
+    pub fn user(&self) -> WechatCpUser<'_, T> {
         WechatCpUser::new(self)
     }
 

@@ -580,7 +580,7 @@ impl <T: SessionStore> AlipayClient<T> {
             }
             let key = self.encrypt_key.to_owned().unwrap_or_default();
             let prp = PrpCrypto::new(key.into_bytes());
-            let encrypt_content = prp.aes_128_cbc_encrypt_data(biz_content, Some(&get_nonce_str()))?;
+            let encrypt_content = prp.aes_128_cbc_encrypt_data(biz_content, Some(get_nonce_str().into_bytes()))?;
             let encrypt_content = String::from_utf8_lossy(&encrypt_content).to_string();
             app_params.insert(constants::BIZ_CONTENT_KEY.to_string(), encrypt_content);
         }

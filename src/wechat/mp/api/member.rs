@@ -17,7 +17,7 @@ pub struct WechatMpMember<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatMpMember<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatMpClient<T>) -> WechatMpMember<T> {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpMember<'_, T> {
         WechatMpMember {
             client,
         }
@@ -26,7 +26,7 @@ impl<'a, T: SessionStore> WechatMpMember<'a, T> {
     /// <pre>
     /// 会员卡创建接口
     /// </pre>
-    pub async fn create_member_card_custom<D: Serialize>(&self, req: D) -> LabradorResult<WechatMpCardCreateResponse> {
+    pub async fn create_member_card_custom<D: Serialize>(&self, req: D) -> LabradorResult<WechatMpMemberCardCreateResponse> {
         let v = serde_json::to_value(req)?;
         let req = serde_json::from_value::<WechatMpMemberCardCreateRequest>(v)?;
         self.create_member_card(req).await
@@ -35,10 +35,10 @@ impl<'a, T: SessionStore> WechatMpMember<'a, T> {
     /// <pre>
     /// 会员卡创建接口
     /// </pre>
-    pub async fn create_member_card(&self, req: WechatMpMemberCardCreateRequest) -> LabradorResult<WechatMpCardCreateResponse> {
+    pub async fn create_member_card(&self, req: WechatMpMemberCardCreateRequest) -> LabradorResult<WechatMpMemberCardCreateResponse> {
         req.valid_check()?;
         let v = self.client.post(WechatMpMethod::MemberCard(MpMemeberCardMethod::Create), vec![], req, RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<WechatMpCardCreateResponse>(v)
+        WechatCommonResponse::parse::<WechatMpMemberCardCreateResponse>(v)
     }
 
     /// <pre>
@@ -659,7 +659,7 @@ pub struct DateInfo {
 
 /// 使用日期，有效期的信息.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WechatMpCardCreateResponse {
+pub struct WechatMpMemberCardCreateResponse {
     pub card_id: String,
 }
 

@@ -14,7 +14,7 @@ pub struct WechatMpOauth2<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatMpOauth2<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatMpClient<T>) -> WechatMpOauth2<T> {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpOauth2<'_, T> {
         WechatMpOauth2 {
             client,
         }

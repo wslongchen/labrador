@@ -14,7 +14,7 @@ pub struct WechatCpMessage<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatCpMessage<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatCpClient<T>) -> WechatCpMessage<T> {
+    pub fn new(client: &WechatCpClient<T>) -> WechatCpMessage<'_, T> {
         WechatCpMessage {
             client,
         }
@@ -297,12 +297,12 @@ pub struct MultipleSelect {
 /// 应用消息发送统计信息
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WechatCpMessageSendStatistics {
-    pub statistics: Option<Vec<StatisticItem>>,
+    pub statistics: Option<Vec<MessageStatisticItem>>,
 }
 
 /// 应用消息发送统计信息
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct StatisticItem {
+pub struct MessageStatisticItem {
     /// 应用名
     pub app_name: Option<String>,
     /// 应用id

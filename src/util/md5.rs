@@ -1,8 +1,8 @@
 
-//! 
+//!
 //! MD5加密类
 //!
-use std::ops::Deref;
+
 
 #[allow(unused)]
 static SALT: &'static str = "labrador";
@@ -28,6 +28,7 @@ pub fn md5<S:Into<String>>(input: S) -> String {
 
     #[cfg(not(feature = "openssl-crypto"))]
     fn crypto_md5(input: String) -> String {
+        use std::ops::Deref;
         let mut input_salt: String = String::new();
         input_salt.push_str(input.as_str());
         let result = md5::compute(input_salt.as_bytes());

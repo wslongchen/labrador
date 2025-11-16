@@ -16,7 +16,7 @@ pub struct WechatMpUser<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatMpUser<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatMpClient<T>) -> WechatMpUser<T> {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpUser<'_, T> {
         WechatMpUser {
             client,
         }

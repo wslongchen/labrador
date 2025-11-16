@@ -13,7 +13,7 @@ pub struct WechatCpTpTag<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatCpTpTag<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatCpTpClient<T>) -> WechatCpTpTag<T> {
+    pub fn new(client: &WechatCpTpClient<T>) -> WechatCpTpTag<'_, T> {
         WechatCpTpTag {
             client,
         }
