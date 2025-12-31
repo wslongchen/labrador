@@ -24,7 +24,7 @@ cfg_if! {if #[cfg(not(feature = "openssl-crypto"))]{
         generic_array::GenericArray,
     };
     use aes_gcm::AeadInPlace;
-    use block_modes::{BlockMode, Cbc, Ecb, Cfb};
+    use block_modes::{BlockMode, Cbc, Ecb};
     use hmac::Mac;
     use sha1::Digest;
 }}
