@@ -353,7 +353,8 @@ impl <T> LabraRequest <T> where T: Serialize {
                 request = request.header(k, HeaderValue::from_str(v)?);
             }
         }
-        tracing::info!("[请求第三方接口参数] url: {}, data:{}", http_url.as_str(), data);
+        
+        tracing::info!("[请求第三方接口参数] url: {}, \n headers:{:?},\n data:{}", http_url.as_str(), &self.headers, data);
         let result = request.send().await?;
         let status = result.status();
         let remote_addr = result.remote_addr();

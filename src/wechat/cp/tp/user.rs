@@ -15,7 +15,7 @@ pub struct WechatCpTpUser<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatCpTpUser<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatCpTpClient<T>) -> WechatCpTpUser<T> {
+    pub fn new(client: &WechatCpTpClient<T>) -> WechatCpTpUser<'_, T> {
         WechatCpTpUser {
             client,
         }
@@ -188,9 +188,9 @@ impl<'a, T: SessionStore> WechatCpTpUser<'a, T> {
     /// 第三方应用需拥有“企业客户”权限。
     /// 第三方应用调用时，返回的跟进人follow_user仅包含应用可见范围之内的成员。
     /// </pre>
-    pub async fn get_external_contact(&self, userid: &str) -> LabradorResult<WechatCpUserExternalContactInfo> {
+    pub async fn get_external_contact(&self, userid: &str) -> LabradorResult<WechatCpTpUserExternalContactInfo> {
         let v = self.client.get(WechatCpMethod::User(CpUserMethod::GetExternalContact(userid.to_string())), vec![],RequestType::Json).await?.json::<Value>()?;
-        WechatCommonResponse::parse::<WechatCpUserExternalContactInfo>(v)
+        WechatCommonResponse::parse::<WechatCpTpUserExternalContactInfo>(v)
     }
 }
 
@@ -209,7 +209,7 @@ pub struct WxCpTpUseridToOpenidResponse {
 }
 /// 外部联系人详情
 #[derive(Debug, Clone,Serialize, Deserialize)]
-pub struct WechatCpUserExternalContactInfo {
+pub struct WechatCpTpUserExternalContactInfo {
     pub external_contact: Option<ExternalContact>,
     pub follow_user: Option<FollowedUser>,
 }

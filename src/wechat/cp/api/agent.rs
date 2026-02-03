@@ -14,7 +14,7 @@ pub struct WechatCpAgent<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatCpAgent<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatCpClient<T>) -> WechatCpAgent<T> {
+    pub fn new(client: &WechatCpClient<T>) -> WechatCpAgent<'_, T> {
         WechatCpAgent {
             client,
         }

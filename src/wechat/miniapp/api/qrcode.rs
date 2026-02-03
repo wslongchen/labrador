@@ -20,7 +20,7 @@ pub struct WechatMaQrcode<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatMaQrcode<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatMaClient<T>) -> WechatMaQrcode<T> {
+    pub fn new(client: &WechatMaClient<T>) -> WechatMaQrcode<'_, T> {
         WechatMaQrcode {
             client,
         }

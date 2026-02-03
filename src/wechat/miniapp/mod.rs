@@ -137,24 +137,24 @@ impl<T: SessionStore> WechatMaClient<T> {
     }
 
     /// codesssion相关服务
-    pub fn code_session(&self) -> WechatMaCodeSession<T> {
+    pub fn code_session(&self) -> WechatMaCodeSession<'_, T> {
         WechatMaCodeSession::new(self)
     }
 
     /// 二维码相关操作接口
-    pub fn qrcode(&self) -> WechatMaQrcode<T> {
+    pub fn qrcode(&self) -> WechatMaQrcode<'_, T> {
         WechatMaQrcode::new(self)
     }
     /// 用户相关操作接口
-    pub fn user(&self) -> WechatMaUser<T> {
+    pub fn user(&self) -> WechatMaUser<'_, T> {
         WechatMaUser::new(self)
     }
     /// 媒体操作接口
-    pub fn media(&self) -> WechatMaMedia<T> {
+    pub fn media(&self) -> WechatMaMedia<'_, T> {
         WechatMaMedia::new(self)
     }
     /// 媒体操作接口
-    pub fn message(&self) -> WechatMaMessage<T> {
+    pub fn message(&self) -> WechatMaMessage<'_, T> {
         WechatMaMessage::new(self)
     }
 

@@ -5,7 +5,7 @@ use serde_json::{json, Value};
 use crate::{session::SessionStore, request::{RequestType}, WechatCommonResponse, LabradorResult, WechatCrypto, current_timestamp, LabraError, JsapiTicket, JsapiSignature, get_timestamp, get_nonce_str, APIClient, WechatRequest, LabraResponse, LabraRequest, SimpleStorage, WechatCpProviderToken};
 use crate::wechat::cp::constants::{ACCESS_TOKEN, ACCESS_TOKEN_KEY, AGENT_CONFIG, AUTH_URL_INSTALL, PROVIDER_ACCESS_TOKEN, SUITE_ACCESS_TOKEN, TYPE};
 use crate::wechat::cp::method::WechatCpMethod;
-use crate::wechat::cp::AccessTokenResponse;
+use crate::wechat::cp::CpAccessTokenResponse;
 
 mod tag;
 mod license;
@@ -285,14 +285,14 @@ impl<T: SessionStore> WechatCpTpClient<T> {
     /// <pre>
     /// 获取企业凭证
     /// </pre>
-    pub async fn get_corp_token(&self, auth_corpid: &str, permanent_code: &str) -> LabradorResult<AccessTokenResponse> {
+    pub async fn get_corp_token(&self, auth_corpid: &str, permanent_code: &str) -> LabradorResult<CpAccessTokenResponse> {
         self.get_corp_token_force(auth_corpid, permanent_code, false).await
     }
 
     /// <pre>
     /// 获取企业凭证, 支持强制刷新
     /// </pre>
-    pub async fn get_corp_token_force(&self, auth_corpid: &str, permanent_code: &str, force_refresh: bool) -> LabradorResult<AccessTokenResponse> {
+    pub async fn get_corp_token_force(&self, auth_corpid: &str, permanent_code: &str, force_refresh: bool) -> LabradorResult<CpAccessTokenResponse> {
         let session = self.client.session();
         let token_key = format!("{}_corp_access_token_cp", auth_corpid);
         let expires_key = format!("{}_corp_access_token_expires_at_cp", auth_corpid);
@@ -306,7 +306,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
                 "permanent_code": permanent_code,
             });
             let v = self.client.post(WechatCpMethod::GetCorpToken, vec![], req, RequestType::Json).await?.json::<Value>()?;
-            let result = WechatCommonResponse::parse::<AccessTokenResponse>(v)?;
+            let result = WechatCommonResponse::parse::<CpAccessTokenResponse>(v)?;
             let token = result.access_token.to_string();
             let expires_in = result.expires_in;
             // 预留200秒的时间
@@ -315,7 +315,7 @@ impl<T: SessionStore> WechatCpTpClient<T> {
             session.set(&expires_key, expires_at, Some(expires_in as usize));
             Ok(result)
         } else {
-            Ok(AccessTokenResponse { access_token: token.to_string(), expires_in: expires_at })
+            Ok(CpAccessTokenResponse { access_token: token.to_string(), expires_in: expires_at })
         }
     }
 
@@ -535,42 +535,42 @@ impl<T: SessionStore> WechatCpTpClient<T> {
     }
 
     /// 部门
-    pub fn department(&self) -> WechatCpTpDepartment<T> {
+    pub fn department(&self) -> WechatCpTpDepartment<'_, T> {
         WechatCpTpDepartment::new(self)
     }
 
     /// 接口调用许可
-    pub fn license(&self) -> WechatCpTpLicense<T> {
+    pub fn license(&self) -> WechatCpTpLicense<'_, T> {
         WechatCpTpLicense::new(self)
     }
 
     /// 媒体
-    pub fn media(&self) -> WechatCpTpMedia<T> {
+    pub fn media(&self) -> WechatCpTpMedia<'_, T> {
         WechatCpTpMedia::new(self)
     }
 
     /// 订单
-    pub fn order(&self) -> WechatCpTpOrder<T> {
+    pub fn order(&self) -> WechatCpTpOrder<'_, T> {
         WechatCpTpOrder::new(self)
     }
 
     /// 标签
-    pub fn tag(&self) -> WechatCpTpTag<T> {
+    pub fn tag(&self) -> WechatCpTpTag<'_, T> {
         WechatCpTpTag::new(self)
     }
 
     /// 用户
-    pub fn user(&self) -> WechatCpTpUser<T> {
+    pub fn user(&self) -> WechatCpTpUser<'_, T> {
         WechatCpTpUser::new(self)
     }
 
     /// 第三方应用
-    pub fn agent(&self) -> WechatCpTpAgent<T> {
+    pub fn agent(&self) -> WechatCpTpAgent<'_, T> {
         WechatCpTpAgent::new(self)
     }
 
     /// 身份
-    pub fn auth(&self) -> WechatCpTpAuth<T> {
+    pub fn auth(&self) -> WechatCpTpAuth<'_, T> {
         WechatCpTpAuth::new(self)
     }
 }

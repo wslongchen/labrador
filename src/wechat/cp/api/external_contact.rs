@@ -15,7 +15,7 @@ pub struct WechatCpExternalContact<'a, T: SessionStore> {
 #[allow(unused)]
 impl<'a, T: SessionStore> WechatCpExternalContact<'a, T> {
     #[inline]
-    pub fn new(client: &WechatCpClient<T>) -> WechatCpExternalContact<T> {
+    pub fn new(client: &WechatCpClient<T>) -> WechatCpExternalContact<'_, T> {
         WechatCpExternalContact {
             client,
         }
@@ -750,7 +750,7 @@ pub struct ExternalContact {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExternalProfile {
     pub external_corp_name: Option<String>,
-    pub external_attr: Option<ExternalAttribute>,
+    pub external_attr: Option<ExternalContactAttribute>,
     pub wechat_channels: Option<WechatChannel>,
 }
 
@@ -762,7 +762,7 @@ pub struct WechatChannel {
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ExternalAttribute {
+pub struct ExternalContactAttribute {
     #[serde(rename = "type")]
     pub r#type: Option<u8>,
     pub name: Option<String>,
@@ -1103,11 +1103,11 @@ pub struct Behavior {
 pub struct WechatCpUserExternalGroupChatStatistic {
     pub total: Vec<u64>,
     pub next_offset: Vec<u64>,
-    pub items: Vec<StatisticItem>,
+    pub items: Vec<ExternalStatisticItem>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct StatisticItem {
+pub struct ExternalStatisticItem {
     pub owner: Option<String>,
     pub data: Option<ItemData>,
 }

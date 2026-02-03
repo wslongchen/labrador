@@ -13,7 +13,7 @@ pub struct WechatCpTpAuth<'a, T: SessionStore> {
 #[allow(unused)]
 impl<'a, T: SessionStore> WechatCpTpAuth<'a, T> {
     #[inline]
-    pub fn new(client: &WechatCpTpClient<T>) -> WechatCpTpAuth<T> {
+    pub fn new(client: &WechatCpTpClient<T>) -> WechatCpTpAuth<'_, T> {
         WechatCpTpAuth {
             client,
         }

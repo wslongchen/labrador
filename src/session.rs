@@ -436,7 +436,7 @@ pub mod redis_store {
             }
         }
 
-        fn get_connect(&self) -> RedisPool {
+        pub fn get_connect(&self) -> RedisPool {
             let pool = self.client_pool.to_owned();
             pool
         }
@@ -448,8 +448,7 @@ pub mod redis_store {
             if !client.check_connection() {
                 return Err(LabraError::ApiError("error to get redis connection".to_string()))
             }
-            let s = client.del(key.as_ref())?;
-            Ok(())
+            client.del(key.as_ref()).map_err(LabraError::from)
         }
 
         pub fn zlcount<K: AsRef<str>, M: ToRedisArgs, MM: ToRedisArgs, RV: FromRedisValue>(&self, key: K, min: M, max: MM) -> LabradorResult<RV> {
@@ -888,12 +887,10 @@ pub mod redis_store {
                 return Err(LabraError::ApiError("error to get redis connection".to_string()))
             }
             if let Some(seconds) = ttl {
-                let _ = client.set_ex(key, value.to_store(), seconds)?;
+                client.set_ex(key, value.to_store(), seconds).map_err(LabraError::from)
             } else {
-                let _ = client.set(key, value.to_store())?;
+                client.set(key, value.to_store()).map_err(LabraError::from)
             }
-
-            Ok(())
         }
     }
 }

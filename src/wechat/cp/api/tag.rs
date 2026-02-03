@@ -14,7 +14,7 @@ pub struct WechatCpTag<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatCpTag<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatCpClient<T>) -> WechatCpTag<T> {
+    pub fn new(client: &WechatCpClient<T>) -> WechatCpTag<'_, T> {
         WechatCpTag {
             client,
         }
@@ -147,7 +147,7 @@ pub struct WechatCpUserInfo {
     pub qr_code: Option<u8>,
     pub positions: Option<Vec<String>>,
     /// 成员对外信息
-    pub external_attrs: Option<Vec<ExternalAttribute>>,
+    pub external_attrs: Option<Vec<ExternalTagAttribute>>,
     pub external_position: Option<String>,
     pub external_corp_name: Option<String>,
     pub direct_leader: Option<Vec<String>>,
@@ -156,7 +156,7 @@ pub struct WechatCpUserInfo {
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ExternalAttribute {
+pub struct ExternalTagAttribute {
     /// 属性类型: 0-本文 1-网页 2-小程序.
     #[serde(rename = "type")]
     pub r#type: Option<u8>,

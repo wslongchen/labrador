@@ -15,7 +15,7 @@ pub struct WechatCpTpLicense<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatCpTpLicense<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatCpTpClient<T>) -> WechatCpTpLicense<T> {
+    pub fn new(client: &WechatCpTpClient<T>) -> WechatCpTpLicense<'_, T> {
         WechatCpTpLicense {
             client,
         }

@@ -605,7 +605,7 @@ pub struct AlipayTradePayModel {
     /// 结算信息、
     /// json格式，详见结算参数说明。
     /// 直付通模式下必传。
-    pub settle_info: Option<SettleInfo>,
+    pub settle_info: Option<AlipaySettleInfo>,
     /// 二级商户信息。
     /// 直付通模式和机构间连模式下必传，其它场景下不需要传入。。
     pub sub_merchant: Option<SubMerchantInfo>,
@@ -934,7 +934,7 @@ pub struct AlipayTradePrecreateModel {
     /// 结算信息、
     /// json格式，详见结算参数说明。
     /// 直付通模式下必传。
-    pub settle_info: Option<SettleInfo>,
+    pub settle_info: Option<AlipaySettleInfo>,
     /// 订单包含的商品列表信息，json格式，其它说明详见商品明细说明
     pub goods_detail: Option<AlipayGoodsDetail>,
     /// 业务扩展参数
@@ -1134,7 +1134,7 @@ pub struct AlipayTradeCreateModel {
     /// 结算信息、
     /// json格式，详见结算参数说明。
     /// 直付通模式下必传。
-    pub settle_info: Option<SettleInfo>,
+    pub settle_info: Option<AlipaySettleInfo>,
     /// 订单包含的商品列表信息，json格式，其它说明详见商品明细说明
     pub goods_detail: Option<AlipayGoodsDetail>,
     /// 业务扩展参数
@@ -1304,7 +1304,7 @@ pub struct PromoParam {
 
 /// 外部指定买家
 #[derive(Debug, Serialize, Deserialize)]
-pub struct SettleInfo {
+pub struct AlipaySettleInfo {
     /// 结算详细信息，json数组，目前只支持一条。
     pub settle_detail_infos: Option<Vec<SettleDetailInfo>>,
     /// 该笔订单的超期自动确认结算时间，到达期限后，将自动确认结算。此字段只在签约账期结算模式时有效。取值范围：1d～365d。d-天。 该参数数值不接受小数点。

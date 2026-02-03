@@ -5,16 +5,7 @@ use base64;
 
 use std::iter::repeat;
 
-
-use aes::cipher::{
-    generic_array::GenericArray,
-};
-use aes_gcm::AeadInPlace;
-use block_modes::{BlockMode, Cbc, Ecb};
-use hmac::Mac;
-use sha1::Digest;
-
-use crate::{cfg_if, LabradorResult};
+use crate::{cfg_if, LabraError, LabradorResult};
 
 cfg_if! {if #[cfg(feature = "openssl-crypto")]{
     use openssl::hash::{MessageDigest};
@@ -29,6 +20,13 @@ cfg_if! {if #[cfg(not(feature = "openssl-crypto"))]{
     use rsa::pkcs8::DecodePrivateKey;
     use rsa::pkcs8::DecodePublicKey;
     use rsa::PublicKey;
+    use aes::cipher::{
+        generic_array::GenericArray,
+    };
+    use aes_gcm::AeadInPlace;
+    use block_modes::{BlockMode, Cbc, Ecb};
+    use hmac::Mac;
+    use sha1::Digest;
 }}
 
 #[allow(unused)]
@@ -37,7 +35,7 @@ pub enum HashType {
     Sha256
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq,Clone)]
 pub struct PrpCrypto {
     key: Vec<u8>,
 }
@@ -62,12 +60,12 @@ impl PrpCrypto {
     }
 
     /// # 加密消息(aes_128_cbc)
-    pub fn aes_128_cbc_encrypt_data(&self, plaintext: &str, iv_data: Option<&str>) -> LabradorResult<Vec<u8>> {
+    pub fn aes_128_cbc_encrypt_data(&self, plaintext: &str, iv_data: Option<Vec<u8>>) -> LabradorResult<Vec<u8>> {
         let wtr = plaintext.as_bytes();
         let key = &self.key;
         let mut iv = Vec::new();
         if let Some(v) = iv_data {
-            iv = base64::decode(v)?;
+            iv = v;
         } else {
             iv = self.key[..16].to_vec();
         }
@@ -91,10 +89,10 @@ impl PrpCrypto {
     }
 
     /// # 解密消息(aes_128_cbc)
-    pub fn aes_128_cbc_decrypt_data(&self, ciphertext: Vec<u8>, iv_data: Option<&str>) -> LabradorResult<Vec<u8>> {
+    pub fn aes_128_cbc_decrypt_data(&self, ciphertext: Vec<u8>, iv_data: Option<Vec<u8>>) -> LabradorResult<Vec<u8>> {
         let mut iv = Vec::new();
         if let Some(v) = iv_data {
-            iv = base64::decode(v)?;
+            iv = v;
         } else {
             iv = self.key[..16].to_vec();
         }
@@ -274,7 +272,6 @@ impl PrpCrypto {
             let mut verifier = Verifier::new(MessageDigest::sha256(), &pkey)?;
             verifier.update(content)?;
             let ver = verifier.verify(sig)?;
-            println!("ver:{}", ver);
             Ok(ver)
         }
 
@@ -346,9 +343,62 @@ impl PrpCrypto {
         sign(key, message)
     }
 
+    pub fn hmac_sha256_verify(&self, content: &str, sign: &str) -> LabradorResult<bool> {
+        let key = &self.key;
+        let sig = hex::decode(sign)?;
+        let content = content.as_bytes();
+
+        #[cfg(feature = "openssl-crypto")]
+        fn verify(sig: &[u8], key: &[u8], content: &[u8]) -> LabradorResult<bool> {
+            // 获取公钥对象
+            let pkey = PKey::hmac(key)?;
+            // 对摘要进行签名
+            let mut verifier = Verifier::new(MessageDigest::sha256(), &pkey)?;
+            verifier.update(content)?;
+            let ver = verifier.verify(sig)?;
+            Ok(ver)
+        }
+
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn verify(sig: &[u8], key: &[u8], content: &[u8]) -> LabradorResult<bool> {
+            type HmacSha256 = hmac::Hmac<sha2::Sha256>;
+
+            let mut mac = HmacSha256::new_from_slice(key)?;
+            mac.update(content);
+            let result = mac.verify_slice(sig).map_err(|err| crate::LabraError::RequestError(err.to_string()))?;
+            Ok(true)
+        }
+        verify(&sig, key, content)
+    }
+
     pub fn hmac_sha1_sign(&self, message: &str) -> LabradorResult<Vec<u8>> {
         let key = &self.key;
         let message = message.as_bytes();
+
+        #[cfg(feature = "openssl-crypto")]
+        fn sign(key: &[u8], message: &[u8]) -> LabradorResult<Vec<u8>> {
+            let pkey = PKey::hmac(key)?;
+            let mut signer = Signer::new(MessageDigest::sha1(), &pkey)?;
+            signer.update(message)?;
+            let result = signer.sign_to_vec()?;
+            Ok(result)
+        }
+
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn sign(key: &[u8], message: &[u8]) -> LabradorResult<Vec<u8>> {
+            type HmacSha1 = hmac::Hmac<sha1::Sha1>;
+
+            let mut mac = HmacSha1::new_from_slice(key)?;
+            mac.update(message);
+            let result = mac.finalize();
+            Ok(result.into_bytes().to_vec())
+        }
+
+        sign(key, message)
+    }
+
+    pub fn hmac_sha1(&self, data: &[u8]) -> LabradorResult<Vec<u8>> {
+        let key = &self.key;
 
         #[cfg(feature = "openssl-crypto")]
         fn sign(key: &[u8], message: &[u8]) -> LabradorResult<Vec<u8>> {
@@ -370,7 +420,7 @@ impl PrpCrypto {
             Ok(result.into_bytes().to_vec())
         }
 
-        sign(key, message)
+        sign(key, data)
     }
 
     /// # 加密(aes_256_gcm)
@@ -467,6 +517,61 @@ impl PrpCrypto {
         let data = decrypt(key, data)?;
         Ok(String::from_utf8(data).unwrap_or_default())
     }
+
+    /// # 加密(aes_128_cfb)
+    pub fn aes_128_cfb_encrypt(&self, data: &[u8]) -> LabradorResult<Vec<u8>> {
+        if self.key.len() != 16 {
+            return Err(LabraError::InvalidSignature("AES-128 需要 16 字节的 key".to_string()));
+        }
+        let key = &self.key;
+        let iv = key;
+
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn encrypt(key: &[u8], iv: &[u8], data: &[u8]) -> LabradorResult<Vec<u8>> {
+            use cfb_mode::Cfb;
+            use cfb_mode::cipher::{NewCipher, AsyncStreamCipher};
+            type AesCfb = Cfb<aes::Aes128>;
+            let mut buffer = data.to_vec();
+            AesCfb::new_from_slices(key, iv)?.encrypt(&mut buffer);
+            Ok(buffer)
+        }
+
+        #[cfg(feature = "openssl-crypto")]
+        fn encrypt(key: &[u8], iv: &[u8], data: &[u8]) -> LabradorResult<Vec<u8>> {
+            let cipher = symm::Cipher::aes_128_cfb128();
+            let encrypted = symm::encrypt(cipher, key, Some(iv), data)?;
+            Ok(encrypted)
+        }
+
+        encrypt(key, iv, data)
+    }
+
+    /// # 解密(aes_128_cfb)
+    pub fn aes_128_cfb_decrypt(&self, data: &[u8]) -> LabradorResult<String> {
+        if self.key.len() != 16 {
+            return Err(LabraError::InvalidSignature("AES-128 需要 16 字节的 key".to_string()));
+        }
+        let key = &self.key;
+        let iv = key;
+
+        #[cfg(feature = "openssl-crypto")]
+        fn decrypt(key: &[u8], iv: &[u8], data: &[u8]) -> LabradorResult<Vec<u8>> {
+            let cipher = symm::Cipher::aes_128_cfb128();
+            let decrypted = symm::decrypt(cipher, key, Some(iv), data)?;
+            Ok(decrypted)
+        }
+        #[cfg(not(feature = "openssl-crypto"))]
+        fn decrypt(key: &[u8], iv: &[u8], data: &[u8]) -> LabradorResult<Vec<u8>> {
+            use cfb_mode::Cfb;
+            use cfb_mode::cipher::{NewCipher, AsyncStreamCipher};
+            type AesCfb = Cfb<aes::Aes128>;
+            let mut buffer = data.to_vec();
+            AesCfb::new_from_slices(key, iv)?.decrypt(&mut buffer);
+            Ok(buffer)
+        }
+        let data = decrypt(key, iv, data)?;
+        Ok(String::from_utf8(data).unwrap_or_default())
+    }
 }
 
 #[allow(unused, non_snake_case)]
@@ -496,10 +601,6 @@ mod tests {
         // assert_eq!("test", &decrypted);
     }
 
-    fn hex_to_bytes(raw_hex: &str) -> Vec<u8> {
-        raw_hex.from_hex().ok().unwrap()
-    }
-
     #[test]
     fn test_prpcrypto_decrypt_v3() {
         // let key = hex_to_bytes("feffe9928665731c6d6a8f9467308308");
@@ -526,9 +627,9 @@ mod tests {
         let iv= b"bb9ee5e44da1";
         // let plain_text= hex_to_bytes("d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39");
         let cipher_text_base64=base64::decode("WZnvm4CnxNuPUYLIAh3Kv2WJFivwhLA2/xGxhwNHh5j2XmhUn2ibLm1I/pU3XKw6YWYLY8RfHsRHVcY4ln0NUUsiqsmgUxELKjqPKY0dWZSwXtbVAMlK+rGQbrgoopn/gNurM6Sx0jOjzorg091J0GGkxn2hHSaJ6EUtbHAGB3Nx/PTLr2o1rzNvF/QWLGE+5bcGe5Yg85qshvoGATJSwNAlVmdCOV4fg583irGzg6u7MYAytZpBoyzA4yf+9AKrO3K5lQwF5G6ULPWXtTNuW4rrC8wPI5xdnLqKopo9gNDUqg+19DYDSYsUvztRU7wORNh0SVkZLTwhOmKzFM8oqDHDuvcRCrUjw52NT85BQIFtsJMHciiFL+pefsz1llxlDnjroRyqNAyXw0RvKJfff40M8Fw7mAWK5eINQLPZAi4f9Ws7vC3WZ9/WGjrPOQInn8oLxzb8c+Wn0HSAxfEBRBmGx8FQ0+MdAP5bHTn3KCVxBM8gdx5vfeNqzcnRPG6qTMwuf/NE4BdnqNsDk5o3ZyhMGxnDfoJ+9PophG5KtdaPYHDVj/18PzT0w4GttSdw/1pisSPeOKcQqpI3/sC3ndDO7uqieUUAhMCtLxFCn1spndDLr+ciUs3CWJYlBgATE8vOFzPjVN8ECV+UeGULjkjWGBm0yPG3znbBpkX5Zvei4eZml16/JZHTWVgAKHpaaoBNH6qLKqS4UdpAXZJEQLAXflRw+4RjyD8ZsERcOTutnycozb/sPxB8N3qWhTGb8EJ8DTYSCILYemSIDmefmPU+ChzdM1FDbePMpHv8wCC/+zfRSwl0VtWXCauazZ3+1J9dW8ThvTOwlXPuRvOXFwCX/bq8BI3DX619TnahNBKU3+EfcvGGDO6bI5LvPSPLAaf1MgPc31Ab4jP+s73y4vc5IYNuwMC+aKuPmaxrqPA6Lr7PAUEicem4mYiTOAeG4hQh2C9XSOKrocsNDaOgLRiUU53bNY9sBTEkxoOc5prYVV7azwPfR506fSec0fv5c7v58srSK9zpTKNNVKbLL76WCpQ453dwmyaYeJNVqYoslzEL+kcb6UZVwr/Kj9TJka5bYHQOBmTRJT7FUeawvu4kHWzWnlRUShNFkuoymJEA8SXYyPliJgBWl36HAWse3PNr63K+RoYe8VdtviQQ02Js2Bg2RcTAlaxSoKuQdFfraGh35gVeJYEbrIp3N5goxLc6oc+bE/uoQI+pgv6oNsNznotp7bPCY1hIOEdtgvxMAUnpiU5ZsiPGt/N5KVAvSZJMzbuql3p2LBZjY3aGsNsT+xfgMj9K1fsORHP8/zt+RoF3AasSnn66zWRlxGlptkH+HtNxfEefaHtZ3NwYNPwaKwn9hIF5EotIhgLRsbEL9PWJLBVDuaWcmoaYDTNzAUlpGAKvyh2e4U7j3VuxPDiwNmPC+ZG/2CSMuD3+GPJodA3wbkhiNP4TAitKgYC03i94HDj8i2Th5HvNuA+dap7LaZerV7A34DwCK4rwk2C6z8+TAhdqagv2q1rnvzVT/dUXkIz3YMNkowboTpc/VgENPgUGBM4TtUpdk+hSxx/L5q/C+uWt8U1rIxbu5JrN3dHlvF/WfaCHQZP8e2QC8bz/TSX/tzFIQ6o/QtFWlF8OGbbndoNgTe5xyS5AwlprmR9FWFzjim8JAKNKMTKTrW3U6TKSUxSD9m7sl08rD3pCk+1kkKiVEgcuVHPd985n1xr4Ex9Hr8pJBTDcbkzis+dvh+CajqgsrYas+Eq8NTM8pz004PcPfZZzuaLgjl0Z+l7ZschSCkzq54BRxfIcvwywqJUhtRmB6xccpCtln6AsC/FS+kcJdAYEnnuU5uoPmNCcf3n+jDL9UGbcNg5Nj/w92tyF5A==").unwrap();
-        let base64_cipher = cipher_text_base64.to_hex();
+        let base64_cipher = "".to_string();// cipher_text_base64.to_hex();
         println!("cipher_text:{}", &base64_cipher);
-        let cipher_text = hex_to_bytes(&base64_cipher);
+        let cipher_text = "".as_bytes().to_vec();//hex_to_bytes(&base64_cipher);
         let aad= b"certificate";
 
         let cipherdata_length = cipher_text.len() - 16;
@@ -576,18 +677,19 @@ mod tests {
 
     #[test]
     fn test_aes_128_ecb() {
-        let appId = "1ebc3d10ce15cf8cc601f60d3e84385c4d7acc9cc70fcd56dbbd969300c8f6082625cdd2cf66738f4635406a4c796bf7e1769d7ccfb468537ba211bdbf8fb13e09c343f52b1f5a47cab44126b61e338acc93b4cc12939a131f7b15a1af54be699dbb7ce3770aa8261af253d2aeac41c1c2db333d0052b48de4e58541bab56d98";
-        let key = base64::decode("4ChT08phkz59hquD795X7w==").unwrap();
-        let prp = PrpCrypto::new(key);
-        // println!("result:{}", prp.aes_128_cbc_decrypt_data(appId, "dsd2bb9ee5e44da1").unwrap());
-        // match prp.decrypt_data(encryptedData, iv) {
-        //     Ok(data) => {
-        //         println!("data:{}",data);
-        //     }
-        //     Err(err) => {
-        //         println!("err:{:?}",err);
-        //     }
-        // }
+        let encryptedData = "KdT2tYR95PQU+U5ZxaQn+dyNjRMqfiy2ZEzIA5HkQrQ=";
+        let iv = base64::encode("1qaz2wsx3edc4rfv");
+        let encryptedData = base64::decode(encryptedData).unwrap();
+        let key = "1qaz2wsx3edc4rfv";
+        let prp = PrpCrypto::new(key.as_bytes().to_owned().to_vec());
+        match prp.aes_128_cbc_decrypt_data(encryptedData, Some(&iv)) {
+            Ok(data) => {
+                println!("data:{}",String::from_utf8_lossy(&data));
+            }
+            Err(err) => {
+                println!("err:{:?}",err);
+            }
+        }
 
     }
 }

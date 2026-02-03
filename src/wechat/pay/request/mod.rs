@@ -79,7 +79,7 @@ pub struct WechatPayRequestV3 {
     pub scene_info: Option<SceneInfo>,
     /// 结算信息
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub settle_info: Option<SettleInfo>,
+    pub settle_info: Option<WechatSettleInfo>,
 }
 
 
@@ -122,7 +122,7 @@ pub struct IsvWechatPayRequestV3 {
     pub scene_info: Option<SceneInfo>,
     /// 结算信息
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub settle_info: Option<SettleInfo>,
+    pub settle_info: Option<WechatSettleInfo>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -141,7 +141,7 @@ pub struct Amount {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct SettleInfo {
+pub struct WechatSettleInfo {
     /// 是否指定分账
     pub profit_sharing: Option<bool>,
 }

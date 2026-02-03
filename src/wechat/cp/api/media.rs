@@ -20,7 +20,7 @@ pub struct WechatCpMedia<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatCpMedia<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatCpClient<T>) -> WechatCpMedia<T> {
+    pub fn new(client: &WechatCpClient<T>) -> WechatCpMedia<'_, T> {
         WechatCpMedia {
             client,
         }

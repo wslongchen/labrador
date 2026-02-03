@@ -34,7 +34,7 @@ pub struct WechatMpMenu<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatMpMenu<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatMpClient<T>) -> WechatMpMenu<T> {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpMenu<'_, T> {
         WechatMpMenu {
             client,
         }

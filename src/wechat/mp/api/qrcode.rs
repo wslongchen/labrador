@@ -13,7 +13,7 @@ pub struct WechatMpQRCode<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatMpQRCode<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatMpClient<T>) -> WechatMpQRCode<T> {
+    pub fn new(client: &WechatMpClient<T>) -> WechatMpQRCode<'_, T> {
         WechatMpQRCode {
             client,
         }
@@ -133,7 +133,7 @@ pub struct PermQRCodeRequest {
 }
 
 #[derive(Debug, Clone,  Serialize, Deserialize)]
-pub struct MiniQRCodeRequest {
+pub struct MpMiniQRCodeRequest {
     scene: String,
     page: String,
 }
@@ -181,7 +181,7 @@ impl TempQRCodeRequest {
 }
 
 #[allow(unused)]
-impl MiniQRCodeRequest {
+impl MpMiniQRCodeRequest {
     fn to_json(&self) -> Value {
         json!({
             "scene": self.scene,

@@ -352,7 +352,7 @@ impl<T: SessionStore> WechatPayClient<T> {
     }
 
     /// 微信支付服务
-    pub fn wxpay(&self) -> WxPay<T> {
+    pub fn wxpay(&self) -> WxPay<'_, T> {
         WxPay::new(self)
     }
 

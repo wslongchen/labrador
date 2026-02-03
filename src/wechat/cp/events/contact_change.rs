@@ -70,17 +70,17 @@ pub struct CpContactCreateUserEvent {
     #[serde(rename="BizMail")]
     pub biz_mail: Option<String>,
     #[serde(rename="ExtAttr")]
-    pub ext_attrs: Option<ExtAttrs>,
+    pub ext_attrs: Option<ExContactChangetAttrs>,
 }
 
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct CpExtAttrItemText {
+pub struct CpContactChangeExtAttrItemText {
     #[serde(rename = "Value")]
     pub value: String,
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct CpExtAttrItemWeb {
+pub struct CpContactChangeExtAttrItemWeb {
     #[serde(rename="Title")]
     pub title: String,
     #[serde(rename="Url")]
@@ -161,25 +161,25 @@ pub struct CpContactUpdateUserEvent {
     #[serde(rename="BizMail")]
     pub biz_mail: Option<String>,
     #[serde(rename="ExtAttr")]
-    pub ext_attrs: Option<ExtAttrs>,
+    pub ext_attrs: Option<ExContactChangetAttrs>,
 }
 
 #[derive(Debug, Serialize, Deserialize,Clone)]
-pub struct ExtAttrs {
+pub struct ExContactChangetAttrs {
      #[serde(rename = "Item")]
-     items: Vec<ExtAttrItem>
+     items: Vec<ExtContactChangeAttrItem>
 }
 
 #[derive(Debug, Serialize, Deserialize,Clone)]
-pub struct ExtAttrItem {
+pub struct ExtContactChangeAttrItem {
     #[serde(rename = "Name")]
     name: String,
     #[serde(rename = "Type")]
     attr_type: u32,
     #[serde(rename="Text")]
-    pub text: Option<CpExtAttrItemText>,
+    pub text: Option<CpContactChangeExtAttrItemText>,
     #[serde(rename="Web")]
-    pub web: Option<CpExtAttrItemWeb>,
+    pub web: Option<CpContactChangeExtAttrItemWeb>,
 }
 
 

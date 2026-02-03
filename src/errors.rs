@@ -164,6 +164,11 @@ impl From<DecodeError> for LabraError {
         LabraError::InvalidSignature(format!("字符编码出错：{}", err.to_string()))
     }
 }
+impl From<cfb_mode::cipher::errors::InvalidLength> for LabraError {
+    fn from(err: cfb_mode::cipher::errors::InvalidLength) -> Self {
+        LabraError::InvalidSignature(format!("InvalidLength：{}", err.to_string()))
+    }
+}
 impl From<r2d2::Error> for LabraError {
     fn from(err: r2d2::Error) -> Self {
         LabraError::RequestError(format!("redis连接错误：{}", err.to_string()))

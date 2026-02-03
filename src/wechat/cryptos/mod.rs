@@ -152,6 +152,7 @@ impl WechatCrypto {
     /// encrypted_data 加密数据
     pub fn decrypt_data(session_key: &str, encrypted_data: &str, iv: &str) -> LabradorResult<String> {
         let key = base64::decode(&session_key)?;
+        let iv = base64::decode(iv)?;
         let prp = PrpCrypto::new(key);
         let encrypted_data = base64::decode(encrypted_data)?;
         let encrypt_content = prp.aes_128_cbc_decrypt_data(encrypted_data, Some(iv))?;

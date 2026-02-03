@@ -15,7 +15,7 @@ pub struct WechatCpTpDepartment<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WechatCpTpDepartment<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatCpTpClient<T>) -> WechatCpTpDepartment<T> {
+    pub fn new(client: &WechatCpTpClient<T>) -> WechatCpTpDepartment<'_, T> {
         WechatCpTpDepartment {
             client,
         }

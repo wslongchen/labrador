@@ -5,7 +5,7 @@ use crate::prp::PrpCrypto;
 
 pub mod md5;
 pub mod prp;
-
+pub mod amount_serde;
 
 /// 请求参数
 #[derive(Debug, Clone)]

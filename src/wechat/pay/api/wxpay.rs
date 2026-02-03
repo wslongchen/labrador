@@ -14,7 +14,7 @@ pub struct WxPay<'a, T: SessionStore> {
 impl<'a, T: SessionStore> WxPay<'a, T> {
 
     #[inline]
-    pub fn new(client: &WechatPayClient<T>) -> WxPay<T> {
+    pub fn new(client: &WechatPayClient<T>) -> WxPay<'_, T> {
         WxPay {
             client,
         }
