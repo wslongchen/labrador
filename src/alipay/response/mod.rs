@@ -2,6 +2,7 @@ use std::collections::{BTreeMap};
 use json::JsonValue;
 use serde::{Deserialize, Serialize};
 use serde::de::{DeserializeOwned};
+use crate::amount_serde;
 
 use crate::{errors::LabraError, AlipayResponse, LabradorResult, RequestMethod};
 use crate::alipay::constants::{ALIPAY_CERT_SN, ERROR_RESPONSE_KEY, SIGN};
@@ -778,16 +779,22 @@ pub struct AlipayNotifyResponse {
     /// </pre>
     pub trade_status: Option<String>,
     /// 订单金额。本次交易支付订单金额，单位为人民币（元），精确到小数点后 2 位
+    #[serde(with = "amount_serde")]
     pub total_amount: Option<f64>,
     /// 实收金额。商家在交易中实际收到的款项，单位为人民币（元），精确到小数点后 2 位
+    #[serde(with = "amount_serde")]
     pub receipt_amount: Option<f64>,
     /// 开票金额。用户在交易中支付的可开发票的金额，单位为人民币（元），精确到小数点后 2 位
+    #[serde(with = "amount_serde")]
     pub invoice_amount: Option<f64>,
     /// 用户在交易中支付的金额，单位为人民币（元），精确到小数点后 2 位
+    #[serde(with = "amount_serde")]
     pub buyer_pay_amount: Option<f64>,
     /// 使用集分宝支付金额，单位为人民币（元），精确到小数点后 2 位
+    #[serde(with = "amount_serde")]
     pub point_amount: Option<f64>,
     /// 总退款金额。退款通知中，返回总退款金额，单位为人民币（元），精确到小数点后 2 位
+    #[serde(with = "amount_serde")]
     pub refund_fee: Option<f64>,
     /// 订单标题/商品标题/交易标题/订单关键字等，是请求时对应参数，会在通知中原样传回
     pub subject: Option<String>,
