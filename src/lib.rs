@@ -1,10 +1,25 @@
-// Copyright (c) 2022 Labrador contributors
-//
-// Licensed under the Apache License, Version 2.0
-// <LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0> or the MIT
-// license <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. All files in the project carrying such notice may not be copied,
-// modified, or distributed except according to those terms.
+#![feature(duration_millis_float)]
+#![feature(async_iterator)]
+/*
+ *
+ *  *
+ *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *
+ *  *   Redistribution and use in source and binary forms, with or without
+ *  *   modification, are permitted provided that the following conditions are met:
+ *  *
+ *  *   Redistributions of source code must retain the above copyright notice,
+ *  *   this list of conditions and the following disclaimer.
+ *  *   Redistributions in binary form must reproduce the above copyright
+ *  *   notice, this list of conditions and the following disclaimer in the
+ *  *   documentation and/or other materials provided with the distribution.
+ *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   contributors may be used to endorse or promote products derived from
+ *  *   this software without specific prior written permission.
+ *  *   Author: SnackCloud
+ *  *
+ *
+ */
 
 //! This create offers:
 //!
@@ -84,17 +99,13 @@
 //!          Ok(res) => {}
 //!          Err(err) => {}
 //!      }
-//!      match result.await {
-//!          Ok(res) => {}
-//!          Err(err) => {}
-//!      }
 //!  }
 //!  ```
 //!
 //! ### With Taobao（淘宝客相关）
 //!
 //!  ```rust
-//! use labrador::{TbItemDetailRequest, TaobaoClient, SimpleStorage};
+//! use labrador::{SimpleStorage,TaobaoClient};
 //!
 //!  #[tokio::main]
 //!  async fn main() {
@@ -158,50 +169,50 @@
 //! We will gradually improve the corresponding API
 //!
 //!
-mod session;
-mod request;
-mod errors;
+pub mod errors;
 mod client;
-mod util;
-#[cfg(feature = "jd")]
-mod jd;
-#[cfg(feature = "jd")]
-pub use jd::*;
-#[cfg(feature = "taobao")]
-mod taobao;
-#[cfg(feature = "taobao")]
-pub use taobao::*;
-#[cfg(feature = "pdd")]
-mod pdd;
-#[cfg(feature = "pdd")]
-pub use pdd::*;
-#[cfg(feature = "wechat")]
-mod wechat;
-#[cfg(feature = "wechat")]
-pub use wechat::*;
 
-pub type LabradorResult<T, E = LabraError> = Result<T, E>;
+pub use client::{builder::ClientBuilder, ApiClient, ClientConfig};
 
-#[cfg(all(feature = "alipay"))]
-mod alipay;
+pub mod utils;
+// #[cfg(feature = "jd")]
+// mod jd;
+// #[cfg(feature = "jd")]
+// pub use jd::*;
+// #[cfg(feature = "taobao")]
+// mod taobao;
+// #[cfg(feature = "taobao")]
+// pub use taobao::*;
+// #[cfg(feature = "pdd")]
+// mod pdd;
+// #[cfg(feature = "pdd")]
+// pub use pdd::*;
+// #[cfg(feature = "wechat")]
+// mod wechat;
+// #[cfg(feature = "wechat")]
+// pub use wechat::*;
+// 
+// 
+// #[cfg(all(feature = "alipay"))]
+// mod alipay;
+// 
+// #[cfg(all(feature = "alipay"))]
+// pub use alipay::*;
+// 
+// #[cfg(all(feature = "qiniu"))]
+// mod qiniu;
+// 
+// #[cfg(all(feature = "qiniu"))]
+// pub use qiniu::*;
 
-#[cfg(all(feature = "alipay"))]
-pub use alipay::*;
-
-#[cfg(all(feature = "qiniu"))]
-mod qiniu;
-#[cfg(all(feature = "qiniu"))]
-pub use qiniu::*;
-
-pub use errors::LabraError;
-pub use session::*;
-pub use util::*;
-pub use client::APIClient;
-pub use request::*;
-pub use reqwest::multipart::{Form, Part};
+mod request;
+mod response;
+mod platforms;
+mod crypto;
+pub use crypto::*;
+pub use platforms::*;
 
 pub use bytes;
+pub use dashmap;
 pub use serde_urlencoded;
 pub use urlencoding;
-pub use dashmap;
-pub use redis;
