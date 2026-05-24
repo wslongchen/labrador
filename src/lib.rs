@@ -175,35 +175,6 @@ mod client;
 pub use client::{builder::ClientBuilder, ApiClient, ClientConfig};
 
 pub mod utils;
-// #[cfg(feature = "jd")]
-// mod jd;
-// #[cfg(feature = "jd")]
-// pub use jd::*;
-// #[cfg(feature = "taobao")]
-// mod taobao;
-// #[cfg(feature = "taobao")]
-// pub use taobao::*;
-// #[cfg(feature = "pdd")]
-// mod pdd;
-// #[cfg(feature = "pdd")]
-// pub use pdd::*;
-// #[cfg(feature = "wechat")]
-// mod wechat;
-// #[cfg(feature = "wechat")]
-// pub use wechat::*;
-// 
-// 
-// #[cfg(all(feature = "alipay"))]
-// mod alipay;
-// 
-// #[cfg(all(feature = "alipay"))]
-// pub use alipay::*;
-// 
-// #[cfg(all(feature = "qiniu"))]
-// mod qiniu;
-// 
-// #[cfg(all(feature = "qiniu"))]
-// pub use qiniu::*;
 
 mod request;
 mod response;

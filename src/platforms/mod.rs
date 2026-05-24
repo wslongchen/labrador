@@ -21,15 +21,14 @@
 
 
 /// 微信平台实现
-// #[cfg(feature = "wechat")]
+#[cfg(feature = "wechat")]
 pub mod wechat;
 /// 请求签名器
 pub mod signer;
-pub mod alipay;
 
 // 支付宝平台实现
-// #[cfg(feature = "alipay")]
-// pub mod alipay;
+#[cfg(feature = "alipay")]
+pub mod alipay;
 
 // 京东平台实现
 // #[cfg(feature = "jd")]
