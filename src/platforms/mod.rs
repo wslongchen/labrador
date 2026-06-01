@@ -18,9 +18,9 @@
  *  *
  *  
  */
-
-
-/// 微信平台实现
+/// 支付宝平台实现
+#[cfg(feature = "alipay")]
+pub mod alipay;
 #[cfg(feature = "wechat")]
 pub mod wechat;
 /// 请求签名器
