@@ -356,3 +356,9 @@ fn test_alipay_request() {
     let req = serde_json::from_str::<AlipayResponse>("{\"code\":\"10000\",\"msg\":\"Success\",\"out_trade_no\":\"20201212121212\",\"retry_flag\":\"N\"}").unwrap();
     println!("data:{:?}", req.data);
 }
+
+#[test]
+fn test_alipay_request_2() {
+    let req = serde_json::from_str::<AlipayResponse<serde_json::Value>>("{\"code\":\"10000\",\"msg\":\"Success\",\"out_trade_no\":\"20201212121212\",\"retry_flag\":\"N\"}").unwrap();
+    println!("data:{:?}", req.data);
+}
