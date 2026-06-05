@@ -56,8 +56,10 @@ impl <'a> AlipayPayService<'a> {
         )
     }
 
-    /// 移动网页支付
-    pub async fn jsapi_pay(&self, mut request: AlipayBizRequest<AlipayTradeWapPayModel>) -> LabradorResult<JsapiPayResponse> {
+    /// JSAPI支付（小程序/生活号支付）
+    /// 使用 alipay.trade.create 接口创建订单并获取 trade_no，
+    /// 然后通过 alipay.trade.pay 发起支付。
+    pub async fn jsapi_pay(&self, mut request: AlipayBizRequest<AlipayTradeJsapiPayModel>) -> LabradorResult<JsapiPayResponse> {
         request.prod_code = Some(constants::pay::PRODUCT_CODE_JSAPI_PAY.to_string());
         request.method = AlipayMethod::TradePay;
         let response: AlipayResponse<JsapiPayResponse> = self.client
@@ -65,6 +67,40 @@ impl <'a> AlipayPayService<'a> {
             .await?;
         response.into_result()
     }
+
+    /// 统一收单交易创建 (alipay.trade.create)
+    /// 商户通过该接口创建订单，获取支付宝交易号 trade_no。
+    /// 适用于小程序支付等需要先创建订单再发起支付的场景。
+    pub async fn trade_create(
+        &self,
+        mut request: AlipayBizRequest<AlipayTradeCreateModel>,
+    ) -> LabradorResult<TradeCreateResponse> {
+        request.method = AlipayMethod::TradeCreate;
+        let response: AlipayResponse<TradeCreateResponse> = self.client
+            .request(request, None, None, None)
+            .await?;
+        response.into_result()
+    }
+
+    /// 查询账单下载地址 (alipay.data.dataservice.bill.downloadurl.query)
+    pub async fn bill_download(
+        &self,
+        bill_type: &str,
+        bill_date: &str,
+    ) -> LabradorResult<BillDownloadResponse> {
+        let mut request = AlipayBizRequest::new();
+        let mut biz_content = BTreeMap::new();
+        biz_content.insert("bill_type".to_string(), bill_type.to_string());
+        biz_content.insert("bill_date".to_string(), bill_date.to_string());
+        request.biz_model = Some(biz_content);
+        request.method = AlipayMethod::BillDownloadUrlQuery;
+        let response: AlipayResponse<BillDownloadResponse> = self.client
+            .request(request, None, None, None)
+            .await?;
+        response.into_result()
+    }
+
+    /// 移动网页支付
 
     /// 手机网站支付
     pub async fn wap_pay(
@@ -221,10 +257,142 @@ impl <'a> AlipayPayService<'a> {
         response.into_result()
     }
 
+    /// # 统一收单交易结算 (alipay.trade.order.settle)
+    /// 详见 [文档](https://opendocs.alipay.com/apis/api_1/alipay.trade.order.settle)
+    ///
+    /// 用于在线下场景，交易完成后进行资金结算。
+    pub async fn settle(
+        &self,
+        mut request: AlipayBizRequest<AlipayTradeOrderSettleModel>,
+    ) -> LabradorResult<TradeOrderSettleResponse> {
+        request.method = AlipayMethod::TradeOrderSettle;
+        let response: AlipayResponse<TradeOrderSettleResponse> = self.client
+            .request(request, None, None, None)
+            .await?;
+        response.into_result()
+    }
+
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
+/// 统一收单交易创建 (alipay.trade.create)
+#[derive(Debug, Serialize, Default, Deserialize)]
+pub struct AlipayTradeCreateModel {
+    /// 商户订单号
+    pub out_trade_no: String,
+    /// 订单总金额，单位元
+    pub total_amount: f64,
+    /// 订单标题
+    pub subject: String,
+    /// 买家支付宝用户ID（2088开头）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub buyer_id: Option<String>,
+    /// 买家支付宝用户唯一标识
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub buyer_open_id: Option<String>,
+    /// 卖家支付宝用户ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub seller_id: Option<String>,
+    /// 订单附加信息
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub body: Option<String>,
+    /// 产品码
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub product_code: Option<String>,
+    /// 订单包含的商品列表
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub goods_detail: Option<Vec<GoodsDetail>>,
+    /// 业务扩展参数
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub extend_params: Option<ExtendParams>,
+    /// 订单绝对超时时间
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub time_expire: Option<String>,
+    /// 订单相对超时时间
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timeout_express: Option<String>,
+    /// 可打折金额
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub discountable_amount: Option<f64>,
+    /// 不可打折金额
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub undiscountable_amount: Option<f64>,
+    /// 商户门店编号
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub store_id: Option<String>,
+    /// 商户操作员编号
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub operator_id: Option<String>,
+    /// 商户机具终端编号
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub terminal_id: Option<String>,
+    /// 业务扩展参数
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub business_params: Option<String>,
+    /// 公用回传参数
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub passback_params: Option<String>,
+    /// 商户原始订单号
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub merchant_order_no: Option<String>,
+    /// 查询选项
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub query_options: Option<Vec<String>>,
+}
+
+/// 交易创建响应
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TradeCreateResponse {
+    /// 商户订单号
+    pub out_trade_no: Option<String>,
+    /// 支付宝交易号
+    pub trade_no: Option<String>,
+}
+
+/// 账单下载响应
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BillDownloadResponse {
+    /// 账单下载地址（30秒有效）
+    pub bill_download_url: Option<String>,
+    /// 账单文件大小，单位字节
+    pub bill_file_size: Option<String>,
+}
+
+/// 统一收单交易结算接口 (alipay.trade.order.settle)
+#[derive(Debug, Serialize, Default, Deserialize)]
+pub struct AlipayTradeOrderSettleModel {
+    /// 结算请求流水号，由商家自定义，需保证唯一
+    pub out_request_no: String,
+    /// 支付宝交易号，和商户订单号不能同时为空
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub trade_no: Option<String>,
+    /// 结算的金额明细列表
+    pub royalty_parameters: Vec<OpenApiRoyaltyDetailInfoPojo>,
+    /// 操作员ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub operator_id: Option<String>,
+    /// 扩展参数
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub extend_params: Option<RoyaltySettleExtendParams>,
+}
+
+/// 分账扩展参数
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct RoyaltySettleExtendParams {
+    /// 是否解冻剩余资金
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub unfreeze_default: Option<String>,
+}
+
+/// 交易结算响应
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TradeOrderSettleResponse {
+    /// 支付宝交易号
+    pub trade_no: Option<String>,
+    /// 结算请求流水号
+    pub settle_no: Option<String>,
+}
 
 /// 统一收单交易撤销接口
 #[derive(Debug, Serialize, Default, Deserialize)]

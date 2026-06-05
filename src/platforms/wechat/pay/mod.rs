@@ -38,9 +38,9 @@ use serde_json::{json, Value};
 use crate::client::certificate::Certificate;
 use crate::client::identity::Identity;
 use crate::platforms::wechat::pay::config::WechatPayConfig;
-use crate::platforms::wechat::pay::types::{BillType, OrderQueryRequest, OrderQueryResponse, PlatformCertificateResponse, RefundQueryRequest, RefundQueryResponse, RefundRequest, RefundResponse, TradeType, UnifiedOrderRequest, UnifiedOrderRequestV3, UnifiedOrderResponse, WechatEncryptResponseV3, WechatPayCommonResponse, WechatPayResponseV3};
+use crate::platforms::wechat::pay::types::{BillType, CodepayOrderRequestV3, CombineCloseOrderRequestV3, CombineOrderQueryRequestV3, CombineOrderRequestV3, CombineOrderResponseV3, OrderQueryRequest, OrderQueryResponse, PlatformCertificateResponse, RefundQueryRequest, RefundQueryResponse, RefundRequest, RefundResponse, TradeType, UnifiedOrderRequest, UnifiedOrderRequestV3, UnifiedOrderResponse, WechatEncryptResponseV3, WechatPayCommonResponse, WechatPayResponseV3};
 use crate::utils::string::random_string;
-use crate::wechat::pay::types::{AccountType, DecryptNotifyResult, DecryptRefundNotifyResult, FundFlowBillResponseV3, OrderQueryRequestV3, OrderQueryResponseV3, OriginNotifyResponse, RefundQueryResponseV3, RefundRequestV3, RefundResponseV3, WechatDecryptRefundNotifyResponse, WechatEncryptResponse, WechatOrderReverseRequest, WechatOrderReverseResponse, WechatPayNotifyResponse, WechatPayShortUrlResponse, WechatPayShorturlRequest, WechatScanPayNotifyResponse, WechatSignatureHeader};
+use crate::wechat::pay::types::{AccountType, DecryptNotifyResult, DecryptRefundNotifyResult, FundFlowBillResponseV3, OrderQueryRequestV3, OrderQueryResponseV3, OrderReverseRequestV3, OriginNotifyResponse, RefundQueryResponseV3, RefundRequestV3, RefundResponseV3, TradeBillRequestV3, TradeBillResponseV3, WechatDecryptRefundNotifyResponse, WechatEncryptResponse, WechatOrderReverseRequest, WechatOrderReverseResponse, WechatPayNotifyResponse, WechatPayShortUrlResponse, WechatPayShorturlRequest, WechatScanPayNotifyResponse, WechatSignatureHeader};
 use crate::wechat::signer::WechatPaySigner;
 
 /// 微信支付客户端
@@ -263,10 +263,10 @@ impl WechatPayClient {
     ///
     /// # 统一下单 - V3版本
     /// <pre>
-    /// 详见:[文档](https://pay.weixin.qq.com/wiki/doc/api/app/app.php?chapter=9_1)
+    /// 详见:[文档](https://pay.weixin.qq.com/docs/merchant/apis/jsapi-payment/direct-jsons/jsapi-prepay.html)
     ///
     /// 在发起微信支付前，需要调用统一下单接口，获取"预支付交易会话标识"
-    /// [接口地址](https://api.mch.weixin.qq.com/pay/unifiedorder)
+    /// 接口地址：POST /v3/pay/transactions/{jsapi|app|h5|native}
     /// </pre>
     /// # 示例
     ///
@@ -306,7 +306,7 @@ impl WechatPayClient {
         let response = self.http_client.request(http_request).await?;
         // 验证签名
         if let Some(signer) = self.http_client.signer() {
-            if signer.verify_signature(&response)? {
+            if !signer.verify_signature(&response)? {
                 return Err(LabraError::Sign("响应签名验证失败".to_string()));
             }
         }
@@ -674,7 +674,7 @@ impl WechatPayClient {
         let response = self.http_client.request(http_request).await?;
         // 验证签名
         if let Some(signer) = self.http_client.signer() {
-            if signer.verify_signature(&response)? {
+            if !signer.verify_signature(&response)? {
                 return Err(LabraError::Sign("响应签名验证失败".to_string()));
             }
         }
@@ -782,7 +782,7 @@ impl WechatPayClient {
         let response = self.http_client.request(http_request).await?;
         // 验证签名
         if let Some(signer) = self.http_client.signer() {
-            if signer.verify_signature(&response)? {
+            if !signer.verify_signature(&response)? {
                 return Err(LabraError::Sign("响应签名验证失败".to_string()));
             }
         }
@@ -877,13 +877,13 @@ impl WechatPayClient {
             http_request = http_request.query_param("account_type", acct_type.as_str());
         }
         if let Some(tar_type) = tar_type {
-            http_request = http_request.query_param("account_type", tar_type);
+            http_request = http_request.query_param("tar_type", tar_type);
         }
         let http_request = http_request.build();
         let response = self.http_client.request(http_request).await?;
         // 验证签名
         if let Some(signer) = self.http_client.signer() {
-            if signer.verify_signature(&response)? {
+            if !signer.verify_signature(&response)? {
                 return Err(LabraError::Sign("响应签名验证失败".to_string()));
             }
         }
@@ -910,6 +910,205 @@ impl WechatPayClient {
         let response = self.http_client.request(http_request).await?;
         let response_bytes = response.bytes();
         Ok(response_bytes)
+    }
+
+    /// # 付款码支付 V3
+    /// 收银员使用扫码设备读取微信用户付款码后，调用该接口发起支付。
+    ///
+    /// [接口文档](https://pay.weixin.qq.com/docs/merchant/apis/code-payment-v3/direct/code-pay.html)
+    pub async fn codepay_v3(&self, mut request: CodepayOrderRequestV3) -> LabradorResult<WechatPayResponseV3> {
+        request = request.mch_id(&self.config.mch_id);
+        request = request.appid(&self.config.app_id);
+        let http_request = Request::builder()
+            .method(HttpMethod::Post)
+            .path("/v3/pay/transactions/codepay")
+            .body(request)
+            .build();
+
+        let response = self.http_client.request(http_request).await?;
+        // 验证签名
+        if let Some(signer) = self.http_client.signer() {
+            if !signer.verify_signature(&response)? {
+                return Err(LabraError::Sign("响应签名验证失败".to_string()));
+            }
+        }
+        let result = response.json::<WechatPayCommonResponse<WechatPayResponseV3>>()?;
+
+        if !result.is_success() {
+            return Err(LabraError::business(
+                result.code.unwrap_or_default(),
+                result.message.unwrap_or_default(),
+            ));
+        }
+
+        Ok(result.data)
+    }
+
+    /// # 合单支付-统一下单 V3
+    /// 使用合单支付接口，用户只输入一次密码即可完成多个订单的支付。目前最多支持50笔。
+    ///
+    /// [接口文档](https://pay.weixin.qq.com/docs/merchant/apis/combine-payment/orders/jsapi-prepay.html)
+    pub async fn combine_order_v3(&self, mut request: CombineOrderRequestV3) -> LabradorResult<CombineOrderResponseV3> {
+        request.combine_mch_id = self.config.mch_id.clone();
+        if request.combine_appid.is_none() {
+            request = request.combine_appid(&self.config.app_id);
+        }
+        let req_path = request.req_path();
+        let http_request = Request::builder()
+            .method(HttpMethod::Post)
+            .path(req_path)
+            .body(request)
+            .build();
+
+        let response = self.http_client.request(http_request).await?;
+        // 验证签名
+        if let Some(signer) = self.http_client.signer() {
+            if !signer.verify_signature(&response)? {
+                return Err(LabraError::Sign("响应签名验证失败".to_string()));
+            }
+        }
+        let result = response.json::<WechatPayCommonResponse<CombineOrderResponseV3>>()?;
+
+        if !result.is_success() {
+            return Err(LabraError::business(
+                result.code.unwrap_or_default(),
+                result.message.unwrap_or_default(),
+            ));
+        }
+
+        Ok(result.data)
+    }
+
+    /// # 合单支付-查询订单 V3
+    ///
+    /// [接口文档](https://pay.weixin.qq.com/docs/merchant/apis/combine-payment/orders/query-order.html)
+    pub async fn combine_order_query_v3(&self, request: &CombineOrderQueryRequestV3) -> LabradorResult<CombineOrderResponseV3> {
+        let http_request = Request::builder()
+            .method(HttpMethod::Get)
+            .path(request.req_path())
+            .build();
+
+        let response = self.http_client.request(http_request).await?;
+        // 验证签名
+        if let Some(signer) = self.http_client.signer() {
+            if !signer.verify_signature(&response)? {
+                return Err(LabraError::Sign("响应签名验证失败".to_string()));
+            }
+        }
+        let result = response.json::<WechatPayCommonResponse<CombineOrderResponseV3>>()?;
+
+        if !result.is_success() {
+            return Err(LabraError::business(
+                result.code.unwrap_or_default(),
+                result.message.unwrap_or_default(),
+            ));
+        }
+
+        Ok(result.data)
+    }
+
+    /// # 合单支付-关闭订单 V3
+    ///
+    /// [接口文档](https://pay.weixin.qq.com/docs/merchant/apis/combine-payment/orders/close-order.html)
+    pub async fn combine_close_order_v3(&self, request: &CombineCloseOrderRequestV3) -> LabradorResult<()> {
+        let body = json!({
+            "combine_appid": &self.config.app_id,
+            "sub_orders": request.sub_orders,
+        });
+        let http_request = Request::builder()
+            .method(HttpMethod::Post)
+            .path(request.req_path())
+            .body(body)
+            .build();
+
+        let response = self.http_client.request(http_request).await?;
+        // 验证签名
+        if let Some(signer) = self.http_client.signer() {
+            if !signer.verify_signature(&response)? {
+                return Err(LabraError::Sign("响应签名验证失败".to_string()));
+            }
+        }
+        let result = response.json::<WechatPayCommonResponse<Value>>()?;
+        if !result.is_success() {
+            return Err(LabraError::business(
+                result.code.unwrap_or_default(),
+                result.message.unwrap_or_default(),
+            ));
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// # 撤销订单 V3
+    /// 详见 [文档](https://pay.weixin.qq.com/docs/merchant/apis/in-person-payment/reverse-order.html)
+    /// <pre>
+    /// 支付交易返回失败或支付系统超时，调用该接口撤销交易。
+    /// 接口地址：POST /v3/pay/transactions/out-trade-no/{out_trade_no}/reverse
+    /// </pre>
+    pub async fn reverse_order_v3(&self, request: OrderReverseRequestV3) -> LabradorResult<()> {
+        let http_request = Request::builder()
+            .method(HttpMethod::Post)
+            .path(request.req_path())
+            .body(json!({
+                "mchid": &self.config.mch_id
+            }))
+            .build();
+
+        let response = self.http_client.request(http_request).await?;
+        // 验证签名
+        if let Some(signer) = self.http_client.signer() {
+            if !signer.verify_signature(&response)? {
+                return Err(LabraError::Sign("响应签名验证失败".to_string()));
+            }
+        }
+        let result = response.json::<WechatPayCommonResponse<Value>>()?;
+        if !result.is_success() {
+            return Err(LabraError::business(
+                result.code.unwrap_or_default(),
+                result.message.unwrap_or_default(),
+            ));
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// # 申请交易账单 V3
+    /// 详见 [文档](https://pay.weixin.qq.com/docs/merchant/apis/bill-download/trade-bill.html)
+    /// <pre>
+    /// 微信支付按天提供交易账单文件，商户可以通过该接口获取账单文件的下载地址。
+    /// 接口地址：GET /v3/bill/tradebill
+    /// </pre>
+    pub async fn trade_bill_v3(&self, request: &TradeBillRequestV3) -> LabradorResult<TradeBillResponseV3> {
+        let mut http_request = Request::builder()
+            .method(HttpMethod::Get)
+            .path("/v3/bill/tradebill")
+            .query_param("bill_date", &request.bill_date);
+        if let Some(bill_type) = &request.bill_type {
+            http_request = http_request.query_param("bill_type", bill_type.as_str());
+        }
+        if let Some(tar_type) = &request.tar_type {
+            http_request = http_request.query_param("tar_type", tar_type.as_str());
+        }
+        let http_request = http_request.build();
+        let response = self.http_client.request(http_request).await?;
+        // 验证签名
+        if let Some(signer) = self.http_client.signer() {
+            if !signer.verify_signature(&response)? {
+                return Err(LabraError::Sign("响应签名验证失败".to_string()));
+            }
+        }
+        let result = response.json::<WechatPayCommonResponse<TradeBillResponseV3>>()?;
+
+        if !result.is_success() {
+            return Err(LabraError::business(
+                result.code.unwrap_or_default(),
+                result.message.unwrap_or_default(),
+            ));
+        }
+
+        Ok(result.data)
     }
 
     ///
@@ -1033,7 +1232,7 @@ impl WechatPayClient {
             return Err(LabraError::RequestError("非法请求，头部信息为空".to_string()));
         }
         let header = header.unwrap();
-        if let Some(signer) = self.http_client.as_wechat_signer() {
+        if let Some(signer) = self.http_client.downcast_signer::<WechatPaySigner>() {
             if !signer.verify_header_sign_v3(notify_data, &header)? {
                 return Err(LabraError::Sign("签名验证失败".to_string()));
             }
@@ -1066,7 +1265,7 @@ impl WechatPayClient {
             return Err(LabraError::RequestError("非法请求，头部信息验证为空".to_string()));
         }
         let header = header.unwrap();
-        if let Some(signer) = self.http_client.as_wechat_signer() {
+        if let Some(signer) = self.http_client.downcast_signer::<WechatPaySigner>() {
             if !signer.verify_header_sign_v3(notify_data, &header)? {
                 return Err(LabraError::Sign("签名验证失败".to_string()));
             }

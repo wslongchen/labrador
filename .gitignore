@@ -1,3 +1,7 @@
 /target
 Cargo.lock
 .idea
+.codebuddy/
+.env
+CONTRIBUTING.md
+CODE_ARCHITECTURE.md

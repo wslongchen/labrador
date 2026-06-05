@@ -19,6 +19,8 @@
  *
  */
 use std::collections::BTreeMap;
+use base64::Engine;
+use base64::engine::general_purpose;
 use chrono::{DateTime, Duration, Utc};
 use http::HeaderMap;
 use serde::{Deserialize, Serialize};
@@ -73,7 +75,8 @@ impl TradeType {
             TradeType::Jsapi => "/v3/pay/transactions/jsapi",
             TradeType::Native => "/v3/pay/transactions/native",
             TradeType::App => "/v3/pay/transactions/app",
-            _ => "/v3/pay/transactions/jsapi",
+            TradeType::Micropay => "/v3/pay/transactions/codepay",
+            TradeType::Miniapp => "/v3/pay/transactions/jsapi",
         }
     }
     
@@ -83,7 +86,7 @@ impl TradeType {
             TradeType::Jsapi => "/v3/pay/partner/transactions/jsapi",
             TradeType::Native => "/v3/pay/partner/transactions/native",
             TradeType::App => "/v3/pay/partner/transactions/app",
-            _ => "/v3/pay/partner/transactions/jsapi",
+            TradeType::Micropay => "/v3/pay/partner/transactions/codepay",
         }
     }
 }
@@ -1723,6 +1726,9 @@ pub struct SceneInfo {
     /// 商户端设备号
     #[serde(skip_serializing_if = "Option::is_none")]
     pub device_id: Option<String>,
+    /// 商户端设备IP（codepay场景使用）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub device_ip: Option<String>,
     /// 商户门店信息
     #[serde(skip_serializing_if = "Option::is_none")]
     pub store_info: Option<StoreInfo>,
@@ -1755,8 +1761,12 @@ pub struct H5Info {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct StoreInfo {
-    /// 门店编号
-    pub id: String,
+    /// 门店编号（微信支付线下场所ID）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    /// 商户系统的门店编码（与id二选一必填）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub out_id: Option<String>,
     /// 详细地址
     pub address: Option<String>,
     /// 门店名称
@@ -1765,17 +1775,54 @@ pub struct StoreInfo {
     pub area_code: Option<String>,
 }
 
+impl StoreInfo {
+    /// 通过微信支付场所ID创建
+    pub fn with_id(id: &str) -> Self {
+        StoreInfo {
+            id: Some(id.to_string()),
+            out_id: None,
+            address: None,
+            name: None,
+            area_code: None,
+        }
+    }
+
+    /// 通过商户门店编码创建
+    pub fn with_out_id(out_id: &str) -> Self {
+        StoreInfo {
+            id: None,
+            out_id: Some(out_id.to_string()),
+            address: None,
+            name: None,
+            area_code: None,
+        }
+    }
+}
+
 
 #[derive(Default,Debug, Serialize, Deserialize, Clone)]
 pub struct Payer {
     /// 用户号,用户在直连商户appid下的唯一标识。
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub openid: String,
+    /// 付款码支付授权码，用户打开微信钱包显示的码。仅codepay场景使用。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub auth_code: Option<String>,
 }
 
 impl Payer {
     pub fn new(open_id: &str) -> Self {
         Payer {
             openid: open_id.to_string(),
+            auth_code: None,
+        }
+    }
+
+    /// 创建付款码支付的payer（使用auth_code而非openid）
+    pub fn with_auth_code(auth_code: &str) -> Self {
+        Payer {
+            openid: String::new(),
+            auth_code: Some(auth_code.to_string()),
         }
     }
 }
@@ -1818,6 +1865,291 @@ pub struct WechatSettleInfo {
     /// 不需要分账（传入false或不传，默认为false）：
     /// 订单收款成功后，资金不会被冻结，而是直接转入基本账户的可用余额。
     pub profit_sharing: Option<bool>,
+}
+
+
+/// 付款码支付请求 V3
+#[derive(Debug, Clone, Serialize)]
+pub struct CodepayOrderRequestV3 {
+    /// 应用ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub appid: Option<String>,
+    /// 直连商户号
+    #[serde(rename = "mchid")]
+    pub mch_id: String,
+    /// 商品描述
+    pub description: String,
+    /// 商户订单号
+    pub out_trade_no: String,
+    /// 附加数据
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attach: Option<String>,
+    /// 订单优惠标记
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub goods_tag: Option<String>,
+    /// 电子发票入口开放标识
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub support_fapiao: Option<bool>,
+    /// 支付者（包含auth_code）
+    pub payer: Payer,
+    /// 订单金额
+    pub amount: Amount,
+    /// 场景信息（必填）
+    pub scene_info: SceneInfo,
+    /// 优惠功能
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub detail: Option<Detail>,
+    /// 结算信息
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub settle_info: Option<WechatSettleInfo>,
+}
+
+impl CodepayOrderRequestV3 {
+    pub fn new(
+        out_trade_no: &str,
+        description: &str,
+        auth_code: &str,
+        amount: Amount,
+        scene_info: SceneInfo,
+    ) -> Self {
+        Self {
+            appid: None,
+            mch_id: String::new(),
+            description: description.to_string(),
+            out_trade_no: out_trade_no.to_string(),
+            attach: None,
+            goods_tag: None,
+            support_fapiao: None,
+            payer: Payer::with_auth_code(auth_code),
+            amount,
+            scene_info,
+            detail: None,
+            settle_info: None,
+        }
+    }
+
+    pub fn mch_id(mut self, mch_id: &str) -> Self {
+        self.mch_id = mch_id.to_string();
+        self
+    }
+
+    pub fn appid(mut self, appid: &str) -> Self {
+        self.appid = Some(appid.to_string());
+        self
+    }
+
+    pub fn attach(mut self, attach: &str) -> Self {
+        self.attach = Some(attach.to_string());
+        self
+    }
+
+    pub fn goods_tag(mut self, goods_tag: &str) -> Self {
+        self.goods_tag = Some(goods_tag.to_string());
+        self
+    }
+
+    pub fn support_fapiao(mut self, support_fapiao: bool) -> Self {
+        self.support_fapiao = Some(support_fapiao);
+        self
+    }
+
+    pub fn detail(mut self, detail: Detail) -> Self {
+        self.detail = Some(detail);
+        self
+    }
+
+    pub fn settle_info(mut self, settle_info: WechatSettleInfo) -> Self {
+        self.settle_info = Some(settle_info);
+        self
+    }
+}
+
+
+// ==================== 合单支付 (Combine) V3 ====================
+
+/// 合单支付子订单
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SubOrder {
+    /// 商户号
+    #[serde(rename = "mchid")]
+    pub mch_id: String,
+    /// 附加数据
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attach: Option<String>,
+    /// 订单金额
+    pub amount: Amount,
+    /// 商户订单号
+    pub out_trade_no: String,
+    /// 商品描述
+    pub description: String,
+    /// 结算信息
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub settle_info: Option<WechatSettleInfo>,
+}
+
+impl SubOrder {
+    pub fn new(mch_id: &str, out_trade_no: &str, description: &str, amount: Amount) -> Self {
+        Self {
+            mch_id: mch_id.to_string(),
+            attach: None,
+            amount,
+            out_trade_no: out_trade_no.to_string(),
+            description: description.to_string(),
+            settle_info: None,
+        }
+    }
+}
+
+/// 合单支付-统一下单请求 V3
+#[derive(Debug, Clone, Serialize)]
+pub struct CombineOrderRequestV3 {
+    /// 合单发起方的appid
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub combine_appid: Option<String>,
+    /// 合单发起方的商户号
+    #[serde(rename = "combine_mchid")]
+    pub combine_mch_id: String,
+    /// 合单商户订单号
+    pub combine_out_trade_no: String,
+    /// 场景信息
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scene_info: Option<SceneInfo>,
+    /// 子订单列表（最多50笔）
+    pub sub_orders: Vec<SubOrder>,
+    /// 支付者
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub combine_payer_info: Option<Payer>,
+    /// 交易起始时间
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub time_start: Option<String>,
+    /// 交易结束时间
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub time_expire: Option<String>,
+    /// 通知地址
+    pub notify_url: String,
+    /// 交易类型
+    #[serde(skip_serializing)]
+    pub trade_type: TradeType,
+}
+
+impl CombineOrderRequestV3 {
+    pub fn new(
+        combine_mch_id: &str,
+        combine_out_trade_no: &str,
+        sub_orders: Vec<SubOrder>,
+        notify_url: &str,
+        trade_type: TradeType,
+    ) -> Self {
+        Self {
+            combine_appid: None,
+            combine_mch_id: combine_mch_id.to_string(),
+            combine_out_trade_no: combine_out_trade_no.to_string(),
+            scene_info: None,
+            sub_orders,
+            combine_payer_info: None,
+            time_start: None,
+            time_expire: None,
+            notify_url: notify_url.to_string(),
+            trade_type,
+        }
+    }
+
+    pub fn combine_appid(mut self, appid: &str) -> Self {
+        self.combine_appid = Some(appid.to_string());
+        self
+    }
+
+    pub fn scene_info(mut self, scene_info: SceneInfo) -> Self {
+        self.scene_info = Some(scene_info);
+        self
+    }
+
+    pub fn combine_payer_info(mut self, payer: Payer) -> Self {
+        self.combine_payer_info = Some(payer);
+        self
+    }
+
+    pub fn time_expire(mut self, time_expire: &str) -> Self {
+        self.time_expire = Some(time_expire.to_string());
+        self
+    }
+
+    /// 获取合单支付的请求路径
+    pub fn req_path(&self) -> &'static str {
+        match self.trade_type {
+            TradeType::H5 => "/v3/combine-transactions/h5",
+            TradeType::Jsapi => "/v3/combine-transactions/jsapi",
+            TradeType::Native => "/v3/combine-transactions/native",
+            TradeType::App => "/v3/combine-transactions/app",
+            TradeType::Miniapp => "/v3/combine-transactions/jsapi",
+            TradeType::Micropay => "/v3/combine-transactions/jsapi",
+        }
+    }
+}
+
+/// 合单支付响应 V3
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CombineOrderResponseV3 {
+    /// 预支付交易会话标识
+    pub prepay_id: Option<String>,
+    /// H5支付跳转链接
+    #[serde(rename = "h5_url")]
+    pub h5_url: Option<String>,
+    /// Native支付二维码链接
+    #[serde(rename = "code_url")]
+    pub code_url: Option<String>,
+}
+
+/// 合单支付-查询订单请求 V3
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CombineOrderQueryRequestV3 {
+    /// 合单商户订单号
+    pub combine_out_trade_no: String,
+}
+
+impl CombineOrderQueryRequestV3 {
+    pub fn new(combine_out_trade_no: &str) -> Self {
+        Self {
+            combine_out_trade_no: combine_out_trade_no.to_string(),
+        }
+    }
+
+    pub fn req_path(&self) -> String {
+        format!("/v3/combine-transactions/out-trade-no/{}", self.combine_out_trade_no)
+    }
+}
+
+/// 合单支付-关单请求 V3
+pub struct CombineCloseOrderRequestV3 {
+    pub combine_out_trade_no: String,
+    /// 合单发起方商户号
+    pub combine_mch_id: String,
+    /// 子订单关单信息
+    pub sub_orders: Vec<SubOrderCloseInfo>,
+}
+
+/// 子订单关单信息
+#[derive(Debug, Clone, Serialize)]
+pub struct SubOrderCloseInfo {
+    /// 子订单商户号
+    #[serde(rename = "mchid")]
+    pub mch_id: String,
+    /// 子订单商户订单号
+    pub out_trade_no: String,
+}
+
+impl CombineCloseOrderRequestV3 {
+    pub fn new(combine_out_trade_no: &str, combine_mch_id: &str, sub_orders: Vec<SubOrderCloseInfo>) -> Self {
+        Self {
+            combine_out_trade_no: combine_out_trade_no.to_string(),
+            combine_mch_id: combine_mch_id.to_string(),
+            sub_orders,
+        }
+    }
+
+    pub fn req_path(&self) -> String {
+        format!("/v3/combine-transactions/out-trade-no/{}/close", self.combine_out_trade_no)
+    }
 }
 
 
@@ -1974,7 +2306,7 @@ impl WechatPayResponseV3 {
                     pay_sign: String::default()
                 };
                 let signature = encryptor.sign(result.get_sign_str().as_bytes(), HashType::Sha256).map_err(|e| LabraError::Sign(format!("RSA加密错误: {}", e)))?;
-                result.pay_sign = String::from_utf8(signature).unwrap_or_default();
+                result.pay_sign = general_purpose::STANDARD.encode(&signature);
                 Ok(serde_json::to_value(result)?)
             }
             TradeType::Native => {
@@ -1991,7 +2323,7 @@ impl WechatPayResponseV3 {
                     sign: "".to_string()
                 };
                 let signature = encryptor.sign(result.get_sign_str().as_bytes(), HashType::Sha256).map_err(|e| LabraError::Sign(format!("RSA加密错误: {}", e)))?;
-                result.sign = String::from_utf8(signature).unwrap_or_default();
+                result.sign = general_purpose::STANDARD.encode(&signature);
                 Ok(serde_json::to_value(result)?)
             }
             _ => Err(LabraError::Validation("不支持的支付类型".to_string()))
@@ -2603,4 +2935,83 @@ impl WechatPayShortUrlResponse {
     pub fn is_success(&self) -> bool {
         self.return_code.clone().unwrap_or_default() == "SUCCESS" && self.return_code.is_some()
     }
+}
+
+// ==================== V3 撤销订单 ====================
+
+/// 撤销订单请求 V3
+#[derive(Debug, Clone, Serialize)]
+pub struct OrderReverseRequestV3 {
+    /// 商户号
+    #[serde(rename = "mchid")]
+    pub mch_id: String,
+    /// 商户订单号（路径参数）
+    #[serde(skip_serializing)]
+    pub out_trade_no: String,
+}
+
+impl OrderReverseRequestV3 {
+    pub fn new(mch_id: &str, out_trade_no: &str) -> Self {
+        Self {
+            mch_id: mch_id.to_string(),
+            out_trade_no: out_trade_no.to_string(),
+        }
+    }
+
+    pub fn req_path(&self) -> String {
+        format!("/v3/pay/transactions/out-trade-no/{}/reverse", self.out_trade_no)
+    }
+}
+
+/// 撤销订单响应 V3（成功时返回空内容，状态码204）
+/// 这里提供一个通用结构用于解析可能的错误响应
+#[derive(Debug, Clone, Deserialize)]
+pub struct OrderReverseResponseV3 {
+    /// 撤销结果
+    #[serde(default)]
+    pub result: Option<String>,
+}
+
+// ==================== V3 申请交易账单 ====================
+
+/// 申请交易账单请求 V3
+#[derive(Debug, Clone)]
+pub struct TradeBillRequestV3 {
+    /// 账单日期，格式：yyyy-MM-DD
+    pub bill_date: String,
+    /// 账单类型：ALL, SUCCESS, REFUND
+    pub bill_type: Option<BillType>,
+    /// 压缩类型：GZIP
+    pub tar_type: Option<String>,
+}
+
+impl TradeBillRequestV3 {
+    pub fn new(bill_date: &str) -> Self {
+        Self {
+            bill_date: bill_date.to_string(),
+            bill_type: None,
+            tar_type: None,
+        }
+    }
+
+    pub fn bill_type(mut self, bill_type: BillType) -> Self {
+        self.bill_type = Some(bill_type);
+        self
+    }
+
+    pub fn tar_type(mut self, tar_type: &str) -> Self {
+        self.tar_type = Some(tar_type.to_string());
+        self
+    }
+}
+
+/// 申请交易账单响应 V3
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TradeBillResponseV3 {
+    /// 哈希类型
+    pub hash_type: String,
+    /// 哈希值
+    pub hash_value: String,
+    /// 下载地址
+    pub download_url: String,
 }

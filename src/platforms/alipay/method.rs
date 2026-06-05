@@ -126,12 +126,16 @@ pub enum AlipayMethod {
     TradeFastpayRefundQuery,
     /// 统一收单交易撤销接口
     TradeCancel,
+    /// 统一收单交易结算接口
+    TradeOrderSettle,
     /// 换取授权访问令牌
     SystemOauthToken,
     /// 换取应用授权令牌
     OpenAuthTokenApp,
     /// 支付宝公钥证书下载
     OpenAppAlipaycertDownload,
+    /// 查询账单下载地址
+    BillDownloadUrlQuery,
     /// 自定义方法
     Custom(String),
 }
@@ -157,9 +161,11 @@ impl AlipayMethod {
             Self::TradeRefund => "alipay.trade.refund",
             Self::TradeFastpayRefundQuery => "alipay.trade.fastpay.refund.query",
             Self::TradeCancel => "alipay.trade.cancel",
+            Self::TradeOrderSettle => "alipay.trade.order.settle",
             Self::SystemOauthToken => "alipay.system.oauth.token",
             Self::OpenAuthTokenApp => "alipay.open.auth.token.app",
             Self::OpenAppAlipaycertDownload => "alipay.open.app.alipaycert.download",
+            Self::BillDownloadUrlQuery => "alipay.data.dataservice.bill.downloadurl.query",
             Self::Custom(method) => method.as_str(),
         }
     }
@@ -178,9 +184,11 @@ impl AlipayMethod {
             Self::TradeRefund => "alipay_trade_refund_response".to_string(),
             Self::TradeFastpayRefundQuery => "alipay_trade_fastpay_refund_query_response".to_string(),
             Self::TradeCancel => "alipay_trade_cancel_response".to_string(),
+            Self::TradeOrderSettle => "alipay_trade_order_settle_response".to_string(),
             Self::SystemOauthToken => "alipay_system_oauth_token_response".to_string(),
             Self::OpenAuthTokenApp => "alipay_open_auth_token_app_response".to_string(),
             Self::OpenAppAlipaycertDownload => "alipay_open_app_alipaycert_download_response".to_string(),
+            Self::BillDownloadUrlQuery => "alipay_data_dataservice_bill_downloadurl_query_response".to_string(),
             Self::Custom(method) => format!("{}_response", method.replace(".", "_")),
         }
     }

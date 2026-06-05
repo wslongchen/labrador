@@ -29,7 +29,6 @@ use sha2::{Sha256, Sha512};
 use std::any::Any;
 use std::collections::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::wechat::signer::WechatPaySigner;
 
 /// 签名方法
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -349,8 +348,17 @@ impl DefaultSigner {
                 Ok(hex::encode(bytes))
             }
             SignMethod::RsaSha256 => {
-                // RSA签名需要私钥，这里简化处理
-                Err(LabraError::Sign("RSA签名暂未实现".to_string()))
+                // RSA-SHA256 签名使用 app_secret 作为私钥
+                use crate::{RsaEncryptor, RsaKeyFormat, HashType};
+                let encryptor = RsaEncryptor::with_private_key(
+                    self.config.app_secret.as_bytes(),
+                    RsaKeyFormat::Pem,
+                );
+                let sig = encryptor
+                    .sign(sign_string.as_bytes(), HashType::Sha256)
+                    .map_err(|e| LabraError::Sign(format!("RSA签名失败: {}", e)))?;
+                use crate::utils::encryption::base64_encode;
+                Ok(base64_encode(&sig))
             }
         }
     }
@@ -420,11 +428,6 @@ impl SignerFactory {
     /// 创建默认签名器
     pub fn default_signer(app_key: &str, app_secret: &str) -> Box<dyn RequestSigner> {
         Box::new(DefaultSigner::new(app_key, app_secret))
-    }
-
-    /// 创建微信支付签名器
-    pub fn wechat_pay_signer(mch_id: &str) -> WechatPaySigner {
-        WechatPaySigner::new(mch_id)
     }
 
     /// 根据配置创建签名器

@@ -358,7 +358,7 @@ impl AlipayClient {
 
     /// 生成签名
     fn sign(&self, content: &str) -> LabradorResult<String> {
-        println!("开始生成签名...{}",content);
+        tracing::debug!("开始生成签名...{}", content);
         let rsa_encryptor = RsaEncryptor::with_private_key(&base64_decode(&self.config.app_private_key)?, RsaKeyFormat::Pkcs1);
         match self.config.sign_type.as_str() {
             constants::SIGN_TYPE_RSA2 => {

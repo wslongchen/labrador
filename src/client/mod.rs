@@ -52,7 +52,6 @@ use crate::errors::{LabraError, LabradorResult};
 pub use crate::platforms::signer::RequestSigner;
 pub use config::{AuthHeader, ClientConfig, RetryConfig, TlsConfig};
 pub use interceptors::RequestInterceptor;
-use crate::wechat::signer::WechatPaySigner;
 
 pub(crate) const DEFAULT_USER_AGENT: &str = concat!(
 "Labrador/",
@@ -178,11 +177,11 @@ impl ApiClient {
         self.signer.as_ref()
     }
 
-    pub fn as_wechat_signer(&self) -> Option<&WechatPaySigner> {
+    /// 将签名器向下转型为具体类型（用于平台特定操作如验签）
+    pub fn downcast_signer<T: 'static>(&self) -> Option<&T> {
         self.signer.as_ref().and_then(|arc| {
             let trait_obj: &dyn RequestSigner = arc.as_ref();
-            let any = trait_obj.as_any();  // 使用 as_any() 方法
-            any.downcast_ref::<WechatPaySigner>()
+            trait_obj.as_any().downcast_ref::<T>()
         })
     }
 
@@ -437,9 +436,7 @@ impl ApiClient {
         }
 
         // 记录请求日志
-        debug!("Sending request: {} {:?} {}", request.method, request.headers, request.path);
-        // TODO: 删除日志
-        println!("Sending request: {} {} {:?} {:?}", request.method, request.path, request.headers, request.body);
+        debug!("Sending request: {} {:?} {} {:?}", request.method, request.headers, request.path, request.body);
         
         // 发送请求
         let response = request_builder
@@ -456,8 +453,6 @@ impl ApiClient {
         let body = response.bytes().await.map_err(LabraError::Network)?;
 
         let http_response = Response::new(url, status, headers, remote_addr, body);
-        // TODO: 删除日志
-        println!("Sending response: {}", http_response.text()?);
         // 记录响应日志
         let duration = start_time.elapsed();
         if http_response.is_success() {

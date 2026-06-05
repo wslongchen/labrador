@@ -18,17 +18,14 @@
  *  *
  *  
  */
-/// 支付宝平台实现
+//// 支付宝平台实现
 #[cfg(feature = "alipay")]
 pub mod alipay;
+/// 微信平台实现
 #[cfg(feature = "wechat")]
 pub mod wechat;
 /// 请求签名器
 pub mod signer;
-
-// 支付宝平台实现
-#[cfg(feature = "alipay")]
-pub mod alipay;
 
 // 京东平台实现
 // #[cfg(feature = "jd")]

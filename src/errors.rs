@@ -236,62 +236,6 @@ impl From<openssl::error::ErrorStack> for LabraError {
         LabraError::InvalidSignature(format!("加解密出错：{}", err.to_string()))
     }
 }
-// 
-// 
-// #[cfg(not(feature = "openssl-crypto"))]
-// impl From<block_modes::InvalidKeyIvLength> for LabraError {
-//     fn from(err: block_modes::InvalidKeyIvLength) -> Self {
-//         LabraError::InvalidSignature(format!("加解密出错：{}", err.to_string()))
-//     }
-// }
-// 
-// #[cfg(not(feature = "openssl-crypto"))]
-// impl From<block_modes::BlockModeError> for LabraError {
-//     fn from(err: block_modes::BlockModeError) -> Self {
-//         LabraError::InvalidSignature(format!("加解密出错：{}", err.to_string()))
-//     }
-// }
-// 
-// #[cfg(not(feature = "openssl-crypto"))]
-// impl From<hmac::digest::InvalidLength> for LabraError {
-//     fn from(err: hmac::digest::InvalidLength) -> Self {
-//         LabraError::InvalidSignature(format!("加解密出错：{}", err.to_string()))
-//     }
-// }
-// 
-// #[cfg(not(feature = "openssl-crypto"))]
-// impl From<aes_gcm::Error> for LabraError {
-//     fn from(err: aes_gcm::Error) -> Self {
-//         LabraError::InvalidSignature(format!("加解密出错：{}", err.to_string()))
-//     }
-// }
-// 
-// 
-// impl From<hex::FromHexError> for LabraError {
-//     fn from(err: hex::FromHexError) -> Self {
-//         LabraError::InvalidSignature(format!("字符转码出错：{}", err.to_string()))
-//     }
-// }
-// 
-// impl From<serde_urlencoded::ser::Error> for LabraError {
-//     fn from(err: serde_urlencoded::ser::Error) -> Self {
-//         LabraError::InvalidSignature(format!("URL转码：{}", err.to_string()))
-//     }
-// }
-// 
-// impl From<serde_urlencoded::de::Error> for LabraError {
-//     fn from(err: serde_urlencoded::de::Error) -> Self {
-//         LabraError::InvalidSignature(format!("URL转码：{}", err.to_string()))
-//     }
-// }
-// 
-// impl From<cfb_mode::cipher::errors::InvalidLength> for LabraError {
-//     fn from(err: cfb_mode::cipher::errors::InvalidLength) -> Self {
-//         LabraError::InvalidSignature(format!("InvalidLength：{}", err.to_string()))
-//     }
-// }
-
-
 impl From<rsa::pkcs8::Error> for LabraError {
     fn from(err: rsa::pkcs8::Error) -> Self {
         LabraError::Certificate(err.to_string())

@@ -182,8 +182,7 @@ impl WechatPaySigner {
         let signature = encryptor.sign(signature_str.as_bytes(), HashType::Sha256).map_err(|e| LabraError::Sign(format!("RSA加密错误: {}", e)))?;
         let authorization = format!("{} mchid=\"{}\",nonce_str=\"{}\",signature=\"{}\",timestamp=\"{}\",serial_no=\"{}\"",
                                     PAY_SIGN_SCHEMA_V3 , mch_id, nonce_str, CryptoUtils::base64_encode(&signature), timestamp, serial_no);
-        // todo: 删除日志
-        println!("auth:{}", authorization);
+        tracing::debug!("wechat pay authorization built successfully");
         Ok(authorization)
     }
 
@@ -196,7 +195,7 @@ impl WechatPaySigner {
             let signature = base64_decode(signature)?;
             let encryptor = RsaEncryptor::with_public_key(&cert.public_key, RsaKeyFormat::Pkcs8);
             let verify = encryptor.verify(signature_str.as_bytes(), &signature, HashType::Sha256)?;
-            println!("verify:{}", verify);
+            tracing::debug!("wechat pay v3 signature verify result: {}", verify);
             Ok(verify)
         } else {
             Ok(false)

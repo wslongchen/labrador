@@ -177,102 +177,8 @@ pub enum WechatErrorCode {
     CardReceiveLimitExceeded = 45051,
     /// 卡券已领取完
     CardReceiveFinished = 45052,
-    /// 卡券已过期
-    CardReceiveExpired = 45053,
-    /// 卡券已失效
-    CardReceiveInvalid = 45054,
-    /// 卡券已删除
-    CardReceiveDeleted = 45055,
-    /// 卡券已使用
-    CardReceiveUsed = 45056,
-    /// 卡券已转赠
-    CardReceiveTransferred = 45057,
-    /// 卡券已核销
-    CardReceiveConsumed = 45058,
-    /// 卡券已过期
-    CardReceiveExpired2 = 45059,
-    /// 卡券已失效
-    CardReceiveInvalid2 = 45060,
-    /// 卡券已删除
-    CardReceiveDeleted2 = 45061,
-    /// 卡券已使用
-    CardReceiveUsed2 = 45062,
-    /// 卡券已转赠
-    CardReceiveTransferred2 = 45063,
-    /// 卡券已核销
-    CardReceiveConsumed2 = 45064,
-    /// 卡券已过期
-    CardReceiveExpired3 = 45065,
-    /// 卡券已失效
-    CardReceiveInvalid3 = 45066,
-    /// 卡券已删除
-    CardReceiveDeleted3 = 45067,
-    /// 卡券已使用
-    CardReceiveUsed3 = 45068,
-    /// 卡券已转赠
-    CardReceiveTransferred3 = 45069,
-    /// 卡券已核销
-    CardReceiveConsumed3 = 45070,
-    /// 卡券已过期
-    CardReceiveExpired4 = 45071,
-    /// 卡券已失效
-    CardReceiveInvalid4 = 45072,
-    /// 卡券已删除
-    CardReceiveDeleted4 = 45073,
-    /// 卡券已使用
-    CardReceiveUsed4 = 45074,
-    /// 卡券已转赠
-    CardReceiveTransferred4 = 45075,
-    /// 卡券已核销
-    CardReceiveConsumed4 = 45076,
-    /// 卡券已过期
-    CardReceiveExpired5 = 45077,
-    /// 卡券已失效
-    CardReceiveInvalid5 = 45078,
-    /// 卡券已删除
-    CardReceiveDeleted5 = 45079,
-    /// 卡券已使用
-    CardReceiveUsed5 = 45080,
-    /// 卡券已转赠
-    CardReceiveTransferred5 = 45081,
-    /// 卡券已核销
-    CardReceiveConsumed5 = 45082,
-    /// 卡券已过期
-    CardReceiveExpired6 = 45083,
-    /// 卡券已失效
-    CardReceiveInvalid6 = 45084,
-    /// 卡券已删除
-    CardReceiveDeleted6 = 45085,
-    /// 卡券已使用
-    CardReceiveUsed6 = 45086,
-    /// 卡券已转赠
-    CardReceiveTransferred6 = 45087,
-    /// 卡券已核销
-    CardReceiveConsumed6 = 45088,
-    /// 卡券已过期
-    CardReceiveExpired7 = 45089,
-    /// 卡券已失效
-    CardReceiveInvalid7 = 45090,
-    /// 卡券已删除
-    CardReceiveDeleted7 = 45091,
-    /// 卡券已使用
-    CardReceiveUsed7 = 45092,
-    /// 卡券已转赠
-    CardReceiveTransferred7 = 45093,
-    /// 卡券已核销
-    CardReceiveConsumed7 = 45094,
-    /// 卡券已过期
-    CardReceiveExpired8 = 45095,
-    /// 卡券已失效
-    CardReceiveInvalid8 = 45096,
-    /// 卡券已删除
-    CardReceiveDeleted8 = 45097,
-    /// 卡券已使用
-    CardReceiveUsed8 = 45098,
-    /// 卡券已转赠
-    CardReceiveTransferred8 = 45099,
-    /// 卡券已核销
-    CardReceiveConsumed8 = 45100,
+    /// 其他错误码（未知错误码）
+    Other(i32),
 }
 
 impl From<i32> for WechatErrorCode {
@@ -348,55 +254,7 @@ impl From<i32> for WechatErrorCode {
             45050 => Self::CardStockInsufficient,
             45051 => Self::CardReceiveLimitExceeded,
             45052 => Self::CardReceiveFinished,
-            45053 => Self::CardReceiveExpired,
-            45054 => Self::CardReceiveInvalid,
-            45055 => Self::CardReceiveDeleted,
-            45056 => Self::CardReceiveUsed,
-            45057 => Self::CardReceiveTransferred,
-            45058 => Self::CardReceiveConsumed,
-            45059 => Self::CardReceiveExpired2,
-            45060 => Self::CardReceiveInvalid2,
-            45061 => Self::CardReceiveDeleted2,
-            45062 => Self::CardReceiveUsed2,
-            45063 => Self::CardReceiveTransferred2,
-            45064 => Self::CardReceiveConsumed2,
-            45065 => Self::CardReceiveExpired3,
-            45066 => Self::CardReceiveInvalid3,
-            45067 => Self::CardReceiveDeleted3,
-            45068 => Self::CardReceiveUsed3,
-            45069 => Self::CardReceiveTransferred3,
-            45070 => Self::CardReceiveConsumed3,
-            45071 => Self::CardReceiveExpired4,
-            45072 => Self::CardReceiveInvalid4,
-            45073 => Self::CardReceiveDeleted4,
-            45074 => Self::CardReceiveUsed4,
-            45075 => Self::CardReceiveTransferred4,
-            45076 => Self::CardReceiveConsumed4,
-            45077 => Self::CardReceiveExpired5,
-            45078 => Self::CardReceiveInvalid5,
-            45079 => Self::CardReceiveDeleted5,
-            45080 => Self::CardReceiveUsed5,
-            45081 => Self::CardReceiveTransferred5,
-            45082 => Self::CardReceiveConsumed5,
-            45083 => Self::CardReceiveExpired6,
-            45084 => Self::CardReceiveInvalid6,
-            45085 => Self::CardReceiveDeleted6,
-            45086 => Self::CardReceiveUsed6,
-            45087 => Self::CardReceiveTransferred6,
-            45088 => Self::CardReceiveConsumed6,
-            45089 => Self::CardReceiveExpired7,
-            45090 => Self::CardReceiveInvalid7,
-            45091 => Self::CardReceiveDeleted7,
-            45092 => Self::CardReceiveUsed7,
-            45093 => Self::CardReceiveTransferred7,
-            45094 => Self::CardReceiveConsumed7,
-            45095 => Self::CardReceiveExpired8,
-            45096 => Self::CardReceiveInvalid8,
-            45097 => Self::CardReceiveDeleted8,
-            45098 => Self::CardReceiveUsed8,
-            45099 => Self::CardReceiveTransferred8,
-            45100 => Self::CardReceiveConsumed8,
-            _ => Self::Success,
+            _ => Self::Other(code),
         }
     }
 }
