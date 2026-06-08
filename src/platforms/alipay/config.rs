@@ -16,10 +16,10 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
-use std::time::Duration;
 use crate::alipay::constants;
+use std::time::Duration;
 
 /// 支付宝客户端配置
 #[derive(Debug, Clone)]

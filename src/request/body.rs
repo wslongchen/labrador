@@ -16,17 +16,17 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 //! HTTP请求体实现
 
-use std::collections::BTreeMap;
-use std::fmt;
-use std::fmt::Formatter;
 use bytes::Bytes;
 use reqwest::multipart;
 use serde::Serialize;
+use std::collections::BTreeMap;
+use std::fmt;
+use std::fmt::Formatter;
 
 /// 请求内容类型
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -161,9 +161,7 @@ impl RequestBody {
     pub fn len(&self) -> usize {
         match self {
             RequestBody::Json(s) => s.as_str().map(|s| s.len()).unwrap_or(0),
-            RequestBody::Form(v) => v.iter()
-                .map(|(k, v)| k.len() + v.len())
-                .sum(),
+            RequestBody::Form(v) => v.iter().map(|(k, v)| k.len() + v.len()).sum(),
             RequestBody::Multipart(_) => 0, // 难以计算
             RequestBody::Xml(s) => s.len(),
             RequestBody::Text(s) => s.len(),
@@ -230,8 +228,20 @@ impl RequestBody {
             _ => None,
         }
     }
-}
 
+    /// 返回用于签名计算的规范字符串表示。
+    ///
+    /// JSON body 返回完整序列化 JSON（如 `{"appid":"...","amount":{...}}`），
+    /// 避免 [`as_text`] 对 `serde_json::Value::Object` 返回空串导致签名不匹配。
+    pub fn to_sign_string(&self) -> String {
+        match self {
+            RequestBody::Json(v) => v.to_string(),
+            RequestBody::Text(s) => s.clone(),
+            RequestBody::Xml(s) => s.clone(),
+            _ => String::new(),
+        }
+    }
+}
 
 impl<T: Serialize> From<T> for RequestBody {
     fn from(value: T) -> Self {

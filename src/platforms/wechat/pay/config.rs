@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 use crate::client::certificate::Certificate;
 
@@ -85,12 +85,7 @@ impl Default for WechatPayConfig {
 
 impl WechatPayConfig {
     /// 创建新的微信支付配置
-    pub fn new(
-        app_id: &str,
-        mch_id: &str,
-        api_key: &str,
-        notify_url: &str,
-    ) -> Self {
+    pub fn new(app_id: &str, mch_id: &str, api_key: &str, notify_url: &str) -> Self {
         Self {
             app_id: app_id.to_string(),
             mch_id: mch_id.to_string(),
@@ -114,68 +109,68 @@ impl WechatPayConfig {
         self.private_key = Some(private_key.to_string());
         self
     }
-    
+
     pub fn with_api_key_v3(mut self, api_key_v3: &str) -> Self {
         self.api_key_v3 = Some(api_key_v3.to_string());
         self
     }
-    
+
     pub fn with_root_certificates(mut self, root_certificates: Vec<Certificate>) -> Self {
         self.root_certificates = Some(root_certificates);
         self
     }
-    
+
     pub fn with_api_version(mut self, api_version: WechatPayApiVersion) -> Self {
         self.api_version = api_version;
         self
     }
-    
+
     pub fn with_api_key(mut self, api_key: &str) -> Self {
         self.api_key = Some(api_key.to_string());
         self
     }
-    
+
     pub fn with_mch_id(mut self, mch_id: &str) -> Self {
         self.mch_id = mch_id.to_string();
         self
     }
-    
+
     pub fn with_app_id(mut self, app_id: &str) -> Self {
         self.app_id = app_id.to_string();
         self
     }
-    
+
     pub fn with_notify_url(mut self, notify_url: &str) -> Self {
         self.notify_url = notify_url.to_string();
         self
     }
-    
+
     pub fn with_sandbox(mut self) -> Self {
         self.sandbox = true;
         self
     }
-    
+
     pub fn with_cert_path_and_key_path(mut self, cert_path: &str, key_path: &str) -> Self {
         self.cert_path = Some(cert_path.to_string());
         self.key_path = Some(key_path.to_string());
         self
     }
-    
+
     pub fn with_p12_path(mut self, p12_path: &str) -> Self {
         self.p12_path = Some(p12_path.to_string());
         self
     }
-    
+
     pub fn with_p12_password(mut self, p12_password: &str) -> Self {
         self.p12_password = Some(p12_password.to_string());
         self
     }
-    
+
     pub fn with_serial_no(mut self, serial_no: &str) -> Self {
         self.serial_no = Some(serial_no.to_string());
         self
     }
-    
+
     /// 设置证书路径
     pub fn with_cert_path(mut self, cert_path: &str) -> Self {
         self.cert_path = Some(cert_path.to_string());

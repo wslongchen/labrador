@@ -59,23 +59,37 @@ impl<'a> WechatCpMedia<'a> {
         let default_file_name = format!("{}.png", random_string(16));
         let file_name = file_name.unwrap_or(&default_file_name);
 
-        let form = reqwest::multipart::Form::new()
-            .part("media", reqwest::multipart::Part::bytes(data).file_name(file_name.to_string()));
+        let form = reqwest::multipart::Form::new().part(
+            "media",
+            reqwest::multipart::Part::bytes(data).file_name(file_name.to_string()),
+        );
 
-        let response: WechatApiResponse<MediaUploadResponse> = self.client
-            .post(&format!("/cgi-bin/media/upload?type={}", media_type), RequestBody::Multipart(form))
+        let response: WechatApiResponse<MediaUploadResponse> = self
+            .client
+            .post(
+                &format!("/cgi-bin/media/upload?type={}", media_type),
+                RequestBody::Multipart(form),
+            )
             .await?;
         response.into_result()
     }
 
     /// 上传临时素材（通过文件路径）
-    pub async fn upload_media_with_file(&self, media_type: &str, file_path: &str) -> LabradorResult<MediaUploadResponse> {
+    pub async fn upload_media_with_file(
+        &self,
+        media_type: &str,
+        file_path: &str,
+    ) -> LabradorResult<MediaUploadResponse> {
         let (file_name, data) = read_file_with_name(file_path)?;
         self.upload_media(media_type, Some(&file_name), data).await
     }
 
     /// 上传临时素材（通过URL）
-    pub async fn upload_media_with_url(&self, media_type: &str, url: &str) -> LabradorResult<MediaUploadResponse> {
+    pub async fn upload_media_with_url(
+        &self,
+        media_type: &str,
+        url: &str,
+    ) -> LabradorResult<MediaUploadResponse> {
         let response = reqwest::get(url).await?;
         let data = response.bytes().await?.to_vec();
         self.upload_media(media_type, None, data).await
@@ -87,18 +101,28 @@ impl<'a> WechatCpMedia<'a> {
     /// 返回的图片URL，仅能用于图文消息（mpnews）正文中的图片展示；
     /// 若用于非企业微信域名下的页面，图片将被屏蔽。
     /// 每个企业每天最多可上传100张图片。
-    pub async fn upload_img(&self, file_name: &str, data: Vec<u8>) -> LabradorResult<ImageUploadResponse> {
-        let form = reqwest::multipart::Form::new()
-            .part("media", reqwest::multipart::Part::bytes(data).file_name(file_name.to_string()));
+    pub async fn upload_img(
+        &self,
+        file_name: &str,
+        data: Vec<u8>,
+    ) -> LabradorResult<ImageUploadResponse> {
+        let form = reqwest::multipart::Form::new().part(
+            "media",
+            reqwest::multipart::Part::bytes(data).file_name(file_name.to_string()),
+        );
 
-        let response: WechatApiResponse<ImageUploadResponse> = self.client
+        let response: WechatApiResponse<ImageUploadResponse> = self
+            .client
             .post("/cgi-bin/media/uploadimg", RequestBody::Multipart(form))
             .await?;
         response.into_result()
     }
 
     /// 上传图片（通过文件路径）
-    pub async fn upload_img_with_file(&self, file_path: &str) -> LabradorResult<ImageUploadResponse> {
+    pub async fn upload_img_with_file(
+        &self,
+        file_path: &str,
+    ) -> LabradorResult<ImageUploadResponse> {
         let (file_name, data) = read_file_with_name(file_path)?;
         self.upload_img(&file_name, data).await
     }
@@ -118,11 +142,20 @@ impl<'a> WechatCpMedia<'a> {
         let default_file_name = format!("{}.png", random_string(16));
         let file_name = file_name.unwrap_or(&default_file_name);
 
-        let form = reqwest::multipart::Form::new()
-            .part("media", reqwest::multipart::Part::bytes(data).file_name(file_name.to_string()));
+        let form = reqwest::multipart::Form::new().part(
+            "media",
+            reqwest::multipart::Part::bytes(data).file_name(file_name.to_string()),
+        );
 
-        let response: WechatApiResponse<AttachmentUploadResponse> = self.client
-            .post(&format!("/cgi-bin/media/upload_attachment?media_type={}&attachment_type={}", media_type, attachment_type), RequestBody::Multipart(form))
+        let response: WechatApiResponse<AttachmentUploadResponse> = self
+            .client
+            .post(
+                &format!(
+                    "/cgi-bin/media/upload_attachment?media_type={}&attachment_type={}",
+                    media_type, attachment_type
+                ),
+                RequestBody::Multipart(form),
+            )
             .await?;
         response.into_result()
     }
@@ -135,7 +168,8 @@ impl<'a> WechatCpMedia<'a> {
         file_path: &str,
     ) -> LabradorResult<AttachmentUploadResponse> {
         let (file_name, data) = read_file_with_name(file_path)?;
-        self.upload_attachment(media_type, attachment_type, Some(&file_name), data).await
+        self.upload_attachment(media_type, attachment_type, Some(&file_name), data)
+            .await
     }
 
     /// 上传附件资源（通过URL）
@@ -147,7 +181,8 @@ impl<'a> WechatCpMedia<'a> {
     ) -> LabradorResult<AttachmentUploadResponse> {
         let response = reqwest::get(url).await?;
         let data = response.bytes().await?.to_vec();
-        self.upload_attachment(media_type, attachment_type, None, data).await
+        self.upload_attachment(media_type, attachment_type, None, data)
+            .await
     }
 
     /// 获取临时素材

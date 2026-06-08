@@ -19,13 +19,13 @@
  *
  */
 
-use serde::{Deserialize, Serialize};
-use serde_json::{json};
-use bytes::Bytes;
 use crate::errors::LabradorResult;
 use crate::request::RequestBody;
 use crate::wechat::client::WechatApiResponse;
 use crate::wechat::mp::WechatMpClient;
+use bytes::Bytes;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 /// 微信发票模块（含商户开票、开票平台、发票报销、非税票据）
 #[derive(Debug, Clone)]
@@ -51,9 +51,18 @@ impl<'a> WechatMpInvoice<'a> {
     /// - get_pay_mch：查询商户与开票平台的绑定情况
     /// - set_contact：设置商户的联系方式
     /// - get_contact：获取商户的联系方式
-    pub async fn set_biz_attr(&self, action: &str, request: &BizAttrRequest) -> LabradorResult<BizAttrResponse> {
-        let response: WechatApiResponse<BizAttrResponse> = self.client.wechat_client()
-            .post(&format!("/card/invoice/setbizattr?action={}", action), request)
+    pub async fn set_biz_attr(
+        &self,
+        action: &str,
+        request: &BizAttrRequest,
+    ) -> LabradorResult<BizAttrResponse> {
+        let response: WechatApiResponse<BizAttrResponse> = self
+            .client
+            .wechat_client()
+            .post(
+                &format!("/card/invoice/setbizattr?action={}", action),
+                request,
+            )
             .await?;
         response.into_result()
     }
@@ -61,12 +70,18 @@ impl<'a> WechatMpInvoice<'a> {
     /// 查询授权信息
     ///
     /// 执收单位可以调用该接口查询订单是否有被用户授权。
-    pub async fn get_auth_data(&self, s_pappid: &str, order_id: &str) -> LabradorResult<AuthDataResponse> {
+    pub async fn get_auth_data(
+        &self,
+        s_pappid: &str,
+        order_id: &str,
+    ) -> LabradorResult<AuthDataResponse> {
         let request = json!({
             "s_pappid": s_pappid,
             "order_id": order_id
         });
-        let response: WechatApiResponse<AuthDataResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<AuthDataResponse> = self
+            .client
+            .wechat_client()
             .post("/card/invoice/getauthdata", request)
             .await?;
         response.into_result()
@@ -80,7 +95,9 @@ impl<'a> WechatMpInvoice<'a> {
     /// - 1：填写字段开票授权（填写抬头申请开票类型）
     /// - 2：领票授权（领取发票类型）
     pub async fn get_auth_url(&self, request: &AuthUrlRequest) -> LabradorResult<AuthUrlResponse> {
-        let response: WechatApiResponse<AuthUrlResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<AuthUrlResponse> = self
+            .client
+            .wechat_client()
             .post("/card/invoice/getauthurl", request)
             .await?;
         response.into_result()
@@ -89,13 +106,20 @@ impl<'a> WechatMpInvoice<'a> {
     /// 拒绝领受发票
     ///
     /// 商户收到用户的发票之后，可以选择是否接收。若不接收，则可以调用该接口拒绝领受发票。
-    pub async fn reject_insert(&self, s_pappid: &str, order_id: &str, reason: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn reject_insert(
+        &self,
+        s_pappid: &str,
+        order_id: &str,
+        reason: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let request = json!({
             "s_pappid": s_pappid,
             "order_id": order_id,
             "reason": reason
         });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/card/invoice/rejectinsert", request)
             .await?;
         Ok(response)
@@ -106,8 +130,13 @@ impl<'a> WechatMpInvoice<'a> {
     /// 设置商户联系信息
     ///
     /// 开票平台可以设置商户的联系方式等信息。
-    pub async fn set_invoice_url(&self, request: &SetInvoiceUrlRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+    pub async fn set_invoice_url(
+        &self,
+        request: &SetInvoiceUrlRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/card/invoice/platform/seturl", request)
             .await?;
         Ok(response)
@@ -118,7 +147,8 @@ impl<'a> WechatMpInvoice<'a> {
     /// 开票平台可以通过该接口获取发票PDF文件。
     pub async fn get_invoice_pdf(&self, s_media_id: &str) -> LabradorResult<Bytes> {
         let request = json!({ "s_media_id": s_media_id });
-        self.client.wechat_client()
+        self.client
+            .wechat_client()
             .post_bytes("/card/invoice/platform/getpdf", request)
             .await
     }
@@ -126,8 +156,13 @@ impl<'a> WechatMpInvoice<'a> {
     /// 更新发票状态
     ///
     /// 开票平台可以通过该接口更新发票的状态。
-    pub async fn update_invoice_status(&self, request: &UpdateInvoiceStatusRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+    pub async fn update_invoice_status(
+        &self,
+        request: &UpdateInvoiceStatusRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/card/invoice/platform/updatestatus", request)
             .await?;
         Ok(response)
@@ -137,11 +172,22 @@ impl<'a> WechatMpInvoice<'a> {
     ///
     /// 商户或开票平台可以通过该接口上传PDF。PDF上传成功后将获得发票文件的标识s_media_id。
     /// 注意：s_media_id有效期3天，3天内未关联到发票卡券将自动销毁。
-    pub async fn set_invoice_pdf(&self, pdf_data: Vec<u8>, file_name: &str) -> LabradorResult<SetPdfResponse> {
-        let form = reqwest::multipart::Form::new()
-            .part("pdf", reqwest::multipart::Part::bytes(pdf_data).file_name(file_name.to_string()));
-        let response: WechatApiResponse<SetPdfResponse> = self.client.wechat_client()
-            .post("/card/invoice/platform/setpdf", RequestBody::Multipart(form))
+    pub async fn set_invoice_pdf(
+        &self,
+        pdf_data: Vec<u8>,
+        file_name: &str,
+    ) -> LabradorResult<SetPdfResponse> {
+        let form = reqwest::multipart::Form::new().part(
+            "pdf",
+            reqwest::multipart::Part::bytes(pdf_data).file_name(file_name.to_string()),
+        );
+        let response: WechatApiResponse<SetPdfResponse> = self
+            .client
+            .wechat_client()
+            .post(
+                "/card/invoice/platform/setpdf",
+                RequestBody::Multipart(form),
+            )
             .await?;
         response.into_result()
     }
@@ -149,8 +195,13 @@ impl<'a> WechatMpInvoice<'a> {
     /// 创建发票卡券模板
     ///
     /// 开票平台可以通过该接口创建发票卡券模板。
-    pub async fn create_invoice_card(&self, request: &CreateInvoiceCardRequest) -> LabradorResult<CreateInvoiceCardResponse> {
-        let response: WechatApiResponse<CreateInvoiceCardResponse> = self.client.wechat_client()
+    pub async fn create_invoice_card(
+        &self,
+        request: &CreateInvoiceCardRequest,
+    ) -> LabradorResult<CreateInvoiceCardResponse> {
+        let response: WechatApiResponse<CreateInvoiceCardResponse> = self
+            .client
+            .wechat_client()
             .post("/card/invoice/platform/createcard", request)
             .await?;
         response.into_result()
@@ -159,8 +210,13 @@ impl<'a> WechatMpInvoice<'a> {
     /// 插入发票到用户卡包
     ///
     /// 开票平台可以通过该接口将发票插入到用户的微信卡包中。
-    pub async fn insert_invoice(&self, request: &InsertInvoiceRequest) -> LabradorResult<InsertInvoiceResponse> {
-        let response: WechatApiResponse<InsertInvoiceResponse> = self.client.wechat_client()
+    pub async fn insert_invoice(
+        &self,
+        request: &InsertInvoiceRequest,
+    ) -> LabradorResult<InsertInvoiceResponse> {
+        let response: WechatApiResponse<InsertInvoiceResponse> = self
+            .client
+            .wechat_client()
             .post("/card/invoice/insert", request)
             .await?;
         response.into_result()
@@ -171,12 +227,18 @@ impl<'a> WechatMpInvoice<'a> {
     /// 获取报销发票信息
     ///
     /// 报销方可以通过该接口获取用户的发票信息。
-    pub async fn get_invoice_info(&self, card_id: &str, encrypt_code: &str) -> LabradorResult<InvoiceInfoResponse> {
+    pub async fn get_invoice_info(
+        &self,
+        card_id: &str,
+        encrypt_code: &str,
+    ) -> LabradorResult<InvoiceInfoResponse> {
         let request = json!({
             "card_id": card_id,
             "encrypt_code": encrypt_code
         });
-        let response: WechatApiResponse<InvoiceInfoResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<InvoiceInfoResponse> = self
+            .client
+            .wechat_client()
             .post("/card/invoice/reimburse/getinvoiceinfo", request)
             .await?;
         response.into_result()
@@ -185,8 +247,13 @@ impl<'a> WechatMpInvoice<'a> {
     /// 更新报销发票状态
     ///
     /// 报销方可以通过该接口更新发票的报销状态。
-    pub async fn update_invoice_status_reimburse(&self, request: &ReimburseStatusRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+    pub async fn update_invoice_status_reimburse(
+        &self,
+        request: &ReimburseStatusRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/card/invoice/reimburse/updatestatus", request)
             .await?;
         Ok(response)
@@ -195,8 +262,13 @@ impl<'a> WechatMpInvoice<'a> {
     /// 批量更新报销发票状态
     ///
     /// 报销方可以通过该接口批量更新发票的报销状态。
-    pub async fn batch_update_invoice_status(&self, request: &BatchReimburseStatusRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+    pub async fn batch_update_invoice_status(
+        &self,
+        request: &BatchReimburseStatusRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/card/invoice/reimburse/updatestatusbatch", request)
             .await?;
         Ok(response)
@@ -205,9 +277,14 @@ impl<'a> WechatMpInvoice<'a> {
     /// 批量获取报销发票信息
     ///
     /// 报销方可以通过该接口批量获取用户的发票信息。
-    pub async fn batch_get_invoice_info(&self, item_list: Vec<InvoiceItem>) -> LabradorResult<Vec<InvoiceInfoResponse>> {
+    pub async fn batch_get_invoice_info(
+        &self,
+        item_list: Vec<InvoiceItem>,
+    ) -> LabradorResult<Vec<InvoiceInfoResponse>> {
         let request = json!({ "item_list": item_list });
-        let response: WechatApiResponse<BatchInvoiceInfoResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<BatchInvoiceInfoResponse> = self
+            .client
+            .wechat_client()
             .post("/card/invoice/reimburse/getinvoiceinfobatch", request)
             .await?;
         Ok(response.into_result()?.item_list)
@@ -218,8 +295,13 @@ impl<'a> WechatMpInvoice<'a> {
     /// 获取用户抬头（获取用户填写抬头链接）
     ///
     /// 商户可以通过该接口获取让用户填写抬头的链接。
-    pub async fn get_user_title_url(&self, request: &UserTitleUrlRequest) -> LabradorResult<UserTitleUrlResponse> {
-        let response: WechatApiResponse<UserTitleUrlResponse> = self.client.wechat_client()
+    pub async fn get_user_title_url(
+        &self,
+        request: &UserTitleUrlRequest,
+    ) -> LabradorResult<UserTitleUrlResponse> {
+        let response: WechatApiResponse<UserTitleUrlResponse> = self
+            .client
+            .wechat_client()
             .post("/card/invoice/biz/getusertitleurl", request)
             .await?;
         response.into_result()
@@ -228,8 +310,13 @@ impl<'a> WechatMpInvoice<'a> {
     /// 获取选择抬头链接
     ///
     /// 商户可以通过该接口获取让用户选择抬头的链接。
-    pub async fn get_select_title_url(&self, request: &SelectTitleUrlRequest) -> LabradorResult<SelectTitleUrlResponse> {
-        let response: WechatApiResponse<SelectTitleUrlResponse> = self.client.wechat_client()
+    pub async fn get_select_title_url(
+        &self,
+        request: &SelectTitleUrlRequest,
+    ) -> LabradorResult<SelectTitleUrlResponse> {
+        let response: WechatApiResponse<SelectTitleUrlResponse> = self
+            .client
+            .wechat_client()
             .post("/card/invoice/biz/getselecttitleurl", request)
             .await?;
         response.into_result()
@@ -240,7 +327,9 @@ impl<'a> WechatMpInvoice<'a> {
     /// 商户可以通过该接口扫描用户的抬头二维码。
     pub async fn scan_title(&self, scan_text: &str) -> LabradorResult<TitleInfo> {
         let request = json!({ "scan_text": scan_text });
-        let response: WechatApiResponse<TitleInfo> = self.client.wechat_client()
+        let response: WechatApiResponse<TitleInfo> = self
+            .client
+            .wechat_client()
             .post("/card/invoice/scantitle", request)
             .await?;
         response.into_result()
@@ -251,8 +340,13 @@ impl<'a> WechatMpInvoice<'a> {
     /// 获取非税票据授权页链接
     ///
     /// 此接口用于获取非税票据授权页链接，让用户跳转到授权页。
-    pub async fn get_notax_auth_url(&self, request: &NotaxAuthUrlRequest) -> LabradorResult<NotaxAuthUrlResponse> {
-        let response: WechatApiResponse<NotaxAuthUrlResponse> = self.client.wechat_client()
+    pub async fn get_notax_auth_url(
+        &self,
+        request: &NotaxAuthUrlRequest,
+    ) -> LabradorResult<NotaxAuthUrlResponse> {
+        let response: WechatApiResponse<NotaxAuthUrlResponse> = self
+            .client
+            .wechat_client()
             .post("/nontax/getbillauthurl", request)
             .await?;
         response.into_result()
@@ -261,8 +355,13 @@ impl<'a> WechatMpInvoice<'a> {
     /// 创建财政电子票据模板
     ///
     /// 财政局可以通过这个接口帮助执收单位创建一张财政电子票据模板。
-    pub async fn create_notax_card(&self, request: &CreateNotaxCardRequest) -> LabradorResult<CreateNotaxCardResponse> {
-        let response: WechatApiResponse<CreateNotaxCardResponse> = self.client.wechat_client()
+    pub async fn create_notax_card(
+        &self,
+        request: &CreateNotaxCardRequest,
+    ) -> LabradorResult<CreateNotaxCardResponse> {
+        let response: WechatApiResponse<CreateNotaxCardResponse> = self
+            .client
+            .wechat_client()
             .post("/nontax/createbillcard", request)
             .await?;
         response.into_result()
@@ -271,8 +370,13 @@ impl<'a> WechatMpInvoice<'a> {
     /// 票据插入用户卡包
     ///
     /// 执收单位完成用户插卡授权后，向财政局请求给某一个订单号进行领取财政电子票据。
-    pub async fn insert_notax_invoice(&self, request: &InsertNotaxInvoiceRequest) -> LabradorResult<InsertNotaxInvoiceResponse> {
-        let response: WechatApiResponse<InsertNotaxInvoiceResponse> = self.client.wechat_client()
+    pub async fn insert_notax_invoice(
+        &self,
+        request: &InsertNotaxInvoiceRequest,
+    ) -> LabradorResult<InsertNotaxInvoiceResponse> {
+        let response: WechatApiResponse<InsertNotaxInvoiceResponse> = self
+            .client
+            .wechat_client()
             .post("/nontax/insertbill", request)
             .await?;
         response.into_result()
@@ -285,7 +389,9 @@ impl<'a> WechatMpInvoice<'a> {
     /// Api_ticket是用于调用js-sdk的临时票据，有效期为7200秒。
     /// type: jsapi 为 js-sdk凭证；wx_card 为微信卡券凭证
     pub async fn get_ticket(&self, ticket_type: &str) -> LabradorResult<TicketResponse> {
-        let response: WechatApiResponse<TicketResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<TicketResponse> = self
+            .client
+            .wechat_client()
             .get(&format!("/cgi-bin/ticket/getticket?type={}", ticket_type))
             .await?;
         response.into_result()

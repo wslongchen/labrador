@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 //! 缓存工具
@@ -228,7 +228,8 @@ where
         if let Some(max_size) = self.max_size {
             if self.cache.len() >= max_size && !self.cache.contains_key(&key) {
                 // 移除最旧的项目（基于最后访问时间）
-                let oldest_key = self.cache
+                let oldest_key = self
+                    .cache
                     .iter()
                     .min_by_key(|(_, item)| item.last_accessed)
                     .map(|(k, _)| k.clone());
@@ -399,9 +400,7 @@ where
 {
     /// 创建新的异步缓存
     pub fn new(max_capacity: u64) -> Self {
-        let cache = MokaCache::builder()
-            .max_capacity(max_capacity)
-            .build();
+        let cache = MokaCache::builder().max_capacity(max_capacity).build();
         Self { cache }
     }
 

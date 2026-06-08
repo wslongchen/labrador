@@ -16,29 +16,29 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 //! 支付宝平台实现
 
-use std::collections::BTreeMap;
-use serde::{Deserialize, Serialize};
 use crate::alipay::method::AlipayMethod;
 use crate::errors::{LabraError, LabradorResult};
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
+pub mod builder;
 /// 支付宝客户端
 pub mod client;
-/// 支付宝支付
-pub mod pay;
-/// 支付宝开放平台
-pub mod open;
-/// 支付宝小程序
-pub mod miniapp;
+pub mod config;
 #[allow(unused)]
 pub mod constants;
-pub mod builder;
-pub mod config;
 pub mod method;
+/// 支付宝小程序
+pub mod miniapp;
+/// 支付宝开放平台
+pub mod open;
+/// 支付宝支付
+pub mod pay;
 pub mod types;
 
 /// 支付宝错误码
@@ -91,9 +91,6 @@ impl From<&str> for AlipayErrorCode {
     }
 }
 
-
-
-
 #[derive(Debug, Serialize, Default, Deserialize)]
 pub struct AlipayBizRequest<T: Serialize> {
     /// API版本
@@ -118,7 +115,7 @@ pub struct AlipayBizRequest<T: Serialize> {
     pub method: AlipayMethod,
 }
 
-impl <T: Serialize> AlipayBizRequest<T> {
+impl<T: Serialize> AlipayBizRequest<T> {
     pub fn new() -> Self {
         Self {
             api_version: "1.0".to_string(),
@@ -163,15 +160,20 @@ impl<T: Serialize + Clone> From<&T> for AlipayBizRequest<T> {
     }
 }
 
-
-impl <T> AlipayRequest<T> for AlipayBizRequest<T> where T: Serialize {
+impl<T> AlipayRequest<T> for AlipayBizRequest<T>
+where
+    T: Serialize,
+{
     fn get_api_method(&self) -> &AlipayMethod {
         &self.method
     }
 
     fn get_text_params(&self) -> BTreeMap<String, String> {
         let mut txt_params = BTreeMap::new();
-        txt_params.insert(constants::BIZ_CONTENT_KEY.to_string(), serde_json::to_string(&self.get_biz_model()).unwrap_or_default());
+        txt_params.insert(
+            constants::BIZ_CONTENT_KEY.to_string(),
+            serde_json::to_string(&self.get_biz_model()).unwrap_or_default(),
+        );
         if !self.udf_params.is_empty() {
             for (k, v) in &self.udf_params {
                 txt_params.insert(k.to_string(), v.to_string());
@@ -217,8 +219,6 @@ impl <T> AlipayRequest<T> for AlipayBizRequest<T> where T: Serialize {
     }
 }
 
-
-
 /// 支付宝响应
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct AlipayResponse<T = serde_json::Value> {
@@ -246,7 +246,8 @@ impl<T> AlipayResponse<T> {
     /// 转换为Result
     pub fn into_result(self) -> LabradorResult<T> {
         if self.is_success() {
-            self.data.ok_or_else(|| LabraError::Other("No data in response".to_string()))
+            self.data
+                .ok_or_else(|| LabraError::Other("No data in response".to_string()))
         } else {
             let errmsg = self.sub_msg.unwrap_or(self.msg.clone());
             Err(LabraError::business(
@@ -256,7 +257,6 @@ impl<T> AlipayResponse<T> {
         }
     }
 }
-
 
 pub trait AlipayRequest<T: Serialize> {
     ///
@@ -283,7 +283,7 @@ pub trait AlipayRequest<T: Serialize> {
 
         txt_params.insert(
             constants::BIZ_CONTENT_KEY.to_string(),
-            serde_json::to_string(&value).unwrap_or_default()
+            serde_json::to_string(&value).unwrap_or_default(),
         );
         txt_params
     }
@@ -295,7 +295,6 @@ pub trait AlipayRequest<T: Serialize> {
     fn get_api_version(&self) -> String {
         "1.0".to_string()
     }
-
 
     ///
     /// 获取终端类型
@@ -312,7 +311,6 @@ pub trait AlipayRequest<T: Serialize> {
     fn get_terminal_info(&self) -> String {
         "".to_string()
     }
-
 
     ///
     /// 获取产品码

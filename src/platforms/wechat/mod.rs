@@ -16,26 +16,27 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 //! 微信平台实现
 
 /// 微信客户端
 pub mod client;
-/// 微信支付
-pub mod pay;
-/// 微信公众号
-pub mod mp;
-/// 微信小程序
-pub mod miniapp;
 pub mod constants;
-pub mod message_crypto;
 /// 企业微信
 pub mod cp;
+pub mod message_crypto;
+/// 微信小程序
+pub mod miniapp;
+/// 微信公众号
+pub mod mp;
+/// 微信支付
+pub mod pay;
 pub mod signer;
 
 /// 微信错误码
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(i32)]
 pub enum WechatErrorCode {
     /// 成功
     Success = 0,

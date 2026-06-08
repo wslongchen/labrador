@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 /// 微信API基础URL
@@ -34,7 +34,6 @@ pub const PAY_SANDBOX_API_BASE_URL: &str = "https://api.mch.weixin.qq.com/sandbo
 
 /// 微信支付V3 API基础URL
 pub const PAY_V3_API_BASE_URL: &str = "https://api.mch.weixin.qq.com/v3";
-
 
 pub const PAY_SIGN_SCHEMA_V3: &str = "WECHATPAY2-SHA256-RSA2048";
 pub static ACCEPT: &str = "Accept";

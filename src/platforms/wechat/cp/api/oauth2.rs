@@ -18,7 +18,7 @@
  *  *
  *
  */
-use serde::{Deserialize};
+use serde::Deserialize;
 use serde_json::json;
 
 use crate::errors::LabradorResult;
@@ -52,7 +52,12 @@ impl<'a> WechatCpOauth2<'a> {
     ///   - `snsapi_userinfo`：静默授权，可获取成员的详细信息，但不包含手机、邮箱等敏感信息
     ///   - `snsapi_privateinfo`：手动授权，可获取成员的详细信息，包含手机、邮箱等敏感信息
     /// * `state` - 重定向后会带上state参数，企业可以填写a-zA-Z0-9的参数值，最多128字节
-    pub fn build_authorization_url(&self, redirect_uri: &str, scope: &str, state: Option<&str>) -> String {
+    pub fn build_authorization_url(
+        &self,
+        redirect_uri: &str,
+        scope: &str,
+        state: Option<&str>,
+    ) -> String {
         let mut url = format!(
             "https://open.weixin.qq.com/connect/oauth2/authorize?appid={}&redirect_uri={}&response_type=code&scope={}",
             self.client.corp_id(),
@@ -87,14 +92,22 @@ impl<'a> WechatCpOauth2<'a> {
     /// 构造OAuth2授权链接（使用snsapi_userinfo scope）
     ///
     /// 静默授权，可获取成员的详细信息，但不包含手机、邮箱等敏感信息
-    pub fn build_authorization_url_userinfo(&self, redirect_uri: &str, state: Option<&str>) -> String {
+    pub fn build_authorization_url_userinfo(
+        &self,
+        redirect_uri: &str,
+        state: Option<&str>,
+    ) -> String {
         self.build_authorization_url(redirect_uri, SNSAPI_USERINFO, state)
     }
 
     /// 构造OAuth2授权链接（使用snsapi_privateinfo scope）
     ///
     /// 手动授权，可获取成员的详细信息，包含手机、邮箱等敏感信息
-    pub fn build_authorization_url_privateinfo(&self, redirect_uri: &str, state: Option<&str>) -> String {
+    pub fn build_authorization_url_privateinfo(
+        &self,
+        redirect_uri: &str,
+        state: Option<&str>,
+    ) -> String {
         self.build_authorization_url(redirect_uri, SNSAPI_PRIVATEINFO, state)
     }
 
@@ -106,7 +119,8 @@ impl<'a> WechatCpOauth2<'a> {
     /// # 参数说明
     /// * `code` - 通过成员授权获取到的code，每次成员授权带上的code将不一样，code只能使用一次，5分钟未被使用自动过期
     pub async fn get_user_info(&self, code: &str) -> LabradorResult<UserInfoResponse> {
-        let response: WechatApiResponse<UserInfoResponse> = self.client
+        let response: WechatApiResponse<UserInfoResponse> = self
+            .client
             .get(&format!("/cgi-bin/auth/getuserinfo?code={}", code))
             .await?;
         response.into_result()
@@ -116,9 +130,17 @@ impl<'a> WechatCpOauth2<'a> {
     ///
     /// 根据code获取成员信息，适用于自建应用与代开发应用。
     /// 注意：需要指定agent_id，该方法可能已过时，建议使用 `get_user_info`。
-    pub async fn get_user_info_with_agent(&self, code: &str, agent_id: i32) -> LabradorResult<UserInfoResponse> {
-        let response: WechatApiResponse<UserInfoResponse> = self.client
-            .get(&format!("/cgi-bin/user/getuserinfo?code={}&agentid={}", code, agent_id))
+    pub async fn get_user_info_with_agent(
+        &self,
+        code: &str,
+        agent_id: i32,
+    ) -> LabradorResult<UserInfoResponse> {
+        let response: WechatApiResponse<UserInfoResponse> = self
+            .client
+            .get(&format!(
+                "/cgi-bin/user/getuserinfo?code={}&agentid={}",
+                code, agent_id
+            ))
             .await?;
         response.into_result()
     }
@@ -130,8 +152,12 @@ impl<'a> WechatCpOauth2<'a> {
     /// # 参数说明
     /// * `user_ticket` - 成员票据，通过get_user_info获取
     pub async fn get_user_detail(&self, user_ticket: &str) -> LabradorResult<UserDetail> {
-        let response: WechatApiResponse<UserDetail> = self.client
-            .post("/cgi-bin/auth/getuserdetail", json!({ "user_ticket": user_ticket }))
+        let response: WechatApiResponse<UserDetail> = self
+            .client
+            .post(
+                "/cgi-bin/auth/getuserdetail",
+                json!({ "user_ticket": user_ticket }),
+            )
             .await?;
         response.into_result()
     }
@@ -143,9 +169,16 @@ impl<'a> WechatCpOauth2<'a> {
     ///
     /// # 参数说明
     /// * `user_ticket` - 成员票据，通过get_user_info获取
-    pub async fn get_user_sensitive_info(&self, user_ticket: &str) -> LabradorResult<UserSensitiveInfo> {
-        let response: WechatApiResponse<UserSensitiveInfo> = self.client
-            .post("/cgi-bin/auth/getuser_sensitive_info", json!({ "user_ticket": user_ticket }))
+    pub async fn get_user_sensitive_info(
+        &self,
+        user_ticket: &str,
+    ) -> LabradorResult<UserSensitiveInfo> {
+        let response: WechatApiResponse<UserSensitiveInfo> = self
+            .client
+            .post(
+                "/cgi-bin/auth/getuser_sensitive_info",
+                json!({ "user_ticket": user_ticket }),
+            )
             .await?;
         response.into_result()
     }

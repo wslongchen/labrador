@@ -18,7 +18,7 @@
  *  *
  *
  */
-use serde::{Deserialize};
+use serde::Deserialize;
 use serde_json::json;
 
 use crate::errors::LabradorResult;
@@ -47,9 +47,7 @@ impl<'a> WechatCpUser<'a> {
     ///
     /// 详情请见：<https://work.weixin.qq.com/api/doc/90195>
     pub async fn create(&self, user: UserInfo) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client
-            .post("/cgi-bin/user/create", user)
-            .await?;
+        let response: WechatApiResponse = self.client.post("/cgi-bin/user/create", user).await?;
         Ok(response)
     }
 
@@ -57,7 +55,8 @@ impl<'a> WechatCpUser<'a> {
     ///
     /// 详情请见：<https://work.weixin.qq.com/api/doc/90196>
     pub async fn get(&self, userid: &str) -> LabradorResult<UserInfo> {
-        let response: WechatApiResponse<UserInfo> = self.client
+        let response: WechatApiResponse<UserInfo> = self
+            .client
             .get(&format!("/cgi-bin/user/get?userid={}", userid))
             .await?;
         response.into_result()
@@ -67,9 +66,7 @@ impl<'a> WechatCpUser<'a> {
     ///
     /// 详情请见：<https://work.weixin.qq.com/api/doc/90197>
     pub async fn update(&self, user: UserInfo) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client
-            .post("/cgi-bin/user/update", user)
-            .await?;
+        let response: WechatApiResponse = self.client.post("/cgi-bin/user/update", user).await?;
         Ok(response)
     }
 
@@ -80,14 +77,19 @@ impl<'a> WechatCpUser<'a> {
     pub async fn delete(&self, userids: Vec<&str>) -> LabradorResult<WechatApiResponse> {
         if userids.len() == 1 {
             // 单个删除
-            let response: WechatApiResponse = self.client
+            let response: WechatApiResponse = self
+                .client
                 .get(&format!("/cgi-bin/user/delete?userid={}", userids[0]))
                 .await?;
             Ok(response)
         } else {
             // 批量删除
-            let response: WechatApiResponse = self.client
-                .post("/cgi-bin/user/batchdelete", json!({ "useridlist": userids }))
+            let response: WechatApiResponse = self
+                .client
+                .post(
+                    "/cgi-bin/user/batchdelete",
+                    json!({ "useridlist": userids }),
+                )
                 .await?;
             Ok(response)
         }
@@ -116,9 +118,7 @@ impl<'a> WechatCpUser<'a> {
         let status_val = status.unwrap_or(0);
         url.push_str(&format!("&status={}", status_val));
 
-        let response: WechatApiResponse<UserListResponse> = self.client
-            .get(&url)
-            .await?;
+        let response: WechatApiResponse<UserListResponse> = self.client.get(&url).await?;
         Ok(response.into_result()?.userlist)
     }
 
@@ -144,9 +144,7 @@ impl<'a> WechatCpUser<'a> {
         let status_val = status.unwrap_or(0);
         url.push_str(&format!("&status={}", status_val));
 
-        let response: WechatApiResponse<SimpleUserListResponse> = self.client
-            .get(&url)
-            .await?;
+        let response: WechatApiResponse<SimpleUserListResponse> = self.client.get(&url).await?;
         Ok(response.into_result()?.userlist)
     }
 
@@ -155,7 +153,8 @@ impl<'a> WechatCpUser<'a> {
     /// 企业在员工验证成功后，调用本方法告诉企业号平台该员工关注成功。
     /// 文档地址：<https://work.weixin.qq.com/api/doc/90202>
     pub async fn authenticate(&self, userid: &str) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client
+        let response: WechatApiResponse = self
+            .client
             .get(&format!("/cgi-bin/user/authsucc?userid={}", userid))
             .await?;
         Ok(response)
@@ -181,9 +180,8 @@ impl<'a> WechatCpUser<'a> {
             "party": party_ids,
             "tag": tag_ids,
         });
-        let response: WechatApiResponse<InviteResponse> = self.client
-            .post("/cgi-bin/batch/invite", req)
-            .await?;
+        let response: WechatApiResponse<InviteResponse> =
+            self.client.post("/cgi-bin/batch/invite", req).await?;
         response.into_result()
     }
 
@@ -195,7 +193,8 @@ impl<'a> WechatCpUser<'a> {
     /// * `size_type` - 二维码类型，1: 默认值，适用于部分用户扫码; 2: 适用于成员活码
     pub async fn get_join_qrcode(&self, size_type: Option<i32>) -> LabradorResult<String> {
         let size = size_type.unwrap_or(1);
-        let response: WechatApiResponse<JoinQrcodeResponse> = self.client
+        let response: WechatApiResponse<JoinQrcodeResponse> = self
+            .client
             .get(&format!("/cgi-bin/corp/get_join_qrcode?size_type={}", size))
             .await?;
         Ok(response.into_result()?.join_qrcode)
@@ -208,7 +207,8 @@ impl<'a> WechatCpUser<'a> {
     /// # 参数说明
     /// * `date` - 具体某天的活跃信息，最长支持获取30天前数据
     pub async fn get_active_count(&self, date: &str) -> LabradorResult<u64> {
-        let response: WechatApiResponse<ActiveCountResponse> = self.client
+        let response: WechatApiResponse<ActiveCountResponse> = self
+            .client
             .post("/cgi-bin/user/get_active_stat", json!({ "date": date }))
             .await?;
         Ok(response.into_result()?.active_cnt)
@@ -225,12 +225,17 @@ impl<'a> WechatCpUser<'a> {
     /// # 参数说明
     /// * `userid` - 企业内的成员id
     /// * `agent_id` - 应用id，若指定则返回该应用关联的openid，否则返回源应用的openid
-    pub async fn userid_to_openid(&self, userid: &str, agent_id: Option<i32>) -> LabradorResult<UseridToOpenidResponse> {
+    pub async fn userid_to_openid(
+        &self,
+        userid: &str,
+        agent_id: Option<i32>,
+    ) -> LabradorResult<UseridToOpenidResponse> {
         let mut req = json!({ "userid": userid });
         if let Some(agent) = agent_id {
             req["agentid"] = json!(agent);
         }
-        let response: WechatApiResponse<UseridToOpenidResponse> = self.client
+        let response: WechatApiResponse<UseridToOpenidResponse> = self
+            .client
             .post("/cgi-bin/user/convert_to_openid", req)
             .await?;
         response.into_result()
@@ -244,8 +249,12 @@ impl<'a> WechatCpUser<'a> {
     /// # 参数说明
     /// * `openid` - 在使用微信支付、微信红包和企业转账之后，返回的openid
     pub async fn openid_to_userid(&self, openid: &str) -> LabradorResult<String> {
-        let response: WechatApiResponse<OpenidToUseridResponse> = self.client
-            .post("/cgi-bin/user/convert_to_userid", json!({ "openid": openid }))
+        let response: WechatApiResponse<OpenidToUseridResponse> = self
+            .client
+            .post(
+                "/cgi-bin/user/convert_to_userid",
+                json!({ "openid": openid }),
+            )
             .await?;
         Ok(response.into_result()?.userid)
     }
@@ -258,7 +267,8 @@ impl<'a> WechatCpUser<'a> {
     /// # 参数说明
     /// * `mobile` - 手机号码
     pub async fn get_userid_by_mobile(&self, mobile: &str) -> LabradorResult<String> {
-        let response: WechatApiResponse<MobileToUseridResponse> = self.client
+        let response: WechatApiResponse<MobileToUseridResponse> = self
+            .client
             .post("/cgi-bin/user/getuserid", json!({ "mobile": mobile }))
             .await?;
         Ok(response.into_result()?.userid)
@@ -273,9 +283,16 @@ impl<'a> WechatCpUser<'a> {
     ///
     /// # 参数说明
     /// * `userid` - 外部联系人的userid
-    pub async fn get_external_contact(&self, userid: &str) -> LabradorResult<UserExternalContactDetail> {
-        let response: WechatApiResponse<UserExternalContactDetail> = self.client
-            .get(&format!("/cgi-bin/crm/get_external_contact?external_userid={}", userid))
+    pub async fn get_external_contact(
+        &self,
+        userid: &str,
+    ) -> LabradorResult<UserExternalContactDetail> {
+        let response: WechatApiResponse<UserExternalContactDetail> = self
+            .client
+            .get(&format!(
+                "/cgi-bin/crm/get_external_contact?external_userid={}",
+                userid
+            ))
             .await?;
         response.into_result()
     }

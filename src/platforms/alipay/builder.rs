@@ -16,12 +16,12 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
-use std::time::Duration;
-use crate::alipay::client::{AlipayClient};
+use crate::alipay::client::AlipayClient;
 use crate::alipay::config::AlipayClientConfig;
 use crate::errors::LabradorResult;
+use std::time::Duration;
 
 /// 支付宝客户端构建器
 pub struct AlipayClientBuilder {

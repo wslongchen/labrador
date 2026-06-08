@@ -16,16 +16,16 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 //// 支付宝平台实现
 #[cfg(feature = "alipay")]
 pub mod alipay;
+/// 请求签名器
+pub mod signer;
 /// 微信平台实现
 #[cfg(feature = "wechat")]
 pub mod wechat;
-/// 请求签名器
-pub mod signer;
 
 // 京东平台实现
 // #[cfg(feature = "jd")]

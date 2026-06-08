@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 use crate::client::certificate::Certificate;
 use crate::errors::{LabraError, LabradorResult};
@@ -55,9 +55,7 @@ enum RawIdentityData {
         password_hint: Option<String>, // 仅用于提示，不保存真实密码
     },
     /// PEM格式 (文本)
-    Pem {
-        data: Vec<u8>,
-    },
+    Pem { data: Vec<u8> },
 }
 
 /// 私钥类型
@@ -76,7 +74,8 @@ impl Identity {
             .map_err(|e| LabraError::Identity(format!("Invalid PKCS12: {}", e)))?;
 
         // 解析证书信息和私钥
-        let (certificates, private_key, key_type, has_chain) = Self::parse_pkcs12_info(der, password)?;
+        let (certificates, private_key, key_type, has_chain) =
+            Self::parse_pkcs12_info(der, password)?;
 
         Ok(Self {
             raw_data: RawIdentityData::P12 {
@@ -127,48 +126,65 @@ impl Identity {
     /// 转换为reqwest Identity（需要提供密码）
     pub fn to_reqwest_identity(&self) -> LabradorResult<ReqwestIdentity> {
         match &self.raw_data {
-            RawIdentityData::P12 { data, password_hint } => {
+            RawIdentityData::P12 {
+                data,
+                password_hint,
+            } => {
                 // 尝试提供的密码
                 if let Some(pwd) = password_hint {
-                    return ReqwestIdentity::from_pkcs12_der(data, pwd)
-                        .map_err(|e| LabraError::Identity(format!("Failed to create from P12: {}", e)));
+                    return ReqwestIdentity::from_pkcs12_der(data, pwd).map_err(|e| {
+                        LabraError::Identity(format!("Failed to create from P12: {}", e))
+                    });
                 }
 
-                Err(LabraError::Identity("Password required for P12".to_string()))
+                Err(LabraError::Identity(
+                    "Password required for P12".to_string(),
+                ))
             }
-            RawIdentityData::Pem { data } => {
-                ReqwestIdentity::from_pem(data)
-                    .map_err(|e| LabraError::Identity(format!("Failed to create from PEM: {}", e)))
-            }
+            RawIdentityData::Pem { data } => ReqwestIdentity::from_pem(data)
+                .map_err(|e| LabraError::Identity(format!("Failed to create from PEM: {}", e))),
         }
     }
 
     /// 解析PKCS#12信息
-    fn parse_pkcs12_info(der: &[u8], password: &str) -> LabradorResult<(Vec<Certificate>, Vec<u8>, PrivateKeyType, bool)> {
+    fn parse_pkcs12_info(
+        der: &[u8],
+        password: &str,
+    ) -> LabradorResult<(Vec<Certificate>, Vec<u8>, PrivateKeyType, bool)> {
         let pfx = Pkcs12::from_der(der)
             .map_err(|e| LabraError::Identity(format!("Failed to parse PKCS12: {}", e)))?;
 
-        let parsed = pfx.parse2(password)
-            .map_err(|e| LabraError::Identity(format!("Failed to parse PKCS12 with password: {}", e)))?;
+        let parsed = pfx.parse2(password).map_err(|e| {
+            LabraError::Identity(format!("Failed to parse PKCS12 with password: {}", e))
+        })?;
 
         let mut certificates = Vec::new();
 
         // 客户端证书
         if let Some(cert) = parsed.cert {
-            certificates.push(Certificate::from_pem(&cert.to_pem().map_err(|e| LabraError::Identity(e.to_string()))?)?);
+            certificates.push(Certificate::from_pem(
+                &cert
+                    .to_pem()
+                    .map_err(|e| LabraError::Identity(e.to_string()))?,
+            )?);
         }
 
         // CA证书链
         if let Some(ca_certs) = parsed.ca {
             for ca_cert in ca_certs {
-                certificates.push(Certificate::from_pem(&ca_cert.to_pem().map_err(|e| LabraError::Identity(e.to_string()))?)?);
+                certificates.push(Certificate::from_pem(
+                    &ca_cert
+                        .to_pem()
+                        .map_err(|e| LabraError::Identity(e.to_string()))?,
+                )?);
             }
         }
 
         // 获取私钥
         let private_key = if let Some(pkey) = parsed.pkey {
-            pkey.private_key_to_pem_pkcs8()
-                .map_err(|e| LabraError::Identity(format!("Failed to convert private key: {}", e)))?
+            pkey.private_key_to_pem_pkcs8().map_err(|e| {
+                LabraError::Identity(format!("Failed to convert private key: {}", e))
+            })?
         } else {
             return Err(LabraError::Identity("No private key found".to_string()));
         };
@@ -181,7 +197,9 @@ impl Identity {
     }
 
     /// 解析PEM信息（不使用外部crate）
-    fn parse_pem_info(pem_data: &[u8]) -> LabradorResult<(Vec<Certificate>, Vec<u8>, PrivateKeyType, bool)> {
+    fn parse_pem_info(
+        pem_data: &[u8],
+    ) -> LabradorResult<(Vec<Certificate>, Vec<u8>, PrivateKeyType, bool)> {
         let pem_str = std::str::from_utf8(pem_data)
             .map_err(|e| LabraError::Identity(format!("Invalid UTF-8 in PEM: {}", e)))?;
 
@@ -216,7 +234,8 @@ impl Identity {
             }
         }
 
-        let private_key = private_key.ok_or_else(|| LabraError::Identity("No private key found in PEM".to_string()))?;
+        let private_key = private_key
+            .ok_or_else(|| LabraError::Identity("No private key found in PEM".to_string()))?;
         let len = certificates.len();
 
         Ok((certificates, private_key, key_type, len > 1))
@@ -266,11 +285,12 @@ impl Identity {
 
     /// 获取摘要信息
     pub fn summary(&self) -> String {
-        let cert_info = self.client_certificate()
+        let cert_info = self
+            .client_certificate()
             .map(|cert| {
-                format!("serial: {}, expires: {}",
-                        cert.serial_number,
-                        cert.not_after
+                format!(
+                    "serial: {}, expires: {}",
+                    cert.serial_number, cert.not_after
                 )
             })
             .unwrap_or_else(|| "no certificate".to_string());
@@ -308,12 +328,14 @@ impl Identity {
     pub fn private_key(&self) -> Option<&[u8]> {
         self.private_key.as_deref()
     }
-    
+
     /// 获取私钥（PEM格式）
     pub fn private_key_pem(&self) -> Option<String> {
-        self.private_key.as_deref().map(|key| String::from_utf8_lossy(key).to_string())
+        self.private_key
+            .as_deref()
+            .map(|key| String::from_utf8_lossy(key).to_string())
     }
-    
+
     /// 获取证书序列号
     pub fn serial_number(&self) -> Option<String> {
         self.client_certificate()

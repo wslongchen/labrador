@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};

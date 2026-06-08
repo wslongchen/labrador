@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 use crate::errors::LabradorResult;
 use crate::platforms::wechat::miniapp::config::WechatMiniAppConfig;

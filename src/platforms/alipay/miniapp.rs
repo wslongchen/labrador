@@ -25,18 +25,18 @@
 
 use super::client::AlipayClient;
 use crate::alipay::method::AlipayMethod;
+use crate::alipay::AlipayBizRequest;
 use crate::errors::LabradorResult;
 use crate::platforms::alipay::AlipayResponse;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use crate::alipay::AlipayBizRequest;
 
 /// 小程序服务
 pub struct AlipayMiniappService<'a> {
     client: &'a AlipayClient,
 }
 
-impl <'a> AlipayMiniappService<'a> {
+impl<'a> AlipayMiniappService<'a> {
     /// 创建新的小程序服务
     pub fn new(client: &'a AlipayClient) -> Self {
         Self { client }
@@ -64,15 +64,11 @@ impl <'a> AlipayMiniappService<'a> {
             biz_content.insert("page_size".to_string(), size.to_string());
         }
         request.set_biz_model(biz_content);
-        request.set_method(AlipayMethod::Custom("alipay.open.mini.templatelist.query".to_string()));
-        let response: AlipayResponse<TemplateListResponse> = self.client
-            .request(
-                request,
-                None,
-                None,
-                None,
-            )
-            .await?;
+        request.set_method(AlipayMethod::Custom(
+            "alipay.open.mini.templatelist.query".to_string(),
+        ));
+        let response: AlipayResponse<TemplateListResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }
@@ -104,15 +100,11 @@ impl <'a> AlipayMiniappService<'a> {
             biz_content.insert("emphasis_keyword".to_string(), keyword);
         }
         request.set_biz_model(biz_content);
-        request.set_method(AlipayMethod::Custom("alipay.open.app.mini.templatemessage.send".to_string()));
-        let response: AlipayResponse<SendTemplateMessageResponse> = self.client
-            .request(
-                request,
-                None,
-                None,
-                None,
-            )
-            .await?;
+        request.set_method(AlipayMethod::Custom(
+            "alipay.open.app.mini.templatemessage.send".to_string(),
+        ));
+        let response: AlipayResponse<SendTemplateMessageResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }
@@ -126,15 +118,11 @@ impl <'a> AlipayMiniappService<'a> {
         let mut biz_content = BTreeMap::new();
         biz_content.insert("msg_id".to_string(), msg_id);
         request.set_biz_model(biz_content);
-        request.set_method(AlipayMethod::Custom("alipay.open.app.mini.templatemessage.query".to_string()));
-        let response: AlipayResponse<QueryTemplateMessageStatusResponse> = self.client
-            .request(
-                request,
-                None,
-                None,
-                None,
-            )
-            .await?;
+        request.set_method(AlipayMethod::Custom(
+            "alipay.open.app.mini.templatemessage.query".to_string(),
+        ));
+        let response: AlipayResponse<QueryTemplateMessageStatusResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }
@@ -168,37 +156,26 @@ impl <'a> AlipayMiniappService<'a> {
             biz_content.insert("size".to_string(), size_str);
         }
         request.set_biz_model(biz_content);
-        request.set_method(AlipayMethod::Custom("alipay.open.app.qrcode.create".to_string()));
-        let response: AlipayResponse<CreateQrcodeResponse> = self.client
-            .request(
-                request,
-                None,
-                None,
-                None,
-            )
-            .await?;
+        request.set_method(AlipayMethod::Custom(
+            "alipay.open.app.qrcode.create".to_string(),
+        ));
+        let response: AlipayResponse<CreateQrcodeResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }
 
     /// 获取小程序摘要
-    pub async fn get_summary(
-        &self,
-        mini_app_id: String,
-    ) -> LabradorResult<GetSummaryResponse> {
+    pub async fn get_summary(&self, mini_app_id: String) -> LabradorResult<GetSummaryResponse> {
         let mut request = AlipayBizRequest::new();
         let mut biz_content = BTreeMap::new();
         biz_content.insert("mini_app_id".to_string(), mini_app_id);
         request.set_biz_model(biz_content);
-        request.set_method(AlipayMethod::Custom("alipay.open.mini.summary.query".to_string()));
-        let response: AlipayResponse<GetSummaryResponse> = self.client
-            .request(
-                request,
-                None,
-                None,
-                None,
-            )
-            .await?;
+        request.set_method(AlipayMethod::Custom(
+            "alipay.open.mini.summary.query".to_string(),
+        ));
+        let response: AlipayResponse<GetSummaryResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }
@@ -216,15 +193,11 @@ impl <'a> AlipayMiniappService<'a> {
         let scene_json = serde_json::to_string(&scene_codes).unwrap_or_default();
         biz_content.insert("scene_codes".to_string(), scene_json);
         request.set_biz_model(biz_content);
-        request.set_method(AlipayMethod::Custom("alipay.security.risk.content.analyze".to_string()));
-        let response: AlipayResponse<CheckTextSecurityResponse> = self.client
-            .request(
-                request,
-                None,
-                None,
-                None,
-            )
-            .await?;
+        request.set_method(AlipayMethod::Custom(
+            "alipay.security.risk.content.analyze".to_string(),
+        ));
+        let response: AlipayResponse<CheckTextSecurityResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }
@@ -244,15 +217,11 @@ impl <'a> AlipayMiniappService<'a> {
         let scene_json = serde_json::to_string(&scene_codes).unwrap_or_default();
         biz_content.insert("scene_codes".to_string(), scene_json);
         request.set_biz_model(biz_content);
-        request.set_method(AlipayMethod::Custom("alipay.security.risk.content.analyze.image".to_string()));
-        let response: AlipayResponse<CheckImageSecurityResponse> = self.client
-            .request(
-                request,
-                None,
-                None,
-                None,
-            )
-            .await?;
+        request.set_method(AlipayMethod::Custom(
+            "alipay.security.risk.content.analyze.image".to_string(),
+        ));
+        let response: AlipayResponse<CheckImageSecurityResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }

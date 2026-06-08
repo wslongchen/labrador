@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 //! HTTP客户端实现
 //!
@@ -36,17 +36,17 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tracing::{debug, error, info, warn};
 
+pub mod builder;
+pub mod certificate;
 /// 客户端配置
 pub mod config;
+pub mod identity;
 /// 请求拦截器
 #[allow(unused)]
 pub mod interceptors;
 /// 重试机制
 #[allow(unused)]
 pub mod retry;
-pub mod builder;
-pub mod identity;
-pub mod certificate;
 
 use crate::errors::{LabraError, LabradorResult};
 pub use crate::platforms::signer::RequestSigner;
@@ -54,9 +54,9 @@ pub use config::{AuthHeader, ClientConfig, RetryConfig, TlsConfig};
 pub use interceptors::RequestInterceptor;
 
 pub(crate) const DEFAULT_USER_AGENT: &str = concat!(
-"Labrador/",
-env!("CARGO_PKG_VERSION"),
-" (+https://github.com/wslongchen/labrador)"
+    "Labrador/",
+    env!("CARGO_PKG_VERSION"),
+    " (+https://github.com/wslongchen/labrador)"
 );
 
 /// API客户端
@@ -82,12 +82,7 @@ impl ApiClient {
     /// 创建新的API客户端
     pub fn new(config: ClientConfig) -> LabradorResult<Self> {
         let mut client_builder = reqwest::Client::builder()
-            .user_agent(
-                config
-                    .user_agent
-                    .as_deref()
-                    .unwrap_or(DEFAULT_USER_AGENT),
-            );
+            .user_agent(config.user_agent.as_deref().unwrap_or(DEFAULT_USER_AGENT));
 
         // 配置超时
         if let Some(timeout) = config.timeout {
@@ -134,9 +129,7 @@ impl ApiClient {
             client_builder = client_builder.add_root_certificate(cert.to_reqwest_certificate()?);
         }
 
-        let http_client = client_builder
-            .build()
-            .map_err(LabraError::Network)?;
+        let http_client = client_builder.build().map_err(LabraError::Network)?;
 
         // 创建会话缓存，5分钟过期，最大1000个条目
         let session = Cache::builder()
@@ -289,10 +282,7 @@ impl ApiClient {
 
         // 添加认证头
         if let Some(auth_header) = &self.config.auth_header {
-            request_builder = request_builder.header(
-                &auth_header.name,
-                &auth_header.value,
-            );
+            request_builder = request_builder.header(&auth_header.name, &auth_header.value);
         }
 
         // 处理请求体
@@ -311,10 +301,7 @@ impl ApiClient {
         debug!("Sending request: {} {}", request.method, request.path);
 
         // 发送请求并获取流式响应
-        let response = request_builder
-            .send()
-            .await
-            .map_err(LabraError::Network)?;
+        let response = request_builder.send().await.map_err(LabraError::Network)?;
 
         let status = response.status();
         let headers = response.headers().clone();
@@ -347,8 +334,13 @@ impl ApiClient {
                     if retry_config.should_retry(&response) {
                         if attempts < retry_config.max_retries {
                             let delay = retry_config.delay_for_attempt(attempts);
-                            warn!("Request failed with status {}, retrying in {:?} (attempt {}/{})",
-                                response.status(), delay, attempts, retry_config.max_retries);
+                            warn!(
+                                "Request failed with status {}, retrying in {:?} (attempt {}/{})",
+                                response.status(),
+                                delay,
+                                attempts,
+                                retry_config.max_retries
+                            );
 
                             tokio::time::sleep(delay).await;
                             continue;
@@ -374,8 +366,10 @@ impl ApiClient {
                     if let Some(err) = last_error.as_ref() {
                         if err.should_retry() && attempts < retry_config.max_retries {
                             let delay = retry_config.delay_for_attempt(attempts);
-                            warn!("Request failed with error: {}, retrying in {:?} (attempt {}/{})",
-                                err, delay, attempts, retry_config.max_retries);
+                            warn!(
+                                "Request failed with error: {}, retrying in {:?} (attempt {}/{})",
+                                err, delay, attempts, retry_config.max_retries
+                            );
 
                             tokio::time::sleep(delay).await;
                             continue;
@@ -417,10 +411,7 @@ impl ApiClient {
 
         // 添加认证头
         if let Some(auth_header) = &self.config.auth_header {
-            request_builder = request_builder.header(
-                &auth_header.name,
-                &auth_header.value,
-            );
+            request_builder = request_builder.header(&auth_header.name, &auth_header.value);
         }
 
         // 处理请求体
@@ -436,16 +427,14 @@ impl ApiClient {
         }
 
         // 记录请求日志
-        debug!("Sending request: {} {:?} {} {:?}", request.method, request.headers, request.path, request.body);
-        
-        // 发送请求
-        let response = request_builder
-            .send()
-            .await
-            .map_err(LabraError::Network)?;
+        debug!(
+            "Sending request: {} {:?} {} {:?}",
+            request.method, request.headers, request.path, request.body
+        );
 
-        
-        
+        // 发送请求
+        let response = request_builder.send().await.map_err(LabraError::Network)?;
+
         let status = response.status();
         let remote_addr = response.remote_addr();
         let headers = response.headers().clone();
@@ -456,11 +445,14 @@ impl ApiClient {
         // 记录响应日志
         let duration = start_time.elapsed();
         if http_response.is_success() {
-            info!("Request succeeded in {:?} with status: {}", duration, status);
+            info!(
+                "Request succeeded in {:?} with status: {}",
+                duration, status
+            );
         } else {
             error!("Request failed in {:?} with status: {}", duration, status);
         }
-        
+
         // 执行后置拦截器
         for interceptor in &self.interceptors {
             interceptor.after_response(&http_response).await?;
@@ -502,7 +494,10 @@ impl ApiClient {
                 builder = builder.body(serde_json::to_string(&json)?);
             }
             RequestBody::Form(form_data) => {
-                builder = builder.header(header::CONTENT_TYPE, "application/x-www-form-urlencoded; charset=UTF-8");
+                builder = builder.header(
+                    header::CONTENT_TYPE,
+                    "application/x-www-form-urlencoded; charset=UTF-8",
+                );
                 builder = builder.form(&form_data);
             }
             RequestBody::Multipart(form) => {

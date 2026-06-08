@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 use serde::{Deserialize, Serialize};
@@ -108,7 +108,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 插入记录请求参数
-    pub async fn database_add(&self, request: &DatabaseAddRequest) -> LabradorResult<DatabaseAddResponse> {
+    pub async fn database_add(
+        &self,
+        request: &DatabaseAddRequest,
+    ) -> LabradorResult<DatabaseAddResponse> {
         let response: WechatApiResponse<DatabaseAddResponse> = self
             .client
             .wechat_client()
@@ -123,7 +126,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 聚合查询请求参数
-    pub async fn database_aggregate(&self, request: &DatabaseAggregateRequest) -> LabradorResult<DatabaseAggregateResponse> {
+    pub async fn database_aggregate(
+        &self,
+        request: &DatabaseAggregateRequest,
+    ) -> LabradorResult<DatabaseAggregateResponse> {
         let response: WechatApiResponse<DatabaseAggregateResponse> = self
             .client
             .wechat_client()
@@ -139,7 +145,11 @@ impl<'a> WechatMxaCloudBase<'a> {
     /// # 参数说明
     /// * `env` - 云环境ID
     /// * `collection_name` - 集合名称
-    pub async fn database_collection_add(&self, env: &str, collection_name: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn database_collection_add(
+        &self,
+        env: &str,
+        collection_name: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let request = serde_json::json!({
             "env": env,
             "collection_name": collection_name,
@@ -159,7 +169,11 @@ impl<'a> WechatMxaCloudBase<'a> {
     /// # 参数说明
     /// * `env` - 云环境ID
     /// * `collection_name` - 集合名称
-    pub async fn database_collection_delete(&self, env: &str, collection_name: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn database_collection_delete(
+        &self,
+        env: &str,
+        collection_name: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let request = serde_json::json!({
             "env": env,
             "collection_name": collection_name,
@@ -180,7 +194,12 @@ impl<'a> WechatMxaCloudBase<'a> {
     /// * `env` - 云环境ID
     /// * `limit` - 返回集合数量，最大100
     /// * `offset` - 偏移量
-    pub async fn database_collection_get(&self, env: &str, limit: i32, offset: i32) -> LabradorResult<CollectionInfoResponse> {
+    pub async fn database_collection_get(
+        &self,
+        env: &str,
+        limit: i32,
+        offset: i32,
+    ) -> LabradorResult<CollectionInfoResponse> {
         let request = serde_json::json!({
             "env": env,
             "limit": limit,
@@ -200,7 +219,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 统计请求参数
-    pub async fn database_count(&self, request: &DatabaseCountRequest) -> LabradorResult<DatabaseCountResponse> {
+    pub async fn database_count(
+        &self,
+        request: &DatabaseCountRequest,
+    ) -> LabradorResult<DatabaseCountResponse> {
         let response: WechatApiResponse<DatabaseCountResponse> = self
             .client
             .wechat_client()
@@ -215,7 +237,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 删除记录请求参数
-    pub async fn database_delete(&self, request: &DatabaseDeleteRequest) -> LabradorResult<DatabaseDeleteResponse> {
+    pub async fn database_delete(
+        &self,
+        request: &DatabaseDeleteRequest,
+    ) -> LabradorResult<DatabaseDeleteResponse> {
         let response: WechatApiResponse<DatabaseDeleteResponse> = self
             .client
             .wechat_client()
@@ -230,7 +255,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 导出请求参数
-    pub async fn database_migrate_export(&self, request: &MigrateExportRequest) -> LabradorResult<MigrateExportResponse> {
+    pub async fn database_migrate_export(
+        &self,
+        request: &MigrateExportRequest,
+    ) -> LabradorResult<MigrateExportResponse> {
         let response: WechatApiResponse<MigrateExportResponse> = self
             .client
             .wechat_client()
@@ -245,7 +273,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 导入请求参数
-    pub async fn database_migrate_import(&self, request: &MigrateImportRequest) -> LabradorResult<MigrateImportResponse> {
+    pub async fn database_migrate_import(
+        &self,
+        request: &MigrateImportRequest,
+    ) -> LabradorResult<MigrateImportResponse> {
         let response: WechatApiResponse<MigrateImportResponse> = self
             .client
             .wechat_client()
@@ -261,7 +292,11 @@ impl<'a> WechatMxaCloudBase<'a> {
     /// # 参数说明
     /// * `env` - 云环境ID
     /// * `job_id` - 迁移任务ID
-    pub async fn database_migrate_query_info(&self, env: &str, job_id: i32) -> LabradorResult<MigrateQueryInfoResponse> {
+    pub async fn database_migrate_query_info(
+        &self,
+        env: &str,
+        job_id: i32,
+    ) -> LabradorResult<MigrateQueryInfoResponse> {
         let request = serde_json::json!({
             "env": env,
             "job_id": job_id,
@@ -280,7 +315,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 查询请求参数
-    pub async fn database_query(&self, request: &DatabaseQueryRequest) -> LabradorResult<DatabaseQueryResponse> {
+    pub async fn database_query(
+        &self,
+        request: &DatabaseQueryRequest,
+    ) -> LabradorResult<DatabaseQueryResponse> {
         let response: WechatApiResponse<DatabaseQueryResponse> = self
             .client
             .wechat_client()
@@ -295,7 +333,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 更新请求参数
-    pub async fn database_update(&self, request: &DatabaseUpdateRequest) -> LabradorResult<DatabaseUpdateResponse> {
+    pub async fn database_update(
+        &self,
+        request: &DatabaseUpdateRequest,
+    ) -> LabradorResult<DatabaseUpdateResponse> {
         let response: WechatApiResponse<DatabaseUpdateResponse> = self
             .client
             .wechat_client()
@@ -310,7 +351,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 更新索引请求参数
-    pub async fn update_index(&self, request: &UpdateIndexRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn update_index(
+        &self,
+        request: &UpdateIndexRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
@@ -327,7 +371,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 获取上传链接请求参数
-    pub async fn upload_file(&self, request: &UploadFileRequest) -> LabradorResult<UploadFileResponse> {
+    pub async fn upload_file(
+        &self,
+        request: &UploadFileRequest,
+    ) -> LabradorResult<UploadFileResponse> {
         let response: WechatApiResponse<UploadFileResponse> = self
             .client
             .wechat_client()
@@ -342,7 +389,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 获取下载链接请求参数
-    pub async fn batch_download_file(&self, request: &BatchDownloadFileRequest) -> LabradorResult<BatchDownloadFileResponse> {
+    pub async fn batch_download_file(
+        &self,
+        request: &BatchDownloadFileRequest,
+    ) -> LabradorResult<BatchDownloadFileResponse> {
         let response: WechatApiResponse<BatchDownloadFileResponse> = self
             .client
             .wechat_client()
@@ -357,7 +407,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 删除文件请求参数
-    pub async fn batch_delete_file(&self, request: &BatchDeleteFileRequest) -> LabradorResult<BatchDeleteFileResponse> {
+    pub async fn batch_delete_file(
+        &self,
+        request: &BatchDeleteFileRequest,
+    ) -> LabradorResult<BatchDeleteFileResponse> {
         let response: WechatApiResponse<BatchDeleteFileResponse> = self
             .client
             .wechat_client()
@@ -404,7 +457,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 创建任务请求参数
-    pub async fn create_send_sms_task(&self, request: &CreateSendSmsTaskRequest) -> LabradorResult<CreateSendSmsTaskResponse> {
+    pub async fn create_send_sms_task(
+        &self,
+        request: &CreateSendSmsTaskRequest,
+    ) -> LabradorResult<CreateSendSmsTaskResponse> {
         let response: WechatApiResponse<CreateSendSmsTaskResponse> = self
             .client
             .wechat_client()
@@ -434,7 +490,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 查询请求参数
-    pub async fn describe_sms_records(&self, request: &DescribeSmsRecordsRequest) -> LabradorResult<DescribeSmsRecordsResponse> {
+    pub async fn describe_sms_records(
+        &self,
+        request: &DescribeSmsRecordsRequest,
+    ) -> LabradorResult<DescribeSmsRecordsResponse> {
         let response: WechatApiResponse<DescribeSmsRecordsResponse> = self
             .client
             .wechat_client()
@@ -449,7 +508,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 描述请求参数
-    pub async fn describe_extension_upload_info(&self, request: &DescribeExtensionUploadInfoRequest) -> LabradorResult<DescribeExtensionUploadInfoResponse> {
+    pub async fn describe_extension_upload_info(
+        &self,
+        request: &DescribeExtensionUploadInfoRequest,
+    ) -> LabradorResult<DescribeExtensionUploadInfoResponse> {
         let response: WechatApiResponse<DescribeExtensionUploadInfoResponse> = self
             .client
             .wechat_client()
@@ -464,7 +526,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 获取数据请求参数
-    pub async fn get_statistics(&self, request: &GetStatisticsRequest) -> LabradorResult<GetStatisticsResponse> {
+    pub async fn get_statistics(
+        &self,
+        request: &GetStatisticsRequest,
+    ) -> LabradorResult<GetStatisticsResponse> {
         let response: WechatApiResponse<GetStatisticsResponse> = self
             .client
             .wechat_client()
@@ -479,7 +544,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `cloudid_list` - cloudID列表，最多20个
-    pub async fn get_open_data(&self, cloudid_list: Vec<String>) -> LabradorResult<Vec<OpenDataItem>> {
+    pub async fn get_open_data(
+        &self,
+        cloudid_list: Vec<String>,
+    ) -> LabradorResult<Vec<OpenDataItem>> {
         let request = serde_json::json!({
             "cloudid_list": cloudid_list,
         });
@@ -497,7 +565,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 获取签名请求参数
-    pub async fn get_voip_sign(&self, request: &GetVoipSignRequest) -> LabradorResult<GetVoipSignResponse> {
+    pub async fn get_voip_sign(
+        &self,
+        request: &GetVoipSignRequest,
+    ) -> LabradorResult<GetVoipSignResponse> {
         let response: WechatApiResponse<GetVoipSignResponse> = self
             .client
             .wechat_client()
@@ -512,7 +583,10 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// # 参数说明
     /// * `request` - 获取凭证请求参数
-    pub async fn get_qcloud_token(&self, request: &GetQcloudTokenRequest) -> LabradorResult<GetQcloudTokenResponse> {
+    pub async fn get_qcloud_token(
+        &self,
+        request: &GetQcloudTokenRequest,
+    ) -> LabradorResult<GetQcloudTokenResponse> {
         let response: WechatApiResponse<GetQcloudTokenResponse> = self
             .client
             .wechat_client()

@@ -16,11 +16,11 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 use crate::errors::LabradorResult;
-use crate::platforms::wechat::pay::{WechatPayClient, WechatPayConfig};
 use crate::platforms::wechat::pay::config::WechatPayApiVersion;
+use crate::platforms::wechat::pay::{WechatPayClient, WechatPayConfig};
 
 /// 微信支付构建器
 pub struct WechatPayBuilder {
@@ -40,27 +40,39 @@ impl WechatPayBuilder {
         self.config.cert_path = Some(cert_path.into());
         self
     }
-    
+
     /// 设置p12证书路径
     pub fn p12_path<S: Into<String>>(mut self, p12_path: S, p12_password: Option<S>) -> Self {
         self.config.p12_path = Some(p12_path.into());
         self.config.p12_password = p12_password.map(|s| s.into());
         self
     }
-    
+
     /// 设置apiKey
     pub fn api_key<S: Into<String>>(mut self, api_key: S) -> Self {
         self.config.api_key = Some(api_key.into());
         self
     }
-    
+
     /// 设置v3版本密钥
     pub fn api_key_v3<S: Into<String>>(mut self, api_key_v3: S) -> Self {
         self.config.api_key_v3 = Some(api_key_v3.into());
         self.config.api_version = WechatPayApiVersion::V3;
         self
     }
-    
+
+    /// 设置 API 证书序列号（V3 商户签名必填）
+    pub fn serial_no<S: Into<String>>(mut self, serial_no: S) -> Self {
+        self.config.serial_no = Some(serial_no.into());
+        self
+    }
+
+    /// 设置商户 API 私钥（PEM 格式，V3 商户签名必填）
+    pub fn private_key<S: Into<String>>(mut self, private_key: S) -> Self {
+        self.config.private_key = Some(private_key.into());
+        self
+    }
+
     /// 设置api版本
     pub fn api_version(mut self, api_version: WechatPayApiVersion) -> Self {
         self.config.api_version = api_version;

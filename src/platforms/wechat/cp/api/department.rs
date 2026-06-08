@@ -42,9 +42,8 @@ impl<'a> WechatCpDepartment<'a> {
     /// 最多支持创建500个部门。
     /// 详情请见：<https://work.weixin.qq.com/api/doc/90205>
     pub async fn create(&self, req: DepartmentInfo) -> LabradorResult<i64> {
-        let response: WechatApiResponse<CreateDepartmentResponse> = self.client
-            .post("/cgi-bin/department/create", req)
-            .await?;
+        let response: WechatApiResponse<CreateDepartmentResponse> =
+            self.client.post("/cgi-bin/department/create", req).await?;
         Ok(response.into_result()?.id)
     }
 
@@ -57,9 +56,8 @@ impl<'a> WechatCpDepartment<'a> {
         if let Some(dept_id) = id {
             url.push_str(&format!("?id={}", dept_id));
         }
-        let response: WechatApiResponse<DepartmentSimpleListResponse> = self.client
-            .get(&url)
-            .await?;
+        let response: WechatApiResponse<DepartmentSimpleListResponse> =
+            self.client.get(&url).await?;
         Ok(response.into_result()?.department_id)
     }
 
@@ -72,9 +70,7 @@ impl<'a> WechatCpDepartment<'a> {
         if let Some(dept_id) = id {
             url.push_str(&format!("?id={}", dept_id));
         }
-        let response: WechatApiResponse<DepartmentListResponse> = self.client
-            .get(&url)
-            .await?;
+        let response: WechatApiResponse<DepartmentListResponse> = self.client.get(&url).await?;
         Ok(response.into_result()?.department)
     }
 
@@ -84,9 +80,8 @@ impl<'a> WechatCpDepartment<'a> {
     /// 注意：如果id为0(未部门)、1(黑名单)、2(星标组)，或者不存在的id，会返回错误。
     /// 详情请见：<https://work.weixin.qq.com/api/doc/90206>
     pub async fn update(&self, req: UpdateDepartmentRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client
-            .post("/cgi-bin/department/update", req)
-            .await?;
+        let response: WechatApiResponse =
+            self.client.post("/cgi-bin/department/update", req).await?;
         Ok(response)
     }
 
@@ -95,7 +90,8 @@ impl<'a> WechatCpDepartment<'a> {
     /// 删除指定部门。应用须拥有指定部门的管理权限。
     /// 详情请见：<https://work.weixin.qq.com/api/doc/90207>
     pub async fn delete(&self, department_id: i64) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client
+        let response: WechatApiResponse = self
+            .client
             .get(&format!("/cgi-bin/department/delete?id={}", department_id))
             .await?;
         Ok(response)

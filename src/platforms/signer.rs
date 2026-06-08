@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 //! 请求签名器模块
 
@@ -70,7 +70,10 @@ impl SignMethod {
 
     /// 是否是哈希签名
     pub fn is_hash(&self) -> bool {
-        matches!(self, SignMethod::Md5 | SignMethod::Sha1 | SignMethod::Sha256 | SignMethod::Sha512)
+        matches!(
+            self,
+            SignMethod::Md5 | SignMethod::Sha1 | SignMethod::Sha256 | SignMethod::Sha512
+        )
     }
 }
 
@@ -249,7 +252,12 @@ impl DefaultSigner {
     }
 
     /// 从JSON中提取参数
-    fn extract_json_params(&self, value: &serde_json::Value, prefix: &str, params: &mut BTreeMap<String, String>) {
+    fn extract_json_params(
+        &self,
+        value: &serde_json::Value,
+        prefix: &str,
+        params: &mut BTreeMap<String, String>,
+    ) {
         match value {
             serde_json::Value::Object(obj) => {
                 for (key, val) in obj {
@@ -302,7 +310,8 @@ impl DefaultSigner {
     fn calculate_signature(&self, sign_string: &str) -> LabradorResult<String> {
         match self.config.sign_method {
             SignMethod::Md5 => {
-                let final_hasher = md5::compute(format!("{}{}", sign_string, self.config.app_secret));
+                let final_hasher =
+                    md5::compute(format!("{}{}", sign_string, self.config.app_secret));
                 Ok(hex::encode(*final_hasher))
             }
             SignMethod::Sha1 => {
@@ -349,7 +358,7 @@ impl DefaultSigner {
             }
             SignMethod::RsaSha256 => {
                 // RSA-SHA256 签名使用 app_secret 作为私钥
-                use crate::{RsaEncryptor, RsaKeyFormat, HashType};
+                use crate::{HashType, RsaEncryptor, RsaKeyFormat};
                 let encryptor = RsaEncryptor::with_private_key(
                     self.config.app_secret.as_bytes(),
                     RsaKeyFormat::Pem,
@@ -403,11 +412,11 @@ impl RequestSigner for DefaultSigner {
     fn verify_signature(&self, _response: &Response) -> LabradorResult<bool> {
         // TODO: 收集参数（排除签名字段）
         // let params = self.collect_params(request);
-        // 
+        //
         // // 生成签名字符串并计算签名
         // let sign_string = self.generate_sign_string(&params);
         // let calculated_signature = self.calculate_signature(&sign_string)?;
-        // 
+        //
         // Ok(calculated_signature == signature)
         Ok(true)
     }

@@ -43,8 +43,8 @@ use std::io::Read;
 use std::path::Path;
 
 use bytes::Bytes;
-use serde::{Deserialize};
-use serde_json::{json};
+use serde::Deserialize;
+use serde_json::json;
 
 use crate::errors::LabradorResult;
 use crate::request::RequestBody;
@@ -87,29 +87,46 @@ impl<'a> WechatMpMedia<'a> {
         let default_file_name = format!("{}.png", random_string(16));
         let file_name = file_name.unwrap_or(&default_file_name);
 
-        let form = reqwest::multipart::Form::new()
-            .part("media", reqwest::multipart::Part::bytes(data).file_name(file_name.to_string()));
+        let form = reqwest::multipart::Form::new().part(
+            "media",
+            reqwest::multipart::Part::bytes(data).file_name(file_name.to_string()),
+        );
 
-        let response: WechatApiResponse<TempMediaResponse> = self.client.wechat_client()
-            .post(&format!("/cgi-bin/media/upload?type={}", media_type), RequestBody::Multipart(form))
+        let response: WechatApiResponse<TempMediaResponse> = self
+            .client
+            .wechat_client()
+            .post(
+                &format!("/cgi-bin/media/upload?type={}", media_type),
+                RequestBody::Multipart(form),
+            )
             .await?;
         response.into_result()
     }
 
     /// 新增临时素材（通过文件路径）
-    pub async fn upload_media_with_file(&self, media_type: &str, file_path: &str) -> LabradorResult<TempMediaResponse> {
+    pub async fn upload_media_with_file(
+        &self,
+        media_type: &str,
+        file_path: &str,
+    ) -> LabradorResult<TempMediaResponse> {
         let path = Path::new(file_path);
-        let file_name = path.file_name()
+        let file_name = path
+            .file_name()
             .and_then(|v| v.to_str())
             .unwrap_or_default();
         let mut file = File::open(path)?;
         let mut content = Vec::new();
         file.read_to_end(&mut content)?;
-        self.upload_media(media_type, Some(file_name), content).await
+        self.upload_media(media_type, Some(file_name), content)
+            .await
     }
 
     /// 新增临时素材（通过URL）
-    pub async fn upload_media_with_url(&self, media_type: &str, url: &str) -> LabradorResult<TempMediaResponse> {
+    pub async fn upload_media_with_url(
+        &self,
+        media_type: &str,
+        url: &str,
+    ) -> LabradorResult<TempMediaResponse> {
         let response = reqwest::get(url).await?;
         let content = response.bytes().await?.to_vec();
         self.upload_media(media_type, None, content).await
@@ -119,7 +136,8 @@ impl<'a> WechatMpMedia<'a> {
     ///
     /// 公众号可以使用本接口获取临时素材（即下载临时的多媒体文件）。请注意，视频文件不支持https下载，调用该接口需http协议。
     pub async fn get_media(&self, media_id: &str) -> LabradorResult<Bytes> {
-        self.client.wechat_client()
+        self.client
+            .wechat_client()
             .get_bytes(&format!("/cgi-bin/media/get?media_id={}", media_id))
             .await
     }
@@ -129,7 +147,8 @@ impl<'a> WechatMpMedia<'a> {
     /// 公众号可以使用本接口获取从JSSDK的uploadVoice接口上传的临时语音素材，格式为speex，16K采样率。
     /// 该音频比上文的临时素材获取接口（格式为amr，8K采样率）更加清晰，适合用作语音识别等对音质要求较高的业务。
     pub async fn get_hd_voice(&self, media_id: &str) -> LabradorResult<Bytes> {
-        self.client.wechat_client()
+        self.client
+            .wechat_client()
             .get_bytes(&format!("/cgi-bin/media/get/jssdk?media_id={}", media_id))
             .await
     }
@@ -154,8 +173,10 @@ impl<'a> WechatMpMedia<'a> {
         video_title: Option<&str>,
         video_introduction: Option<&str>,
     ) -> LabradorResult<PermanentMediaResponse> {
-        let mut form = reqwest::multipart::Form::new()
-            .part("media", reqwest::multipart::Part::bytes(data).file_name(filename.to_string()));
+        let mut form = reqwest::multipart::Form::new().part(
+            "media",
+            reqwest::multipart::Part::bytes(data).file_name(filename.to_string()),
+        );
 
         if let (Some(title), Some(intro)) = (video_title, video_introduction) {
             let description = json!({
@@ -165,8 +186,13 @@ impl<'a> WechatMpMedia<'a> {
             form = form.text("description", description.to_string());
         }
 
-        let response: WechatApiResponse<PermanentMediaResponse> = self.client.wechat_client()
-            .post(&format!("/cgi-bin/material/add_material?type={}", media_type), RequestBody::Multipart(form))
+        let response: WechatApiResponse<PermanentMediaResponse> = self
+            .client
+            .wechat_client()
+            .post(
+                &format!("/cgi-bin/material/add_material?type={}", media_type),
+                RequestBody::Multipart(form),
+            )
             .await?;
         response.into_result()
     }
@@ -175,11 +201,19 @@ impl<'a> WechatMpMedia<'a> {
     ///
     /// 该接口所上传的图片，不占用公众号的素材库中图片数量的100000个的限制，图片仅支持jpg/png格式，大小必须在1MB以下。
     /// 图文消息支持正文中插入自己账号和其他公众号已群发文章链接的能力。
-    pub async fn upload_img(&self, file_name: &str, data: Vec<u8>) -> LabradorResult<UploadImgResponse> {
-        let form = reqwest::multipart::Form::new()
-            .part("media", reqwest::multipart::Part::bytes(data).file_name(file_name.to_string()));
+    pub async fn upload_img(
+        &self,
+        file_name: &str,
+        data: Vec<u8>,
+    ) -> LabradorResult<UploadImgResponse> {
+        let form = reqwest::multipart::Form::new().part(
+            "media",
+            reqwest::multipart::Part::bytes(data).file_name(file_name.to_string()),
+        );
 
-        let response: WechatApiResponse<UploadImgResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<UploadImgResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/media/uploadimg", RequestBody::Multipart(form))
             .await?;
         response.into_result()
@@ -190,8 +224,12 @@ impl<'a> WechatMpMedia<'a> {
     /// 本接口用于根据media_id获取永久素材的详细信息。
     /// 除图文、视频之外，其他类型的素材消息，则响应的直接为素材的内容，开发者可以自行保存为文件。
     pub async fn get_material(&self, media_id: &str) -> LabradorResult<Bytes> {
-        self.client.wechat_client()
-            .post_bytes("/cgi-bin/material/get_material", json!({ "media_id": media_id }))
+        self.client
+            .wechat_client()
+            .post_bytes(
+                "/cgi-bin/material/get_material",
+                json!({ "media_id": media_id }),
+            )
             .await
     }
 
@@ -199,8 +237,13 @@ impl<'a> WechatMpMedia<'a> {
     ///
     /// 专门用于获取图文素材的详细信息。
     pub async fn get_material_news(&self, media_id: &str) -> LabradorResult<NewsMaterialDetail> {
-        let response: WechatApiResponse<NewsMaterialDetail> = self.client.wechat_client()
-            .post("/cgi-bin/material/get_material", json!({ "media_id": media_id }))
+        let response: WechatApiResponse<NewsMaterialDetail> = self
+            .client
+            .wechat_client()
+            .post(
+                "/cgi-bin/material/get_material",
+                json!({ "media_id": media_id }),
+            )
             .await?;
         response.into_result()
     }
@@ -209,8 +252,13 @@ impl<'a> WechatMpMedia<'a> {
     ///
     /// 专门用于获取视频素材的标题、描述和下载地址。
     pub async fn get_material_video(&self, media_id: &str) -> LabradorResult<VideoMaterialDetail> {
-        let response: WechatApiResponse<VideoMaterialDetail> = self.client.wechat_client()
-            .post("/cgi-bin/material/get_material", json!({ "media_id": media_id }))
+        let response: WechatApiResponse<VideoMaterialDetail> = self
+            .client
+            .wechat_client()
+            .post(
+                "/cgi-bin/material/get_material",
+                json!({ "media_id": media_id }),
+            )
             .await?;
         response.into_result()
     }
@@ -222,8 +270,13 @@ impl<'a> WechatMpMedia<'a> {
     /// 1、请谨慎操作本接口，它可以删除公众号在公众平台官网素材管理模块中新建的素材
     /// 2、临时素材无法通过本接口删除
     pub async fn delete_material(&self, media_id: &str) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
-            .post("/cgi-bin/material/del_material", json!({ "media_id": media_id }))
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
+            .post(
+                "/cgi-bin/material/del_material",
+                json!({ "media_id": media_id }),
+            )
             .await?;
         Ok(response)
     }
@@ -233,7 +286,9 @@ impl<'a> WechatMpMedia<'a> {
     /// 本接口用于获取公众号永久素材的总数信息。
     /// 注意：永久素材的总数包含公众平台官网素材管理中的素材。
     pub async fn get_material_count(&self) -> LabradorResult<MaterialCountResponse> {
-        let response: WechatApiResponse<MaterialCountResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<MaterialCountResponse> = self
+            .client
+            .wechat_client()
             .get("/cgi-bin/material/get_materialcount")
             .await?;
         response.into_result()
@@ -259,7 +314,9 @@ impl<'a> WechatMpMedia<'a> {
             "count": count,
         });
 
-        let response: WechatApiResponse<MaterialListResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<MaterialListResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/material/batchget_material", request)
             .await?;
         response.into_result()

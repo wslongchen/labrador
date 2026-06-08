@@ -47,9 +47,8 @@ impl<'a> WechatCpMessage<'a> {
         if req.agentid.is_none() {
             req.agentid = self.client.agent_id();
         }
-        let response: WechatApiResponse<MessageResponse> = self.client
-            .post("/cgi-bin/message/send", req)
-            .await?;
+        let response: WechatApiResponse<MessageResponse> =
+            self.client.post("/cgi-bin/message/send", req).await?;
         response.into_result()
     }
 
@@ -57,11 +56,15 @@ impl<'a> WechatCpMessage<'a> {
     ///
     /// 互联企业的应用支持推送文本、图片、视频、文件、图文等类型。
     /// 详情请见：<https://work.weixin.qq.com/api/doc/90250>
-    pub async fn send_linked_corp(&self, mut req: LinkedCorpMessageRequest) -> LabradorResult<LinkedCorpMessageResponse> {
+    pub async fn send_linked_corp(
+        &self,
+        mut req: LinkedCorpMessageRequest,
+    ) -> LabradorResult<LinkedCorpMessageResponse> {
         if req.agentid.is_none() {
             req.agentid = self.client.agent_id();
         }
-        let response: WechatApiResponse<LinkedCorpMessageResponse> = self.client
+        let response: WechatApiResponse<LinkedCorpMessageResponse> = self
+            .client
             .post("/cgi-bin/linkedcorp/message/send", req)
             .await?;
         response.into_result()
@@ -71,11 +74,15 @@ impl<'a> WechatCpMessage<'a> {
     ///
     /// 学校可以通过此接口来给家长发送不同类型的学校通知。
     /// 详情请见：<https://developer.work.weixin.qq.com/document/path/92321>
-    pub async fn send_school_contact(&self, mut req: SchoolContactMessageRequest) -> LabradorResult<SchoolContactMessageResponse> {
+    pub async fn send_school_contact(
+        &self,
+        mut req: SchoolContactMessageRequest,
+    ) -> LabradorResult<SchoolContactMessageResponse> {
         if req.agentid.is_none() {
             req.agentid = self.client.agent_id();
         }
-        let response: WechatApiResponse<SchoolContactMessageResponse> = self.client
+        let response: WechatApiResponse<SchoolContactMessageResponse> = self
+            .client
             .post("/cgi-bin/externalcontact/send_school_contact_message", req)
             .await?;
         response.into_result()
@@ -84,8 +91,12 @@ impl<'a> WechatCpMessage<'a> {
     /// 查询应用消息发送统计
     ///
     /// 详情请见：<https://work.weixin.qq.com/api/doc/92369>
-    pub async fn get_statistics(&self, req: StatisticsRequest) -> LabradorResult<Vec<MessageStatistic>> {
-        let response: WechatApiResponse<StatisticsResponse> = self.client
+    pub async fn get_statistics(
+        &self,
+        req: StatisticsRequest,
+    ) -> LabradorResult<Vec<MessageStatistic>> {
+        let response: WechatApiResponse<StatisticsResponse> = self
+            .client
             .post("/cgi-bin/message/get_statistics", req)
             .await?;
         Ok(response.into_result()?.statistics)

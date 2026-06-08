@@ -16,10 +16,10 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
-use serde::{Deserialize};
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::errors::LabradorResult;
@@ -201,7 +201,10 @@ impl<'a> WechatMxaImgOcr<'a> {
     ///
     /// # 返回
     /// 包含驾驶证信息的响应。
-    pub async fn ocr_drivinglicense(&self, img_url: &str) -> LabradorResult<OcrDrivingLicenseResponse> {
+    pub async fn ocr_drivinglicense(
+        &self,
+        img_url: &str,
+    ) -> LabradorResult<OcrDrivingLicenseResponse> {
         let request = serde_json::json!({
             "img_url": img_url,
         });

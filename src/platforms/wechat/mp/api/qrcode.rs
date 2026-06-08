@@ -18,12 +18,12 @@
  *  *
  *
  */
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
-use crate::errors::{LabradorResult, LabraError};
+use crate::errors::{LabraError, LabradorResult};
 use crate::wechat::client::WechatApiResponse;
 use crate::wechat::mp::types::{QR_LIMIT_SCENE, QR_LIMIT_STR_SCENE, QR_SCENE, QR_STR_SCENE};
 use crate::wechat::mp::WechatMpClient;
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 
 /// 服务号二维码管理模块
 ///
@@ -43,29 +43,45 @@ impl<'a> WechatMpQRCode<'a> {
     // ==================== 二维码生成接口 ====================
 
     /// 创建临时二维码（场景值ID）
-    pub async fn create_temp_by_id(&self, scene_id: i32, expire_seconds: u64) -> LabradorResult<QRCodeTicket> {
+    pub async fn create_temp_by_id(
+        &self,
+        scene_id: i32,
+        expire_seconds: u64,
+    ) -> LabradorResult<QRCodeTicket> {
         if scene_id == 0 {
-            return Err(LabraError::RequestError("临时二维码场景值不能为0".to_string()));
+            return Err(LabraError::RequestError(
+                "临时二维码场景值不能为0".to_string(),
+            ));
         }
-        self.create_qrcode(QR_SCENE, None, Some(scene_id), Some(expire_seconds)).await
+        self.create_qrcode(QR_SCENE, None, Some(scene_id), Some(expire_seconds))
+            .await
     }
 
     /// 创建临时二维码（场景值字符串）
-    pub async fn create_temp_by_str(&self, scene_str: &str, expire_seconds: u64) -> LabradorResult<QRCodeTicket> {
+    pub async fn create_temp_by_str(
+        &self,
+        scene_str: &str,
+        expire_seconds: u64,
+    ) -> LabradorResult<QRCodeTicket> {
         if scene_str.is_empty() {
-            return Err(LabraError::RequestError("临时二维码场景值不能为空".to_string()));
+            return Err(LabraError::RequestError(
+                "临时二维码场景值不能为空".to_string(),
+            ));
         }
-        self.create_qrcode(QR_STR_SCENE, Some(scene_str), None, Some(expire_seconds)).await
+        self.create_qrcode(QR_STR_SCENE, Some(scene_str), None, Some(expire_seconds))
+            .await
     }
 
     /// 创建永久二维码（场景值ID）
     pub async fn create_perm_by_id(&self, scene_id: i32) -> LabradorResult<QRCodeTicket> {
-        self.create_qrcode(QR_LIMIT_SCENE, None, Some(scene_id), None).await
+        self.create_qrcode(QR_LIMIT_SCENE, None, Some(scene_id), None)
+            .await
     }
 
     /// 创建永久二维码（场景值字符串）
     pub async fn create_perm_by_str(&self, scene_str: &str) -> LabradorResult<QRCodeTicket> {
-        self.create_qrcode(QR_LIMIT_STR_SCENE, Some(scene_str), None, None).await
+        self.create_qrcode(QR_LIMIT_STR_SCENE, Some(scene_str), None, None)
+            .await
     }
 
     /// 创建二维码的核心方法
@@ -79,7 +95,9 @@ impl<'a> WechatMpQRCode<'a> {
         // 临时二维码有效期校验
         if let Some(expire) = expire_seconds {
             if expire > 2592000 {
-                return Err(LabraError::RequestError("临时二维码有效时间最大不能超过30天".to_string()));
+                return Err(LabraError::RequestError(
+                    "临时二维码有效时间最大不能超过30天".to_string(),
+                ));
             }
         }
 
@@ -98,7 +116,9 @@ impl<'a> WechatMpQRCode<'a> {
             req["expire_seconds"] = json!(expire);
         }
 
-        let response: WechatApiResponse<QRCodeTicket> = self.client.wechat_client()
+        let response: WechatApiResponse<QRCodeTicket> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/qrcode/create", req)
             .await?;
         response.into_result()
@@ -106,22 +126,32 @@ impl<'a> WechatMpQRCode<'a> {
 
     /// 通过ticket换取二维码图片URL
     pub fn get_image_url(&self, ticket: &str) -> String {
-        format!("https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket={}", ticket)
+        format!(
+            "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket={}",
+            ticket
+        )
     }
 
     // ==================== 二维码跳转规则 ====================
 
     /// 获取二维码跳转规则列表
     pub async fn get_jump_rules(&self) -> LabradorResult<QRCodeJumpRules> {
-        let response: WechatApiResponse<QRCodeJumpRules> = self.client.wechat_client()
+        let response: WechatApiResponse<QRCodeJumpRules> = self
+            .client
+            .wechat_client()
             .get("/cgi-bin/qrcodejump/get")
             .await?;
         response.into_result()
     }
 
     /// 添加二维码跳转规则
-    pub async fn add_jump_rule(&self, request: &AddQRCodeJumpRuleRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+    pub async fn add_jump_rule(
+        &self,
+        request: &AddQRCodeJumpRuleRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/qrcodejump/add", request)
             .await?;
         Ok(response)
@@ -130,7 +160,9 @@ impl<'a> WechatMpQRCode<'a> {
     /// 发布二维码跳转规则
     pub async fn publish_jump_rule(&self, prefix: &str) -> LabradorResult<WechatApiResponse> {
         let request = json!({ "prefix": prefix });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/qrcodejump/publish", request)
             .await?;
         Ok(response)
@@ -139,7 +171,9 @@ impl<'a> WechatMpQRCode<'a> {
     /// 删除二维码跳转规则
     pub async fn delete_jump_rule(&self, prefix: &str) -> LabradorResult<WechatApiResponse> {
         let request = json!({ "prefix": prefix });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/qrcodejump/delete", request)
             .await?;
         Ok(response)
@@ -148,12 +182,18 @@ impl<'a> WechatMpQRCode<'a> {
     // ==================== 短链接生成 ====================
 
     /// 生成短key
-    pub async fn gen_short_key(&self, long_url: &str, expire_seconds: Option<u64>) -> LabradorResult<ShortKeyResponse> {
+    pub async fn gen_short_key(
+        &self,
+        long_url: &str,
+        expire_seconds: Option<u64>,
+    ) -> LabradorResult<ShortKeyResponse> {
         let mut request = json!({ "long_url": long_url });
         if let Some(expire) = expire_seconds {
             request["expire_seconds"] = json!(expire);
         }
-        let response: WechatApiResponse<ShortKeyResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<ShortKeyResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/shorten/gen", request)
             .await?;
         response.into_result()
@@ -162,7 +202,9 @@ impl<'a> WechatMpQRCode<'a> {
     /// 获取短链接
     pub async fn fetch_short_url(&self, short_key: &str) -> LabradorResult<String> {
         let request = json!({ "short_key": short_key });
-        let response: WechatApiResponse<FetchShortUrlResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<FetchShortUrlResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/shorten/fetch", request)
             .await?;
         Ok(response.into_result()?.long_url)

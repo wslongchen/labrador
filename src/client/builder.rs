@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 //! 客户端构建器实现
 
@@ -26,7 +26,6 @@ use crate::client::identity::Identity;
 use crate::errors::LabradorResult;
 use reqwest::Proxy;
 use std::time::Duration;
-
 
 /// 客户端构建器
 pub struct ClientBuilder {
@@ -133,13 +132,17 @@ impl ClientBuilder {
 
     /// 启用原生TLS
     pub fn enable_native_tls(mut self) -> Self {
-        self.config.tls_config.get_or_insert_with(TlsConfig::default);
+        self.config
+            .tls_config
+            .get_or_insert_with(TlsConfig::default);
         self
     }
 
     /// 启用Rustls
     pub fn enable_rustls(mut self) -> Self {
-        self.config.tls_config.get_or_insert_with(TlsConfig::default);
+        self.config
+            .tls_config
+            .get_or_insert_with(TlsConfig::default);
         self
     }
 
@@ -335,10 +338,9 @@ impl ClientBuilder {
             match builder.https_proxy(proxy_url) {
                 Ok(_builder) => {
                     builder = _builder;
-                },
+                }
                 Err(err) => panic!("Failed to set proxy: {}", err),
             }
-            
         }
 
         builder

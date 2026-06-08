@@ -173,7 +173,6 @@ pub struct AuthInterceptor {
     header_name: String,
 }
 
-
 impl AuthInterceptor {
     /// 创建新的认证拦截器
     pub fn new(token: impl Into<String>) -> Self {
@@ -200,10 +199,7 @@ impl AuthInterceptor {
 #[async_trait]
 impl RequestInterceptor for AuthInterceptor {
     async fn before_request(&self, request: &mut Request) -> LabradorResult<()> {
-        request.set_header(
-            &self.header_name,
-            format!("Bearer {}", self.token),
-        )?;
+        request.set_header(&self.header_name, format!("Bearer {}", self.token))?;
         Ok(())
     }
 

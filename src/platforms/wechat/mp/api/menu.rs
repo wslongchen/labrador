@@ -38,12 +38,12 @@
 //! media_id：下发消息（除文本消息）用户点击media_id类型按钮后，微信服务器会将开发者填写的永久素材id对应的素材下发给用户，永久素材类型可以是图片、音频、视频、图文消息。请注意：永久素材id必须是在“素材管理/新增永久素材”接口上传后获得的合法id。
 //! view_limited：跳转图文消息URL用户点击view_limited类型按钮后，微信客户端将打开开发者在按钮中填写的永久素材id对应的图文消息URL，永久素材类型只支持图文消息。请注意：永久素材id必须是在“素材管理/新增永久素材”接口上传后获得的合法id。​
 //! 请注意，3到8的所有事件，仅支持微信iPhone5.4.1以上版本，和Android5.4以上版本的微信用户，旧版本微信用户点击后将没有回应，开发者也不能正常接收到事件推送。9和10，是专门给第三方平台旗下未微信认证（具体而言，是资质认证未通过）的订阅号准备的事件类型，它们是没有事件推送的，能力相对受限，其他类型的公众号不必使用。
-//! 
-//! 
-use serde::{Deserialize, Serialize};
+//!
+//!
 use crate::errors::LabradorResult;
 use crate::wechat::client::WechatApiResponse;
 use crate::wechat::mp::WechatMpClient;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub struct WechatMpMenu<'a> {
@@ -52,12 +52,9 @@ pub struct WechatMpMenu<'a> {
 
 #[allow(unused)]
 impl<'a> WechatMpMenu<'a> {
-
     #[inline]
     pub fn new(client: &'a WechatMpClient) -> WechatMpMenu<'a> {
-        WechatMpMenu {
-            client,
-        }
+        WechatMpMenu { client }
     }
 
     /// <pre>
@@ -67,7 +64,9 @@ impl<'a> WechatMpMenu<'a> {
     /// 详情请见：https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1455782296&token=&lang=zh_CN
     /// </pre>
     pub async fn create_menu(&self, menu: &Menu) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/menu/create", serde_json::to_value(menu).unwrap())
             .await?;
         Ok(response)
@@ -77,9 +76,8 @@ impl<'a> WechatMpMenu<'a> {
     /// 详情[请见](https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421141014&token=&lang=zh_CN)
     /// 获取菜单信息
     pub async fn get_menu(&self) -> LabradorResult<MenuResponse> {
-        let response: WechatApiResponse<MenuResponse> = self.client.wechat_client()
-            .get("/cgi-bin/menu/get")
-            .await?;
+        let response: WechatApiResponse<MenuResponse> =
+            self.client.wechat_client().get("/cgi-bin/menu/get").await?;
 
         response.into_result()
     }
@@ -89,7 +87,9 @@ impl<'a> WechatMpMenu<'a> {
     /// 详情[请见](https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1455782296&token=&lang=zh_CN)
     /// </pre>
     pub async fn delete_menu(&self) -> LabradorResult<()> {
-        let response: WechatApiResponse<WechatApiResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<WechatApiResponse> = self
+            .client
+            .wechat_client()
             .get("/cgi-bin/menu/delete")
             .await?;
 
@@ -120,7 +120,9 @@ impl<'a> WechatMpMenu<'a> {
     /// https://api.weixin.qq.com/cgi-bin/get_current_selfmenu_info?access_token=ACCESS_TOKEN
     /// </pre>
     pub async fn get_current_selfmenu_info(&self) -> LabradorResult<SelfMenuInfoResponse> {
-        let response: WechatApiResponse<SelfMenuInfoResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<SelfMenuInfoResponse> = self
+            .client
+            .wechat_client()
             .get("/cgi-bin/get_current_selfmenu_info")
             .await?;
         response.into_result()
@@ -131,7 +133,9 @@ impl<'a> WechatMpMenu<'a> {
     /// 详情[请见](https://developers.weixin.qq.com/doc/subscription/api/custommenu/api_deletemenu.html#HTTPS-%E8%B0%83%E7%94%A8)
     /// </pre>
     pub async fn delete(&self) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .get("/cgi-bin/menu/delete")
             .await?;
         Ok(response)
@@ -140,7 +144,7 @@ impl<'a> WechatMpMenu<'a> {
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-#[derive(Debug, Clone,  Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SelfMenuInfoResponse {
     /// 菜单是否开启，0代表未开启，1代表开启
     pub is_menu_open: Option<u8>,
@@ -148,21 +152,20 @@ pub struct SelfMenuInfoResponse {
     pub selfmenu_info: Option<SelfMenuInfo>,
 }
 
-#[derive(Debug, Clone,  Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SelfMenuInfo {
     /// 菜单是否开启，0代表未开启，1代表开启
     pub button: Option<Vec<SelfMenuButton>>,
 }
 
-
-#[derive(Debug, Clone,  Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SelfMenuButton {
     #[serde(rename = "type")]
     pub button_type: Option<String>,
     /// 菜单标题，不超过16个字节，子菜单不超过60个字节
     pub name: String,
     /// view、miniprogram类型必须
-    /// 网页 链接，用户点击菜单可打开链接，不超过1024字节。 
+    /// 网页 链接，用户点击菜单可打开链接，不超过1024字节。
     /// type为miniprogram时，不支持小程序的老版本客户端将打开本url。
     pub url: Option<String>,
     /// 菜单KEY值，用于消息接口推送，不超过128字节
@@ -177,20 +180,19 @@ pub struct SelfMenuButton {
     pub news_info: Option<SelfMenuNewsButton>,
     /// 二级菜单数组，个数应为1~5个
     pub sub_button: Option<SelfMenuSubButton>,
-
 }
 
-#[derive(Debug, Clone,  Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SelfMenuSubButton {
     pub list: Option<Vec<SelfMenuButton>>,
 }
 
-#[derive(Debug, Clone,  Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SelfMenuNewsButton {
     pub list: Option<Vec<SelfMenuNewsInfo>>,
 }
 
-#[derive(Debug, Clone,  Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SelfMenuNewsInfo {
     /// 图文消息的标题
     pub title: Option<String>,
@@ -207,8 +209,6 @@ pub struct SelfMenuNewsInfo {
     /// 原文的URL，若置空则无查看原文入口
     pub source_url: Option<String>,
 }
-
-
 
 /// 菜单按钮类型
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

@@ -16,21 +16,19 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 //! XML工具
 
 use crate::errors::{LabraError, LabradorResult};
-use quick_xml::events::BytesCData;
 use quick_xml::de;
+use quick_xml::events::BytesCData;
 use serde::{Deserialize, Serialize};
-
 
 #[derive(Serialize)]
 #[serde(rename = "xml")]
 pub struct XmlMap<'a, T>(pub &'a T);
-
 
 /// XML序列化器
 pub struct XmlSerializer;
@@ -44,12 +42,13 @@ impl XmlSerializer {
         let mut writer = quick_xml::se::Serializer::new(&mut xml_string);
 
         // 配置序列化器
-        writer.indent(' ', 2);  // 使用2个空格缩进
-        // 其他可能的配置：
-        // writer.escape(false);  // 禁用转义
-        // writer.text_indent(' ', 4);  // 文本缩进
-        // 执行序列化
-        value.serialize(writer)
+        writer.indent(' ', 2); // 使用2个空格缩进
+                               // 其他可能的配置：
+                               // writer.escape(false);  // 禁用转义
+                               // writer.text_indent(' ', 4);  // 文本缩进
+                               // 执行序列化
+        value
+            .serialize(writer)
             .map_err(|e| LabraError::Xml(format!("序列化失败: {}", e)))?;
 
         // 返回缓冲区中的内容
@@ -64,12 +63,14 @@ impl XmlSerializer {
 
     /// 反序列化XML字符串为结构体
     pub fn deserialize<T: for<'de> Deserialize<'de>>(xml: &str) -> LabradorResult<T> {
-        de::from_str(xml)
-            .map_err(|e| LabraError::Xml(format!("反序列化失败: {}", e)))
+        de::from_str(xml).map_err(|e| LabraError::Xml(format!("反序列化失败: {}", e)))
     }
 
     /// 反序列化带根元素的XML字符串
-    pub fn deserialize_with_root<T: for<'de> Deserialize<'de>>(xml: &str, root_name: &str) -> LabradorResult<T> {
+    pub fn deserialize_with_root<T: for<'de> Deserialize<'de>>(
+        xml: &str,
+        root_name: &str,
+    ) -> LabradorResult<T> {
         let wrapped_xml = format!("<{}>{}</{}>", root_name, xml, root_name);
         Self::deserialize(&wrapped_xml)
     }
@@ -89,7 +90,8 @@ impl XmlSerializer {
             match reader.read_event() {
                 Ok(Event::Eof) => break,
                 Ok(event) => {
-                    writer.write_event(event)
+                    writer
+                        .write_event(event)
                         .map_err(|e| LabraError::Xml(format!("格式化失败: {}", e)))?;
                 }
                 Err(e) => return Err(LabraError::Xml(format!("解析失败: {}", e))),
@@ -115,7 +117,8 @@ impl XmlSerializer {
             match reader.read_event() {
                 Ok(Event::Eof) => break,
                 Ok(event) => {
-                    writer.write_event(event)
+                    writer
+                        .write_event(event)
                         .map_err(|e| LabraError::Xml(format!("压缩失败: {}", e)))?;
                 }
                 Err(e) => return Err(LabraError::Xml(format!("解析失败: {}", e))),
@@ -241,17 +244,22 @@ impl XmlParser {
                     // 创建元素对象
                     let mut element = serde_json::Map::new();
                     if !attributes.is_empty() {
-                        element.insert("@attributes".to_string(), serde_json::Value::Object(attributes));
+                        element.insert(
+                            "@attributes".to_string(),
+                            serde_json::Value::Object(attributes),
+                        );
                     }
                     if !children.is_empty() {
-                        element.insert("@children".to_string(), serde_json::Value::Object(children));
+                        element
+                            .insert("@children".to_string(), serde_json::Value::Object(children));
                     }
 
                     parent.insert(name.to_string(), serde_json::Value::Object(element));
                 }
                 Ok(Event::End(_)) => break,
                 Ok(Event::Text(e)) => {
-                    let text = e.decode()
+                    let text = e
+                        .decode()
                         .map_err(|e| LabraError::Xml(format!("文本解码失败: {}", e)))?
                         .into_owned();
                     if !text.trim().is_empty() {
@@ -304,13 +312,15 @@ impl XmlParser {
                     }
                 }
 
-                writer.write_event(Event::Start(elem))
+                writer
+                    .write_event(Event::Start(elem))
                     .map_err(|e| LabraError::Xml(format!("写入开始标签失败: {}", e)))?;
 
                 // 处理文本内容
                 if let Some(text) = obj.get("@text") {
                     if let serde_json::Value::String(s) = text {
-                        writer.write_event(Event::Text(BytesText::new(s)))
+                        writer
+                            .write_event(Event::Text(BytesText::new(s)))
                             .map_err(|e| LabraError::Xml(format!("写入文本失败: {}", e)))?;
                     }
                 }
@@ -318,7 +328,8 @@ impl XmlParser {
                 // 处理CDATA
                 if let Some(cdata) = obj.get("@cdata") {
                     if let serde_json::Value::String(s) = cdata {
-                        writer.write_event(Event::CData(BytesCData::new(s)))
+                        writer
+                            .write_event(Event::CData(BytesCData::new(s)))
                             .map_err(|e| LabraError::Xml(format!("写入CDATA失败: {}", e)))?;
                     }
                 }
@@ -332,45 +343,56 @@ impl XmlParser {
                     }
                 }
 
-                writer.write_event(Event::End(BytesEnd::new(name)))
+                writer
+                    .write_event(Event::End(BytesEnd::new(name)))
                     .map_err(|e| LabraError::Xml(format!("写入结束标签失败: {}", e)))?;
             }
             serde_json::Value::String(s) => {
                 let elem = BytesStart::new(name);
-                writer.write_event(Event::Start(elem))
+                writer
+                    .write_event(Event::Start(elem))
                     .map_err(|e| LabraError::Xml(format!("写入开始标签失败: {}", e)))?;
 
-                writer.write_event(Event::Text(BytesText::new(s)))
+                writer
+                    .write_event(Event::Text(BytesText::new(s)))
                     .map_err(|e| LabraError::Xml(format!("写入文本失败: {}", e)))?;
 
-                writer.write_event(Event::End(BytesEnd::new(name)))
+                writer
+                    .write_event(Event::End(BytesEnd::new(name)))
                     .map_err(|e| LabraError::Xml(format!("写入结束标签失败: {}", e)))?;
             }
             serde_json::Value::Number(n) => {
                 let elem = BytesStart::new(name);
-                writer.write_event(Event::Start(elem))
+                writer
+                    .write_event(Event::Start(elem))
                     .map_err(|e| LabraError::Xml(format!("写入开始标签失败: {}", e)))?;
 
-                writer.write_event(Event::Text(BytesText::new(&n.to_string())))
+                writer
+                    .write_event(Event::Text(BytesText::new(&n.to_string())))
                     .map_err(|e| LabraError::Xml(format!("写入文本失败: {}", e)))?;
 
-                writer.write_event(Event::End(BytesEnd::new(name)))
+                writer
+                    .write_event(Event::End(BytesEnd::new(name)))
                     .map_err(|e| LabraError::Xml(format!("写入结束标签失败: {}", e)))?;
             }
             serde_json::Value::Bool(b) => {
                 let elem = BytesStart::new(name);
-                writer.write_event(Event::Start(elem))
+                writer
+                    .write_event(Event::Start(elem))
                     .map_err(|e| LabraError::Xml(format!("写入开始标签失败: {}", e)))?;
 
-                writer.write_event(Event::Text(BytesText::new(&b.to_string())))
+                writer
+                    .write_event(Event::Text(BytesText::new(&b.to_string())))
                     .map_err(|e| LabraError::Xml(format!("写入文本失败: {}", e)))?;
 
-                writer.write_event(Event::End(BytesEnd::new(name)))
+                writer
+                    .write_event(Event::End(BytesEnd::new(name)))
                     .map_err(|e| LabraError::Xml(format!("写入结束标签失败: {}", e)))?;
             }
             serde_json::Value::Null => {
                 let elem = BytesStart::new(name);
-                writer.write_event(Event::Empty(elem))
+                writer
+                    .write_event(Event::Empty(elem))
                     .map_err(|e| LabraError::Xml(format!("写入空标签失败: {}", e)))?;
             }
             serde_json::Value::Array(arr) => {
@@ -450,7 +472,9 @@ pub struct XmlBuilder {
 impl XmlBuilder {
     /// 创建新的XML构建器
     pub fn new() -> Self {
-        Self { elements: Vec::new() }
+        Self {
+            elements: Vec::new(),
+        }
     }
 
     /// 添加元素
@@ -460,7 +484,7 @@ impl XmlBuilder {
         let len = self.elements.len();
         XmlElementBuilder {
             builder: self,
-            index:  len - 1,
+            index: len - 1,
         }
     }
 
@@ -614,32 +638,26 @@ impl XmlElementBuilder {
     /// 添加属性
     pub fn attr(mut self, key: &str, value: &str) -> Self {
         let element = self.builder.elements[self.index].clone();
-        self.builder.elements[self.index] = element
-            .attr(key, value);
+        self.builder.elements[self.index] = element.attr(key, value);
         self
     }
 
     /// 设置文本内容
     pub fn text(mut self, text: &str) -> Self {
         let element = self.builder.elements[self.index].clone();
-        self.builder.elements[self.index] = element
-            .text(text);
+        self.builder.elements[self.index] = element.text(text);
         self
     }
 
     /// 设置CDATA内容
     pub fn cdata(mut self, cdata: &str) -> Self {
-        self.builder.elements[self.index] = self.builder.elements[self.index]
-            .clone()
-            .cdata(cdata);
+        self.builder.elements[self.index] = self.builder.elements[self.index].clone().cdata(cdata);
         self
     }
 
     /// 添加子元素
     pub fn child(mut self, child: XmlElement) -> Self {
-        self.builder.elements[self.index] = self.builder.elements[self.index]
-            .clone()
-            .child(child);
+        self.builder.elements[self.index] = self.builder.elements[self.index].clone().child(child);
         self
     }
 

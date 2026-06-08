@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 pub const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
@@ -25,7 +25,7 @@ pub const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
 /// 生成随机字符串
 pub fn random_string(length: usize) -> String {
     use rand::Rng;
-    
+
     let mut rng = rand::thread_rng();
 
     (0..length)

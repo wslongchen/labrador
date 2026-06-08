@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 use serde::{Deserialize, Serialize};
@@ -48,10 +48,18 @@ impl<'a> WechatMpMassMessage<'a> {
     /// # 参数说明
     /// * `file_data` - 图片文件的二进制数据
     /// * `file_name` - 文件名，用于标识
-    pub async fn upload_image(&self, file_data: Vec<u8>, file_name: &str) -> LabradorResult<UploadImageResponse> {
-        let form = reqwest::multipart::Form::new()
-            .part("media", reqwest::multipart::Part::bytes(file_data).file_name(file_name.to_string()));
-        let response: WechatApiResponse<UploadImageResponse> = self.client.wechat_client()
+    pub async fn upload_image(
+        &self,
+        file_data: Vec<u8>,
+        file_name: &str,
+    ) -> LabradorResult<UploadImageResponse> {
+        let form = reqwest::multipart::Form::new().part(
+            "media",
+            reqwest::multipart::Part::bytes(file_data).file_name(file_name.to_string()),
+        );
+        let response: WechatApiResponse<UploadImageResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/media/uploadimg", RequestBody::Multipart(form))
             .await?;
         response.into_result()
@@ -60,8 +68,13 @@ impl<'a> WechatMpMassMessage<'a> {
     /// 根据标签进行群发
     ///
     /// 该接口用于向指定标签下的用户群发消息。
-    pub async fn send_mass_by_tag(&self, request: &MassByTagRequest) -> LabradorResult<MassMessageResponse> {
-        let response: WechatApiResponse<MassMessageResponse> = self.client.wechat_client()
+    pub async fn send_mass_by_tag(
+        &self,
+        request: &MassByTagRequest,
+    ) -> LabradorResult<MassMessageResponse> {
+        let response: WechatApiResponse<MassMessageResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/message/mass/sendall", request)
             .await?;
         response.into_result()
@@ -70,8 +83,13 @@ impl<'a> WechatMpMassMessage<'a> {
     /// 根据OpenID列表进行群发
     ///
     /// 该接口用于向指定的OpenID列表用户群发消息。
-    pub async fn send_mass_by_openid(&self, request: &MassByOpenIdRequest) -> LabradorResult<MassMessageResponse> {
-        let response: WechatApiResponse<MassMessageResponse> = self.client.wechat_client()
+    pub async fn send_mass_by_openid(
+        &self,
+        request: &MassByOpenIdRequest,
+    ) -> LabradorResult<MassMessageResponse> {
+        let response: WechatApiResponse<MassMessageResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/message/mass/send", request)
             .await?;
         response.into_result()
@@ -84,12 +102,18 @@ impl<'a> WechatMpMassMessage<'a> {
     /// # 参数说明
     /// * `msg_id` - 发送出去的消息ID
     /// * `article_idx` - 要删除的文章在图文消息中的位置，第一篇编号为1，不填或填0会删除全部文章
-    pub async fn delete_mass_message(&self, msg_id: i64, article_idx: Option<u32>) -> LabradorResult<WechatApiResponse> {
+    pub async fn delete_mass_message(
+        &self,
+        msg_id: i64,
+        article_idx: Option<u32>,
+    ) -> LabradorResult<WechatApiResponse> {
         let mut req = json!({ "msg_id": msg_id });
         if let Some(idx) = article_idx {
             req["article_idx"] = json!(idx);
         }
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/message/mass/delete", req)
             .await?;
         Ok(response)
@@ -98,8 +122,13 @@ impl<'a> WechatMpMassMessage<'a> {
     /// 预览群发消息
     ///
     /// 该接口用于预览群发消息，可通过指定OpenID或微信号进行预览。
-    pub async fn preview_mass_message(&self, request: &MassPreviewRequest) -> LabradorResult<MassMessageResponse> {
-        let response: WechatApiResponse<MassMessageResponse> = self.client.wechat_client()
+    pub async fn preview_mass_message(
+        &self,
+        request: &MassPreviewRequest,
+    ) -> LabradorResult<MassMessageResponse> {
+        let response: WechatApiResponse<MassMessageResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/message/mass/preview", request)
             .await?;
         response.into_result()
@@ -109,7 +138,9 @@ impl<'a> WechatMpMassMessage<'a> {
     ///
     /// 该接口用于查询群发消息的发送状态。
     pub async fn get_mass_message_status(&self, msg_id: &str) -> LabradorResult<MassMessageStatus> {
-        let response: WechatApiResponse<MassMessageStatus> = self.client.wechat_client()
+        let response: WechatApiResponse<MassMessageStatus> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/message/mass/get", json!({ "msg_id": msg_id }))
             .await?;
         response.into_result()
@@ -120,7 +151,9 @@ impl<'a> WechatMpMassMessage<'a> {
     /// 该接口用于设置消息的群发速度。
     /// speed 级别：0-4，分别对应 80w/分钟、60w/分钟、45w/分钟、30w/分钟、10w/分钟。
     pub async fn set_mass_speed(&self, speed: i32) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/message/mass/speed/set", json!({ "speed": speed }))
             .await?;
         Ok(response)
@@ -130,7 +163,9 @@ impl<'a> WechatMpMassMessage<'a> {
     ///
     /// 该接口用于获取当前消息的群发速度。
     pub async fn get_mass_speed(&self) -> LabradorResult<MassSpeedResponse> {
-        let response: WechatApiResponse<MassSpeedResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<MassSpeedResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/message/mass/speed/get", Value::Null)
             .await?;
         response.into_result()
@@ -139,8 +174,13 @@ impl<'a> WechatMpMassMessage<'a> {
     /// 上传图文消息素材
     ///
     /// 该接口用于上传图文消息素材，供后续群发使用。
-    pub async fn upload_news(&self, articles: Vec<MpNewsArticle>) -> LabradorResult<UploadNewsResponse> {
-        let response: WechatApiResponse<UploadNewsResponse> = self.client.wechat_client()
+    pub async fn upload_news(
+        &self,
+        articles: Vec<MpNewsArticle>,
+    ) -> LabradorResult<UploadNewsResponse> {
+        let response: WechatApiResponse<UploadNewsResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/media/uploadnews", json!({ "articles": articles }))
             .await?;
         response.into_result()

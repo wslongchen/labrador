@@ -19,7 +19,7 @@
  *
  */
 use serde::{Deserialize, Serialize};
-use serde_json::{json};
+use serde_json::json;
 
 use crate::errors::LabradorResult;
 use crate::wechat::client::WechatApiResponse;
@@ -63,8 +63,13 @@ impl<'a> WechatMpSubscribeMessage<'a> {
     ///
     /// 推送订阅模板消息给授权微信用户。
     /// 用户已关注公众号时消息下发到公众号会话，未关注时下发到服务通知。
-    pub async fn send_subscribe_once(&self, msg: &SubscribeOnceRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+    pub async fn send_subscribe_once(
+        &self,
+        msg: &SubscribeOnceRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/message/template/subscribe", msg)
             .await?;
         Ok(response)
@@ -76,7 +81,9 @@ impl<'a> WechatMpSubscribeMessage<'a> {
     ///
     /// 本接口用于获取小程序、公众号所属类目，用于查询公共模板。
     pub async fn get_category(&self) -> LabradorResult<Vec<Category>> {
-        let response: WechatApiResponse<GetCategoryResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<GetCategoryResponse> = self
+            .client
+            .wechat_client()
             .get("/wxaapi/newtmpl/getcategory")
             .await?;
         Ok(response.into_result()?.data)
@@ -91,8 +98,13 @@ impl<'a> WechatMpSubscribeMessage<'a> {
         start: i32,
         limit: i32,
     ) -> LabradorResult<PubTemplateTitlesResponse> {
-        let response: WechatApiResponse<PubTemplateTitlesResponse> = self.client.wechat_client()
-            .get(&format!("/wxaapi/newtmpl/getpubtemplatetitles?ids={}&start={}&limit={}", ids, start, limit))
+        let response: WechatApiResponse<PubTemplateTitlesResponse> = self
+            .client
+            .wechat_client()
+            .get(&format!(
+                "/wxaapi/newtmpl/getpubtemplatetitles?ids={}&start={}&limit={}",
+                ids, start, limit
+            ))
             .await?;
         response.into_result()
     }
@@ -100,9 +112,17 @@ impl<'a> WechatMpSubscribeMessage<'a> {
     /// 获取模板中的关键词
     ///
     /// 该接口用于获取模板标题下的关键词列表。
-    pub async fn get_pub_template_keywords(&self, tid: &str) -> LabradorResult<Vec<PubTemplateKeyword>> {
-        let response: WechatApiResponse<GetPubTemplateKeywordsResponse> = self.client.wechat_client()
-            .get(&format!("/wxaapi/newtmpl/getpubtemplatekeywords?tid={}", tid))
+    pub async fn get_pub_template_keywords(
+        &self,
+        tid: &str,
+    ) -> LabradorResult<Vec<PubTemplateKeyword>> {
+        let response: WechatApiResponse<GetPubTemplateKeywordsResponse> = self
+            .client
+            .wechat_client()
+            .get(&format!(
+                "/wxaapi/newtmpl/getpubtemplatekeywords?tid={}",
+                tid
+            ))
             .await?;
         Ok(response.into_result()?.data)
     }
@@ -110,13 +130,20 @@ impl<'a> WechatMpSubscribeMessage<'a> {
     /// 组合模板并添加至个人模板库
     ///
     /// 从公共模板库中选用模板到私有模板库。
-    pub async fn add_template(&self, tid: &str, kid_list: Vec<i32>, scene_desc: &str) -> LabradorResult<String> {
+    pub async fn add_template(
+        &self,
+        tid: &str,
+        kid_list: Vec<i32>,
+        scene_desc: &str,
+    ) -> LabradorResult<String> {
         let req = json!({
             "tid": tid,
             "kidList": kid_list,
             "sceneDesc": scene_desc,
         });
-        let response: WechatApiResponse<AddTemplateResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<AddTemplateResponse> = self
+            .client
+            .wechat_client()
             .post("/wxaapi/newtmpl/addtemplate", req)
             .await?;
         Ok(response.into_result()?.pri_tmpl_id)
@@ -126,7 +153,9 @@ impl<'a> WechatMpSubscribeMessage<'a> {
     ///
     /// 该接口用于获取当前帐号下的已有的模板列表。
     pub async fn get_template_list(&self) -> LabradorResult<Vec<PrivateTemplate>> {
-        let response: WechatApiResponse<GetTemplateListResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<GetTemplateListResponse> = self
+            .client
+            .wechat_client()
             .get("/wxaapi/newtmpl/gettemplate")
             .await?;
         Ok(response.into_result()?.data)
@@ -135,7 +164,9 @@ impl<'a> WechatMpSubscribeMessage<'a> {
     /// 删除帐号下的某个模板
     pub async fn delete_template(&self, pri_tmpl_id: &str) -> LabradorResult<WechatApiResponse> {
         let req = json!({ "priTmplId": pri_tmpl_id });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/wxaapi/newtmpl/deltemplate", req)
             .await?;
         Ok(response)
@@ -144,8 +175,13 @@ impl<'a> WechatMpSubscribeMessage<'a> {
     /// 发送订阅通知
     ///
     /// 该接口用于发送订阅消息（业务通知）。
-    pub async fn send_subscribe_message(&self, msg: &SubscribeMessageRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+    pub async fn send_subscribe_message(
+        &self,
+        msg: &SubscribeMessageRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/message/subscribe/bizsend", msg)
             .await?;
         Ok(response)

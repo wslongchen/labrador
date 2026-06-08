@@ -49,9 +49,9 @@ use labrador::errors::LabradorResult;
 use labrador::platforms::wechat::pay::builder::WechatPayBuilder;
 use labrador::platforms::wechat::pay::config::WechatPayApiVersion;
 use labrador::platforms::wechat::pay::types::{
-    Amount, BillType, CodepayOrderRequestV3, CombineOrderRequestV3, CombineOrderQueryRequestV3,
-    CombineCloseOrderRequestV3, Detail, GoodsDetail, OrderQueryRequestV3, OrderReverseRequestV3,
-    Payer, RefundRequestV3, TradeBillRequestV3, TradeType,
+    Amount, BillType, CodepayOrderRequestV3, CombineCloseOrderRequestV3,
+    CombineOrderQueryRequestV3, CombineOrderRequestV3, Detail, GoodsDetail, OrderQueryRequestV3,
+    OrderReverseRequestV3, Payer, RefundRequestV3, TradeBillRequestV3, TradeType,
     UnifiedOrderRequestV3,
 };
 use labrador::platforms::wechat::pay::WechatPayClient;
@@ -59,12 +59,10 @@ use labrador::platforms::wechat::pay::WechatPayClient;
 use labrador::platforms::alipay::builder::AlipayClientBuilder;
 use labrador::platforms::alipay::client::AlipayClient;
 use labrador::platforms::alipay::pay::{
-    AlipayBizRequest, AlipayTradePreCreateModel, AlipayTradeQueryModel,
-    AlipayTradeRefundModel, AlipayTradeCancelModel, AlipayTradeCloseModel,
-    AlipayTradePagePayModel, AlipayTradeAppPayModel,
-    AlipayFaceOrderPayModel,
+    AlipayBizRequest, AlipayFaceOrderPayModel, AlipayTradeAppPayModel, AlipayTradeCancelModel,
+    AlipayTradeCloseModel, AlipayTradeOrderSettleModel, AlipayTradePagePayModel,
+    AlipayTradePreCreateModel, AlipayTradeQueryModel, AlipayTradeRefundModel,
     GoodsDetail as AliGoodsDetail,
-    AlipayTradeOrderSettleModel,
 };
 
 // ==================== 辅助函数 ====================
@@ -156,10 +154,18 @@ async fn test_wechat_unified_order(client: &WechatPayClient) {
 
     let trade_types = [
         ("Native下单", TradeType::Native, Option::<Payer>::None),
-        ("JSAPI下单", TradeType::Jsapi, Some(Payer::new(&get_env("WECHAT_OPENID")))),
+        (
+            "JSAPI下单",
+            TradeType::Jsapi,
+            Some(Payer::new(&get_env("WECHAT_OPENID"))),
+        ),
         ("H5下单", TradeType::H5, Option::<Payer>::None),
         ("App下单", TradeType::App, Option::<Payer>::None),
-        ("小程序下单", TradeType::Miniapp, Some(Payer::new(&get_env("WECHAT_OPENID")))),
+        (
+            "小程序下单",
+            TradeType::Miniapp,
+            Some(Payer::new(&get_env("WECHAT_OPENID"))),
+        ),
     ];
 
     for (name, trade_type, payer) in &trade_types {
@@ -172,7 +178,8 @@ async fn test_wechat_unified_order(client: &WechatPayClient) {
             Detail::new(vec![GoodsDetail::new(
                 "1001".to_string(),
                 format!("测试商品-{}", name),
-                1, 1,
+                1,
+                1,
             )]),
             &notify_url,
         );
@@ -331,9 +338,10 @@ async fn test_wechat_bill(client: &WechatPayClient) {
 
     // 资金账单
     println!("  申请资金账单 (日期: {})...", today);
-    print_result("资金账单", &client.download_bill_v3(
-        &today, None, None,
-    ).await);
+    print_result(
+        "资金账单",
+        &client.download_bill_v3(&today, None, None).await,
+    );
 }
 
 async fn test_wechat_combine_order(client: &WechatPayClient) {
@@ -344,32 +352,32 @@ async fn test_wechat_combine_order(client: &WechatPayClient) {
 
     // 合单 Native 下单
     println!("  合单Native下单...");
-    let sub_orders = vec![
-        labrador::platforms::wechat::pay::types::SubOrder::new(
-            &get_env("WECHAT_MCH_ID"), "1", "商品A", Amount::new(1),
-        ),
-    ];
-    let combine_request = CombineOrderRequestV3::new(
-        TradeType::Native,
-        &out_trade_no,
-        sub_orders,
-        &notify_url,
-    );
+    let sub_orders = vec![labrador::platforms::wechat::pay::types::SubOrder::new(
+        &get_env("WECHAT_MCH_ID"),
+        "1",
+        "商品A",
+        Amount::new(1),
+    )];
+    let combine_request =
+        CombineOrderRequestV3::new(TradeType::Native, &out_trade_no, sub_orders, &notify_url);
     print_result("合单下单", &client.combine_order_v3(combine_request).await);
 
     // 合单查询
     println!("  合单查询...");
     let query_request = CombineOrderQueryRequestV3::new(&out_trade_no);
-    print_result("合单查询", &client.combine_order_query_v3(query_request).await);
+    print_result(
+        "合单查询",
+        &client.combine_order_query_v3(query_request).await,
+    );
 
     // 合单关单
     println!("  合单关单...");
-    let close_request = CombineCloseOrderRequestV3::new(
-        &out_trade_no,
-        &get_env("WECHAT_MCH_ID"),
-        vec![],
+    let close_request =
+        CombineCloseOrderRequestV3::new(&out_trade_no, &get_env("WECHAT_MCH_ID"), vec![]);
+    print_result(
+        "合单关单",
+        &client.combine_close_order_v3(close_request).await,
     );
-    print_result("合单关单", &client.combine_close_order_v3(close_request).await);
 }
 
 // ==================== 支付宝测试 ====================
@@ -577,11 +585,13 @@ async fn test_alipay_refund(client: &AlipayClient) {
     print_result("退款申请", &refund_result);
 
     // 退款查询
-    let query_result = srv.query_refund(
-        Some(out_trade_no.to_string()),
-        None,
-        format!("REF{}", chrono::Utc::now().timestamp_millis()),
-    ).await;
+    let query_result = srv
+        .query_refund(
+            Some(out_trade_no.to_string()),
+            None,
+            format!("REF{}", chrono::Utc::now().timestamp_millis()),
+        )
+        .await;
     print_result("退款查询", &query_result);
 }
 

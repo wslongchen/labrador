@@ -16,11 +16,11 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
-use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashMap;
 
 use crate::errors::LabradorResult;
 use crate::wechat::client::WechatApiResponse;
@@ -35,14 +35,17 @@ pub struct WechatMxaMessage<'a> {
 impl<'a> WechatMxaMessage<'a> {
     #[inline]
     pub fn new(client: &'a WechatMiniAppClient) -> WechatMxaMessage<'a> {
-        WechatMxaMessage {
-            client,
-        }
+        WechatMxaMessage { client }
     }
 
     /// 发送订阅消息
-    pub async fn send(&self, request: &SubscribeMessageRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+    pub async fn send(
+        &self,
+        request: &SubscribeMessageRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/message/subscribe/send", request)
             .await?;
         Ok(response)
@@ -50,19 +53,34 @@ impl<'a> WechatMxaMessage<'a> {
 
     /// 获取类目下的公共模板
     /// 该接口用于获取帐号所属类目下的公共模板，可从中选用模板使用
-    pub async fn get_pub_template_titles(&self, request: &PubTemplateTitlesRequest) -> LabradorResult<PubTemplateTitlesResponse> {
-        let response: WechatApiResponse<PubTemplateTitlesResponse> = self.client.wechat_client()
-            .get(&format!("/wxaapi/newtmpl/getpubtemplatetitles?ids={}&start={}&limit={}",
-                          request.ids, request.start, request.limit))
+    pub async fn get_pub_template_titles(
+        &self,
+        request: &PubTemplateTitlesRequest,
+    ) -> LabradorResult<PubTemplateTitlesResponse> {
+        let response: WechatApiResponse<PubTemplateTitlesResponse> = self
+            .client
+            .wechat_client()
+            .get(&format!(
+                "/wxaapi/newtmpl/getpubtemplatetitles?ids={}&start={}&limit={}",
+                request.ids, request.start, request.limit
+            ))
             .await?;
         response.into_result()
     }
 
     /// 获取模板中的关键词
     /// 该接口用于获取模板标题下的关键词列表
-    pub async fn get_pub_template_keywords(&self, tid: &str) -> LabradorResult<Vec<PubTemplateKeyword>> {
-        let response: WechatApiResponse<GetPubTemplateKeywordsResponse> = self.client.wechat_client()
-            .get(&format!("/wxaapi/newtmpl/getpubtemplatekeywords?tid={}", tid))
+    pub async fn get_pub_template_keywords(
+        &self,
+        tid: &str,
+    ) -> LabradorResult<Vec<PubTemplateKeyword>> {
+        let response: WechatApiResponse<GetPubTemplateKeywordsResponse> = self
+            .client
+            .wechat_client()
+            .get(&format!(
+                "/wxaapi/newtmpl/getpubtemplatekeywords?tid={}",
+                tid
+            ))
             .await?;
         Ok(response.into_result()?.data)
     }
@@ -70,7 +88,9 @@ impl<'a> WechatMxaMessage<'a> {
     /// 选用模板
     /// 从公共模板库中选用模板到私有模板库
     pub async fn add_template(&self, request: &AddTemplateRequest) -> LabradorResult<String> {
-        let response: WechatApiResponse<AddTemplateResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<AddTemplateResponse> = self
+            .client
+            .wechat_client()
             .post("/wxaapi/newtmpl/addtemplate", request)
             .await?;
         Ok(response.into_result()?.pri_tmpl_id)
@@ -79,7 +99,9 @@ impl<'a> WechatMxaMessage<'a> {
     /// 获取已有模板列表
     /// 该接口用于获取当前帐号下的已有的模板列表
     pub async fn get_template_list(&self) -> LabradorResult<Vec<PrivateTemplate>> {
-        let response: WechatApiResponse<GetTemplateListResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<GetTemplateListResponse> = self
+            .client
+            .wechat_client()
             .get("/wxaapi/newtmpl/gettemplate")
             .await?;
         Ok(response.into_result()?.data)
@@ -88,8 +110,13 @@ impl<'a> WechatMxaMessage<'a> {
     /// 删除模板
     /// 删除私有模板库中的模板
     pub async fn delete_template(&self, pri_tmpl_id: &str) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
-            .post("/wxaapi/newtmpl/deltemplate", serde_json::json!({ "priTmplId": pri_tmpl_id }))
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
+            .post(
+                "/wxaapi/newtmpl/deltemplate",
+                serde_json::json!({ "priTmplId": pri_tmpl_id }),
+            )
             .await?;
         Ok(response)
     }
@@ -97,31 +124,48 @@ impl<'a> WechatMxaMessage<'a> {
     /// 获取类目
     /// 本接口用于获取小程序、公众号所属类目用于查询公共模板
     pub async fn get_category(&self) -> LabradorResult<Vec<Category>> {
-        let response: WechatApiResponse<GetCategoryResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<GetCategoryResponse> = self
+            .client
+            .wechat_client()
             .get("/wxaapi/newtmpl/getcategory")
             .await?;
         Ok(response.into_result()?.data)
     }
 
     /// 激活与更新服务卡片
-    pub async fn set_user_notify(&self, request: &SetUserNotifyRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+    pub async fn set_user_notify(
+        &self,
+        request: &SetUserNotifyRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/wxa/set_user_notify", request)
             .await?;
         Ok(response)
     }
 
     /// 更新服务卡片扩展信息
-    pub async fn set_user_notifyext(&self, request: &SetUserNotifyExtRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+    pub async fn set_user_notifyext(
+        &self,
+        request: &SetUserNotifyExtRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/wxa/set_user_notifyext", request)
             .await?;
         Ok(response)
     }
 
     /// 查询服务卡片状态
-    pub async fn get_user_notify(&self, request: &GetUserNotifyRequest) -> LabradorResult<UserNotifyStatus> {
-        let response: WechatApiResponse<UserNotifyStatus> = self.client.wechat_client()
+    pub async fn get_user_notify(
+        &self,
+        request: &GetUserNotifyRequest,
+    ) -> LabradorResult<UserNotifyStatus> {
+        let response: WechatApiResponse<UserNotifyStatus> = self
+            .client
+            .wechat_client()
             .post("/wxa/get_user_notify", request)
             .await?;
         response.into_result()

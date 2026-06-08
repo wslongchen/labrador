@@ -41,7 +41,9 @@ impl<'a> WechatCpMenu<'a> {
     ///
     /// 使用客户端配置的agent_id创建菜单。
     pub async fn create(&self, menu: MenuInfo) -> LabradorResult<WechatApiResponse> {
-        let agent_id = self.client.agent_id()
+        let agent_id = self
+            .client
+            .agent_id()
             .ok_or_else(|| LabraError::Config("agent_id未配置".to_string()))?;
         self.create_with_agentid(agent_id, menu).await
     }
@@ -49,8 +51,13 @@ impl<'a> WechatCpMenu<'a> {
     /// 创建菜单（指定应用ID）
     ///
     /// 为指定应用创建自定义菜单。
-    pub async fn create_with_agentid(&self, agent_id: i32, menu: MenuInfo) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client
+    pub async fn create_with_agentid(
+        &self,
+        agent_id: i32,
+        menu: MenuInfo,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
             .post(&format!("/cgi-bin/menu/create?agentid={}", agent_id), menu)
             .await?;
         Ok(response)
@@ -60,7 +67,9 @@ impl<'a> WechatCpMenu<'a> {
     ///
     /// 使用客户端配置的agent_id删除菜单。
     pub async fn delete(&self) -> LabradorResult<WechatApiResponse> {
-        let agent_id = self.client.agent_id()
+        let agent_id = self
+            .client
+            .agent_id()
             .ok_or_else(|| LabraError::Config("agent_id未配置".to_string()))?;
         self.delete_with_agentid(agent_id).await
     }
@@ -69,7 +78,8 @@ impl<'a> WechatCpMenu<'a> {
     ///
     /// 删除指定应用的自定义菜单。
     pub async fn delete_with_agentid(&self, agent_id: i32) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client
+        let response: WechatApiResponse = self
+            .client
             .get(&format!("/cgi-bin/menu/delete?agentid={}", agent_id))
             .await?;
         Ok(response)
@@ -79,7 +89,9 @@ impl<'a> WechatCpMenu<'a> {
     ///
     /// 使用客户端配置的agent_id获取菜单配置。
     pub async fn get(&self) -> LabradorResult<MenuInfo> {
-        let agent_id = self.client.agent_id()
+        let agent_id = self
+            .client
+            .agent_id()
             .ok_or_else(|| LabraError::Config("agent_id未配置".to_string()))?;
         self.get_with_agentid(agent_id).await
     }
@@ -88,7 +100,8 @@ impl<'a> WechatCpMenu<'a> {
     ///
     /// 获取指定应用的菜单配置。
     pub async fn get_with_agentid(&self, agent_id: i32) -> LabradorResult<MenuInfo> {
-        let response: WechatApiResponse<MenuInfo> = self.client
+        let response: WechatApiResponse<MenuInfo> = self
+            .client
             .get(&format!("/cgi-bin/menu/get?agentid={}", agent_id))
             .await?;
         response.into_result()

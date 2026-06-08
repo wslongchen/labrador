@@ -18,9 +18,9 @@
  *  *
  *
  */
-use std::error::Error;
 use hex::FromHexError;
 use quick_xml::{DeError, SeError};
+use std::error::Error;
 use thiserror::Error;
 use tracing::error;
 use x509_parser::error::X509Error;
@@ -81,7 +81,7 @@ pub enum LabraError {
     /// 拦截器错误
     #[error("拦截器错误: {0}")]
     Interceptor(String),
-    
+
     #[error("请求错误: {0}")]
     RequestError(String),
 
@@ -135,8 +135,12 @@ pub enum LabraError {
 
 impl LabraError {
     /// 创建请求失败错误
-    pub fn request_failed(method: impl Into<String>, path: impl Into<String>,
-                          status: u16, body: impl Into<String>) -> Self {
+    pub fn request_failed(
+        method: impl Into<String>,
+        path: impl Into<String>,
+        status: u16,
+        body: impl Into<String>,
+    ) -> Self {
         Self::RequestFailed {
             method: method.into(),
             path: path.into(),
@@ -161,9 +165,7 @@ impl LabraError {
     pub fn should_retry(&self) -> bool {
         matches!(
             self,
-            LabraError::Network(_) |
-            LabraError::RequestFailed { .. } |
-            LabraError::Timeout
+            LabraError::Network(_) | LabraError::RequestFailed { .. } | LabraError::Timeout
         )
     }
 
@@ -197,7 +199,6 @@ impl From<reqwest::header::InvalidHeaderName> for LabraError {
         Self::Interceptor(err.to_string())
     }
 }
-
 
 impl From<reqwest::multipart::Part> for LabraError {
     fn from(_: reqwest::multipart::Part) -> Self {
@@ -242,13 +243,11 @@ impl From<rsa::pkcs8::Error> for LabraError {
     }
 }
 
-
 impl From<FromHexError> for LabraError {
     fn from(err: FromHexError) -> Self {
         LabraError::Crypto(err.to_string())
     }
 }
-
 
 impl From<serde_urlencoded::de::Error> for LabraError {
     fn from(err: serde_urlencoded::de::Error) -> Self {
@@ -256,13 +255,11 @@ impl From<serde_urlencoded::de::Error> for LabraError {
     }
 }
 
-
 impl From<serde_urlencoded::ser::Error> for LabraError {
     fn from(err: serde_urlencoded::ser::Error) -> Self {
         LabraError::RequestError(err.to_string())
     }
 }
-
 
 impl From<DeError> for LabraError {
     fn from(err: DeError) -> Self {
@@ -276,13 +273,11 @@ impl From<SeError> for LabraError {
     }
 }
 
-
 impl From<rsa::pkcs1::Error> for LabraError {
     fn from(err: rsa::pkcs1::Error) -> Self {
         LabraError::Certificate(err.to_string())
     }
 }
-
 
 impl From<rsa::pkcs8::spki::Error> for LabraError {
     fn from(err: rsa::pkcs8::spki::Error) -> Self {
@@ -295,8 +290,6 @@ impl From<X509Error> for LabraError {
         LabraError::Certificate(err.to_string())
     }
 }
-
-
 
 impl From<rsa::errors::Error> for LabraError {
     fn from(err: rsa::errors::Error) -> Self {

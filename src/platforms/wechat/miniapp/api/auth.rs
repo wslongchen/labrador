@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 use serde::{Deserialize, Serialize};
@@ -52,7 +52,10 @@ impl<'a> WechatMxaAuth<'a> {
     ///
     /// # 返回
     /// 成功返回空响应，表示验证通过。
-    pub async fn verify_signature(&self, request: &VerifySignatureRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn verify_signature(
+        &self,
+        request: &VerifySignatureRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
@@ -73,7 +76,10 @@ impl<'a> WechatMxaAuth<'a> {
     ///
     /// # 返回
     /// 包含 `verify_id` 的响应。
-    pub async fn get_verify_id(&self, request: &GetVerifyIdRequest) -> LabradorResult<GetVerifyIdResponse> {
+    pub async fn get_verify_id(
+        &self,
+        request: &GetVerifyIdRequest,
+    ) -> LabradorResult<GetVerifyIdResponse> {
         let response: WechatApiResponse<GetVerifyIdResponse> = self
             .client
             .wechat_client()
@@ -92,7 +98,10 @@ impl<'a> WechatMxaAuth<'a> {
     ///
     /// # 返回
     /// 包含核身结果信息的响应。
-    pub async fn query_verify_info(&self, request: &QueryVerifyInfoRequest) -> LabradorResult<QueryVerifyInfoResponse> {
+    pub async fn query_verify_info(
+        &self,
+        request: &QueryVerifyInfoRequest,
+    ) -> LabradorResult<QueryVerifyInfoResponse> {
         let response: WechatApiResponse<QueryVerifyInfoResponse> = self
             .client
             .wechat_client()

@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 // ============================================================================
@@ -25,8 +25,8 @@
 //       所有结构体均实现了 from_xml 方法，用于反序列化。
 // ============================================================================
 
-use serde::{Deserialize, Serialize};
 use crate::errors::LabradorResult;
+use serde::{Deserialize, Serialize};
 
 // ==================== 公共基础部分 ====================
 // 所有接收消息和事件的XML都包含以下基础字段
@@ -521,7 +521,9 @@ impl ReplyImageMessage {
             from_user_name: from_user.to_string(),
             create_time: chrono::Utc::now().timestamp(),
             msg_type: "image".to_string(),
-            image: ReplyImage { media_id: media_id.to_string() },
+            image: ReplyImage {
+                media_id: media_id.to_string(),
+            },
         }
     }
 
@@ -555,7 +557,9 @@ impl ReplyVoiceMessage {
             from_user_name: from_user.to_string(),
             create_time: chrono::Utc::now().timestamp(),
             msg_type: "voice".to_string(),
-            voice: ReplyVoice { media_id: media_id.to_string() },
+            voice: ReplyVoice {
+                media_id: media_id.to_string(),
+            },
         }
     }
 
@@ -585,13 +589,23 @@ pub struct ReplyVideo {
 }
 
 impl ReplyVideoMessage {
-    pub fn new(to_user: &str, from_user: &str, media_id: &str, title: Option<String>, description: Option<String>) -> Self {
+    pub fn new(
+        to_user: &str,
+        from_user: &str,
+        media_id: &str,
+        title: Option<String>,
+        description: Option<String>,
+    ) -> Self {
         Self {
             to_user_name: to_user.to_string(),
             from_user_name: from_user.to_string(),
             create_time: chrono::Utc::now().timestamp(),
             msg_type: "video".to_string(),
-            video: ReplyVideo { media_id: media_id.to_string(), title, description },
+            video: ReplyVideo {
+                media_id: media_id.to_string(),
+                title,
+                description,
+            },
         }
     }
 

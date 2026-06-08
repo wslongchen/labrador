@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 //! 重试机制实现
 
@@ -77,10 +77,14 @@ impl RetryStrategy {
                 multiplier,
                 max_delay,
             } => {
-                let delay_ms = initial_delay.as_millis() as f32 * multiplier.powi(attempt as i32 - 1);
-                Duration::from_millis(delay_ms.min(max_delay.as_millis_f32()) as u64)
+                let delay_ms =
+                    initial_delay.as_millis() as f32 * multiplier.powi(attempt as i32 - 1);
+                Duration::from_millis(delay_ms.min(max_delay.as_millis() as f32) as u64)
             }
-            RetryStrategy::Random { min_delay, max_delay } => {
+            RetryStrategy::Random {
+                min_delay,
+                max_delay,
+            } => {
                 use rand::Rng;
                 let mut rng = rand::thread_rng();
                 let min_ms = min_delay.as_millis() as u64;
@@ -105,14 +109,31 @@ impl RetryStrategy {
     pub fn description(&self) -> String {
         match self {
             RetryStrategy::Fixed(delay) => format!("固定间隔重试: {:?}", delay),
-            RetryStrategy::Exponential { initial_delay, multiplier, max_delay } => {
-                format!("指数退避重试: 初始{:?}, 乘数{}, 最大{:?}", initial_delay, multiplier, max_delay)
+            RetryStrategy::Exponential {
+                initial_delay,
+                multiplier,
+                max_delay,
+            } => {
+                format!(
+                    "指数退避重试: 初始{:?}, 乘数{}, 最大{:?}",
+                    initial_delay, multiplier, max_delay
+                )
             }
-            RetryStrategy::Random { min_delay, max_delay } => {
+            RetryStrategy::Random {
+                min_delay,
+                max_delay,
+            } => {
                 format!("随机退避重试: 范围{:?}-{:?}", min_delay, max_delay)
             }
-            RetryStrategy::Linear { initial_delay, increment, max_delay } => {
-                format!("线性退避重试: 初始{:?}, 增量{:?}, 最大{:?}", initial_delay, increment, max_delay)
+            RetryStrategy::Linear {
+                initial_delay,
+                increment,
+                max_delay,
+            } => {
+                format!(
+                    "线性退避重试: 初始{:?}, 增量{:?}, 最大{:?}",
+                    initial_delay, increment, max_delay
+                )
             }
             RetryStrategy::Immediate => "立即重试".to_string(),
         }
@@ -215,9 +236,9 @@ impl RetryCondition {
 
         use rand::Rng;
         let mut rng = rand::thread_rng();
-        let jitter_range = self.jitter_factor * delay.as_millis_f32();
+        let jitter_range = self.jitter_factor * delay.as_millis() as f32;
         let jitter = rng.gen_range(-jitter_range..jitter_range);
-        let new_delay_ms = (delay.as_millis_f32() + jitter).max(0.0) as u64;
+        let new_delay_ms = ((delay.as_millis() as f32) + jitter).max(0.0) as u64;
 
         Duration::from_millis(new_delay_ms)
     }
@@ -308,10 +329,7 @@ impl SmartRetrier {
             match operation() {
                 Ok(result) => {
                     if self.log_enabled && self.current_attempt > 0 {
-                        tracing::info!(
-                            "请求在第{}次尝试后成功",
-                            self.current_attempt
-                        );
+                        tracing::info!("请求在第{}次尝试后成功", self.current_attempt);
                     }
                     return Ok(result);
                 }
@@ -319,7 +337,9 @@ impl SmartRetrier {
                     let error_str = error.to_string();
 
                     // 检查是否应该重试
-                    let should_retry = self.condition.error_patterns
+                    let should_retry = self
+                        .condition
+                        .error_patterns
                         .iter()
                         .any(|pattern| error_str.to_lowercase().contains(pattern));
 
@@ -354,7 +374,10 @@ impl SmartRetrier {
     }
 
     /// 执行带响应检查的重试操作
-    pub async fn retry_with_response<F, T>(&mut self, mut operation: F) -> Result<T, crate::errors::LabraError>
+    pub async fn retry_with_response<F, T>(
+        &mut self,
+        mut operation: F,
+    ) -> Result<T, crate::errors::LabraError>
     where
         F: FnMut() -> crate::errors::LabradorResult<Result<T, crate::errors::LabraError>>,
     {
@@ -362,10 +385,7 @@ impl SmartRetrier {
             match operation()? {
                 Ok(result) => {
                     if self.log_enabled && self.current_attempt > 0 {
-                        tracing::info!(
-                            "请求在第{}次尝试后成功",
-                            self.current_attempt
-                        );
+                        tracing::info!("请求在第{}次尝试后成功", self.current_attempt);
                     }
                     return Ok(result);
                 }

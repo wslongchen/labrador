@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 //! 客户端配置模块
 
@@ -94,7 +94,8 @@ impl RetryConfig {
 
     /// 获取第N次重试的延迟时间
     pub fn delay_for_attempt(&self, attempt: u32) -> Duration {
-        let delay = self.initial_delay.as_secs_f32() * self.backoff_multiplier.powi(attempt as i32 - 1);
+        let delay =
+            self.initial_delay.as_secs_f32() * self.backoff_multiplier.powi(attempt as i32 - 1);
         let delay_ms = (delay * 1000.0) as u64;
         Duration::from_millis(delay_ms.min(self.max_delay.as_millis() as u64))
     }

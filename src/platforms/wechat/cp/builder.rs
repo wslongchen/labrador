@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 use crate::errors::LabradorResult;
 use crate::wechat::cp::config::WechatCpConfig;
@@ -39,22 +39,22 @@ impl WechatCpBuilder {
         self.config.token = Some(token.to_string());
         self
     }
-    
+
     pub fn aes_key(mut self, aes_key: &str) -> Self {
         self.config.aes_key = Some(aes_key.to_string());
         self
     }
-    
+
     pub fn agent_id(mut self, agent_id: i32) -> Self {
         self.config.agent_id = Some(agent_id);
         self
     }
-    
+
     pub fn oauth2_redirect_uri(mut self, oauth2_redirect_uri: &str) -> Self {
         self.config.oauth2_redirect_uri = Some(oauth2_redirect_uri.to_string());
         self
     }
-    
+
     pub fn webhook_url(mut self, webhook_url: &str) -> Self {
         self.config.webhook_url = Some(webhook_url.to_string());
         self

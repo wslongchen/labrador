@@ -23,13 +23,13 @@ use serde::{Deserialize, Serialize, Serializer};
 use serde_json::{json, Value};
 
 use crate::errors::{LabraError, LabradorResult};
-use crate::{HashAlgorithm};
 use crate::utils::string::random_string;
-use crate::utils::time::{timestamp_millis};
+use crate::utils::time::timestamp_millis;
 use crate::wechat::client::WechatApiResponse;
 use crate::wechat::mp::api::{AdvancedInfo, BaseInfo};
-use crate::wechat::mp::types::{QR_CODE};
+use crate::wechat::mp::types::QR_CODE;
 use crate::wechat::mp::WechatMpClient;
+use crate::HashAlgorithm;
 
 /// 卡券相关.
 #[derive(Debug, Clone)]
@@ -39,12 +39,9 @@ pub struct WechatMpCard<'a> {
 
 #[allow(unused)]
 impl<'a> WechatMpCard<'a> {
-
     #[inline]
     pub fn new(client: &'a WechatMpClient) -> WechatMpCard<'a> {
-        WechatMpCard {
-            client,
-        }
+        WechatMpCard { client }
     }
 
     /// <pre>
@@ -57,7 +54,10 @@ impl<'a> WechatMpCard<'a> {
     /// <pre>
     /// 创建调用卡券api时所需要的签名
     /// </pre>
-    pub async fn create_card_api_signature(&self, mut params: Vec<String>) -> LabradorResult<WechatMpCardApiSignature> {
+    pub async fn create_card_api_signature(
+        &self,
+        mut params: Vec<String>,
+    ) -> LabradorResult<WechatMpCardApiSignature> {
         let timestamp = timestamp_millis() / 1000;
         let noncestr = random_string(16);
         let api_ticket = self.get_card_api_ticket().await?;
@@ -67,7 +67,7 @@ impl<'a> WechatMpCard<'a> {
         params.sort();
         let signature = HashAlgorithm::Sha1.hash_hex(params.join("").as_bytes());
         let config = self.client.config();
-        Ok(WechatMpCardApiSignature{
+        Ok(WechatMpCardApiSignature {
             app_id: config.app_id.to_string(),
             card_id: "".to_string(),
             card_type: "".to_string(),
@@ -87,7 +87,9 @@ impl<'a> WechatMpCard<'a> {
         let req = json!({
             "encrypt_code": encrypt_code
         });
-        let response: WechatApiResponse<Value> = self.client.wechat_client()
+        let response: WechatApiResponse<Value> = self
+            .client
+            .wechat_client()
             .post("/card/code/decrypt", req)
             .await?;
         let data = response.into_result()?;
@@ -99,13 +101,20 @@ impl<'a> WechatMpCard<'a> {
     /// 卡券Code查询.
     /// 文档地址： <a href="https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1451025272&anchor=1">文档</a>
     /// </pre>
-    pub async fn query_card_code(&self, card_id: &str, code: &str, check_consume: bool) -> LabradorResult<WechatMpCardResponse> {
+    pub async fn query_card_code(
+        &self,
+        card_id: &str,
+        code: &str,
+        check_consume: bool,
+    ) -> LabradorResult<WechatMpCardResponse> {
         let req = json!({
             "card_id": card_id,
             "code": code,
             "check_consume": check_consume,
         });
-        let response: WechatApiResponse<WechatMpCardResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<WechatMpCardResponse> = self
+            .client
+            .wechat_client()
             .post("/card/code/get", req)
             .await?;
         response.into_result()
@@ -114,19 +123,28 @@ impl<'a> WechatMpCard<'a> {
     /// <pre>
     /// 卡券Code核销。核销失败会抛出异常
     /// </pre>
-    pub async fn consume_card_code(&self, code: &str) -> LabradorResult<WechatMpCardCodeConsumeResponse> {
+    pub async fn consume_card_code(
+        &self,
+        code: &str,
+    ) -> LabradorResult<WechatMpCardCodeConsumeResponse> {
         self.consume_card_code_with_cardid(None, code).await
     }
 
     /// <pre>
     /// 卡券Code核销。核销失败会抛出异常
     /// </pre>
-    pub async fn consume_card_code_with_cardid(&self, card_id: Option<&str>, code: &str) -> LabradorResult<WechatMpCardCodeConsumeResponse> {
+    pub async fn consume_card_code_with_cardid(
+        &self,
+        card_id: Option<&str>,
+        code: &str,
+    ) -> LabradorResult<WechatMpCardCodeConsumeResponse> {
         let req = json!({
             "card_id": card_id,
             "code": code,
         });
-        let response: WechatApiResponse<WechatMpCardCodeConsumeResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<WechatMpCardCodeConsumeResponse> = self
+            .client
+            .wechat_client()
             .post("/card/code/consume", req)
             .await?;
         response.into_result()
@@ -137,14 +155,22 @@ impl<'a> WechatMpCard<'a> {
     /// 开发者在帮助消费者核销卡券之前，必须帮助先将此code（卡券串码）与一个openid绑定（即mark住），
     /// 才能进一步调用核销接口，否则报错。
     /// </pre>
-    pub async fn mark_card_code(&self, code: &str, card_id: &str, openid: &str, is_mark: bool) -> LabradorResult<WechatApiResponse> {
+    pub async fn mark_card_code(
+        &self,
+        code: &str,
+        card_id: &str,
+        openid: &str,
+        is_mark: bool,
+    ) -> LabradorResult<WechatApiResponse> {
         let req = json!({
             "card_id": card_id,
             "code": code,
             "openid": openid,
             "is_mark": is_mark,
         });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/card/code/mark", req)
             .await?;
         Ok(response)
@@ -158,9 +184,8 @@ impl<'a> WechatMpCard<'a> {
         let req = json!({
             "card_id": card_id,
         });
-        let response: WechatApiResponse<Value> = self.client.wechat_client()
-            .post("/card/get", req)
-            .await?;
+        let response: WechatApiResponse<Value> =
+            self.client.wechat_client().post("/card/get", req).await?;
         response.into_result()
     }
 
@@ -171,7 +196,9 @@ impl<'a> WechatMpCard<'a> {
         let req = json!({
             "openid": vec![openid],
         });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/card/testwhitelist/set", req)
             .await?;
         Ok(response)
@@ -180,9 +207,17 @@ impl<'a> WechatMpCard<'a> {
     /// <pre>
     /// 创建卡券
     /// </pre>
-    pub async fn create_card(&self, req: WechatMpCardCreateRequest) -> LabradorResult<WechatMpCardCreateResponse> {
-        let response: WechatApiResponse<WechatMpCardCreateResponse> = self.client.wechat_client()
-            .post("/card/create", serde_json::to_value(req).unwrap_or(Value::Null))
+    pub async fn create_card(
+        &self,
+        req: WechatMpCardCreateRequest,
+    ) -> LabradorResult<WechatMpCardCreateResponse> {
+        let response: WechatApiResponse<WechatMpCardCreateResponse> = self
+            .client
+            .wechat_client()
+            .post(
+                "/card/create",
+                serde_json::to_value(req).unwrap_or(Value::Null),
+            )
             .await?;
         response.into_result()
     }
@@ -190,21 +225,39 @@ impl<'a> WechatMpCard<'a> {
     /// <pre>
     /// 创建卡券二维码
     /// </pre>
-    pub async fn create_qrcode_card(&self, card_id: &str, outer_str: &str) -> LabradorResult<WechatMpCardQrcodeCreateResponse> {
+    pub async fn create_qrcode_card(
+        &self,
+        card_id: &str,
+        outer_str: &str,
+    ) -> LabradorResult<WechatMpCardQrcodeCreateResponse> {
         self.create_qrcode_card_expire(card_id, outer_str, 0).await
     }
 
     /// <pre>
     /// 创建卡券二维码
     /// </pre>
-    pub async fn create_qrcode_card_expire(&self, card_id: &str, outer_str: &str, expires_in: i64) -> LabradorResult<WechatMpCardQrcodeCreateResponse> {
-        self.create_qrcode_card_complex(card_id, outer_str, expires_in, None, None, false).await
+    pub async fn create_qrcode_card_expire(
+        &self,
+        card_id: &str,
+        outer_str: &str,
+        expires_in: i64,
+    ) -> LabradorResult<WechatMpCardQrcodeCreateResponse> {
+        self.create_qrcode_card_complex(card_id, outer_str, expires_in, None, None, false)
+            .await
     }
 
     /// <pre>
     /// 创建卡券二维码
     /// </pre>
-    pub async fn create_qrcode_card_complex(&self, card_id: &str, outer_str: &str, expires_in: i64, openid: Option<&str>, code: Option<&str>, is_unique_code: bool) -> LabradorResult<WechatMpCardQrcodeCreateResponse> {
+    pub async fn create_qrcode_card_complex(
+        &self,
+        card_id: &str,
+        outer_str: &str,
+        expires_in: i64,
+        openid: Option<&str>,
+        code: Option<&str>,
+        is_unique_code: bool,
+    ) -> LabradorResult<WechatMpCardQrcodeCreateResponse> {
         let mut req = json!({
            "action_name" : QR_CODE,
         });
@@ -221,7 +274,9 @@ impl<'a> WechatMpCard<'a> {
             }
         });
         req["action_info"] = action_info;
-        let response: WechatApiResponse<WechatMpCardQrcodeCreateResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<WechatMpCardQrcodeCreateResponse> = self
+            .client
+            .wechat_client()
             .post("/card/qrcode/create", req)
             .await?;
         response.into_result()
@@ -230,9 +285,17 @@ impl<'a> WechatMpCard<'a> {
     /// <pre>
     /// 创建卡券货架
     /// </pre>
-    pub async fn create_landing_page(&self, req: WechatMpCardLandingPageCreateRequest) -> LabradorResult<WechatMpCardLandingPageCreateResponse> {
-        let response: WechatApiResponse<WechatMpCardLandingPageCreateResponse> = self.client.wechat_client()
-            .post("/card/landingpage/create", serde_json::to_value(req).unwrap_or(Value::Null))
+    pub async fn create_landing_page(
+        &self,
+        req: WechatMpCardLandingPageCreateRequest,
+    ) -> LabradorResult<WechatMpCardLandingPageCreateResponse> {
+        let response: WechatApiResponse<WechatMpCardLandingPageCreateResponse> = self
+            .client
+            .wechat_client()
+            .post(
+                "/card/landingpage/create",
+                serde_json::to_value(req).unwrap_or(Value::Null),
+            )
             .await?;
         response.into_result()
     }
@@ -241,13 +304,20 @@ impl<'a> WechatMpCard<'a> {
     /// 将用户的卡券设置为失效状态.
     /// 详见:<a href="https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1451025272&anchor=9">文档</a>
     /// </pre>
-    pub async fn unavailable_card_code(&self, card_id: &str, code: &str, reason: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn unavailable_card_code(
+        &self,
+        card_id: &str,
+        code: &str,
+        reason: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let req = json!({
            "card_id": card_id,
             "code": code,
             "reason": reason
         });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/card/code/unavailable", req)
             .await?;
         Ok(response)
@@ -260,7 +330,9 @@ impl<'a> WechatMpCard<'a> {
         let req = json!({
            "card_id": card_id,
         });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/card/delete", req)
             .await?;
         Ok(response)
@@ -269,15 +341,23 @@ impl<'a> WechatMpCard<'a> {
     /// <pre>
     /// 导入自定义code(仅对自定义code商户)
     /// </pre>
-    pub async fn card_code_deposit(&self, card_id: &str, code_list: Vec<&str>) -> LabradorResult<WechatMpCardCodeDepositResponse> {
+    pub async fn card_code_deposit(
+        &self,
+        card_id: &str,
+        code_list: Vec<&str>,
+    ) -> LabradorResult<WechatMpCardCodeDepositResponse> {
         if code_list.is_empty() || code_list.len() > 100 {
-            return Err(LabraError::RequestError("code数量为0或者code数量超过100个".to_string()))
+            return Err(LabraError::RequestError(
+                "code数量为0或者code数量超过100个".to_string(),
+            ));
         }
         let req = json!({
            "card_id": card_id,
            "code": code_list,
         });
-        let response: WechatApiResponse<WechatMpCardCodeDepositResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<WechatMpCardCodeDepositResponse> = self
+            .client
+            .wechat_client()
             .post("/card/code/deposit", req)
             .await?;
         response.into_result()
@@ -286,11 +366,16 @@ impl<'a> WechatMpCard<'a> {
     /// <pre>
     /// 查询导入code数目接口
     /// </pre>
-    pub async fn card_code_deposit_count(&self, card_id: &str) -> LabradorResult<WechatMpCardCodeDepositCountResponse> {
+    pub async fn card_code_deposit_count(
+        &self,
+        card_id: &str,
+    ) -> LabradorResult<WechatMpCardCodeDepositCountResponse> {
         let req = json!({
            "card_id": card_id,
         });
-        let response: WechatApiResponse<WechatMpCardCodeDepositCountResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<WechatMpCardCodeDepositCountResponse> = self
+            .client
+            .wechat_client()
             .post("/card/code/getdepositcount", req)
             .await?;
         response.into_result()
@@ -299,15 +384,23 @@ impl<'a> WechatMpCard<'a> {
     /// <pre>
     /// 核查code接口
     /// </pre>
-    pub async fn card_code_check_code(&self, card_id: &str, code_list: Vec<&str>) -> LabradorResult<WechatMpCardCheckCodeResponse> {
+    pub async fn card_code_check_code(
+        &self,
+        card_id: &str,
+        code_list: Vec<&str>,
+    ) -> LabradorResult<WechatMpCardCheckCodeResponse> {
         if code_list.is_empty() || code_list.len() > 100 {
-            return Err(LabraError::RequestError("code数量为0或者code数量超过100个".to_string()))
+            return Err(LabraError::RequestError(
+                "code数量为0或者code数量超过100个".to_string(),
+            ));
         }
         let req = json!({
            "card_id": card_id,
            "code": code_list,
         });
-        let response: WechatApiResponse<WechatMpCardCheckCodeResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<WechatMpCardCheckCodeResponse> = self
+            .client
+            .wechat_client()
             .post("/card/code/checkcode", req)
             .await?;
         response.into_result()
@@ -316,11 +409,16 @@ impl<'a> WechatMpCard<'a> {
     /// <pre>
     /// 图文消息群发卡券获取内嵌html
     /// </pre>
-    pub async fn card_mpnews_get_html(&self, card_id: &str) -> LabradorResult<WechatMpCardMpnewsGethtmlResponse> {
+    pub async fn card_mpnews_get_html(
+        &self,
+        card_id: &str,
+    ) -> LabradorResult<WechatMpCardMpnewsGethtmlResponse> {
         let req = json!({
            "card_id": card_id,
         });
-        let response: WechatApiResponse<WechatMpCardMpnewsGethtmlResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<WechatMpCardMpnewsGethtmlResponse> = self
+            .client
+            .wechat_client()
             .post("/card/mpnews/gethtml", req)
             .await?;
         response.into_result()
@@ -330,7 +428,11 @@ impl<'a> WechatMpCard<'a> {
     /// 修改库存接口
     /// <a href="https://developers.weixin.qq.com/doc/offiaccount/Cards_and_Offer/Managing_Coupons_Vouchers_and_Cards.html#5">文档</a>
     /// </pre>
-    pub async fn card_modify_stock(&self, card_id: &str, change_value: i64) -> LabradorResult<WechatApiResponse> {
+    pub async fn card_modify_stock(
+        &self,
+        card_id: &str,
+        change_value: i64,
+    ) -> LabradorResult<WechatApiResponse> {
         let mut req = json!({
            "card_id": card_id,
         });
@@ -339,7 +441,9 @@ impl<'a> WechatMpCard<'a> {
         } else {
             req["reduce_stock_value"] = json!(change_value.abs());
         }
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/card/modifystock", req)
             .await?;
         Ok(response)
@@ -349,13 +453,20 @@ impl<'a> WechatMpCard<'a> {
     /// 更改Code接口
     /// <a href="https://developers.weixin.qq.com/doc/offiaccount/Cards_and_Offer/Managing_Coupons_Vouchers_and_Cards.html#6">文档</a>
     /// </pre>
-    pub async fn card_code_update(&self, card_id: &str, old_code: &str, new_code: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn card_code_update(
+        &self,
+        card_id: &str,
+        old_code: &str,
+        new_code: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let req = json!({
            "card_id": card_id,
            "code": old_code,
            "new_code": new_code,
         });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/card/code/update", req)
             .await?;
         Ok(response)
@@ -365,12 +476,18 @@ impl<'a> WechatMpCard<'a> {
     /// 设置买单接口
     /// <a href="https://developers.weixin.qq.com/doc/offiaccount/Cards_and_Offer/Create_a_Coupon_Voucher_or_Card.html#12">文档</a>
     /// </pre>
-    pub async fn card_paycell_set(&self, card_id: &str, is_open: bool) -> LabradorResult<WechatApiResponse> {
+    pub async fn card_paycell_set(
+        &self,
+        card_id: &str,
+        is_open: bool,
+    ) -> LabradorResult<WechatApiResponse> {
         let req = json!({
            "card_id": card_id,
            "is_open": is_open,
         });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/card/paycell/set", req)
             .await?;
         Ok(response)
@@ -380,14 +497,22 @@ impl<'a> WechatMpCard<'a> {
     /// 设置自助核销
     /// <a href="https://developers.weixin.qq.com/doc/offiaccount/Cards_and_Offer/Create_a_Coupon_Voucher_or_Card.html#14">文档</a>
     /// </pre>
-    pub async fn card_self_consume_cell_set(&self, card_id: &str, is_open: bool, need_verify_cod: bool, need_remark_amount: bool) -> LabradorResult<WechatApiResponse> {
+    pub async fn card_self_consume_cell_set(
+        &self,
+        card_id: &str,
+        is_open: bool,
+        need_verify_cod: bool,
+        need_remark_amount: bool,
+    ) -> LabradorResult<WechatApiResponse> {
         let req = json!({
            "card_id": card_id,
            "is_open": is_open,
            "need_verify_cod": need_verify_cod,
            "need_remark_amount": need_remark_amount,
         });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/card/selfconsumecell/set", req)
             .await?;
         Ok(response)
@@ -397,12 +522,18 @@ impl<'a> WechatMpCard<'a> {
     /// 获取用户已领取卡券接口
     /// <a href="https://developers.weixin.qq.com/doc/offiaccount/Cards_and_Offer/Managing_Coupons_Vouchers_and_Cards.html#1">文档</a>
     /// </pre>
-    pub async fn get_user_card_list(&self, card_id: &str, openid: &str) -> LabradorResult<WechatUserCardListResponse> {
+    pub async fn get_user_card_list(
+        &self,
+        card_id: &str,
+        openid: &str,
+    ) -> LabradorResult<WechatUserCardListResponse> {
         let req = json!({
            "card_id": card_id,
            "openid": openid,
         });
-        let response: WechatApiResponse<WechatUserCardListResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<WechatUserCardListResponse> = self
+            .client
+            .wechat_client()
             .post("/card/user/getcardlist", req)
             .await?;
         response.into_result()
@@ -431,9 +562,17 @@ impl<'a> WechatMpCard<'a> {
     ///
     /// 3、子商户若有公众号，且不愿意自己运营，通过授权方式让第三方代制，支持配置子商户公众号。配置后，1）该子商户的制券配额不再限制，2）该卡券详情页关联的公众号为子商户配置这个公众号。
     /// </pre>
-    pub async fn create_submerchant(&self, req: WechatMpCardCreateSubmerchantRequest) -> LabradorResult<WechatMpCardSubmerchantResponse> {
-        let response: WechatApiResponse<WechatMpCardSubmerchantResponse> = self.client.wechat_client()
-            .post("/card/submerchant/submit", serde_json::to_value(req).unwrap_or(Value::Null))
+    pub async fn create_submerchant(
+        &self,
+        req: WechatMpCardCreateSubmerchantRequest,
+    ) -> LabradorResult<WechatMpCardSubmerchantResponse> {
+        let response: WechatApiResponse<WechatMpCardSubmerchantResponse> = self
+            .client
+            .wechat_client()
+            .post(
+                "/card/submerchant/submit",
+                serde_json::to_value(req).unwrap_or(Value::Null),
+            )
             .await?;
         response.into_result()
     }
@@ -450,7 +589,9 @@ impl<'a> WechatMpCard<'a> {
     /// 2.对于第三方开发者代制（无公众号）模式，子商户无论选择什么类目，均暂不需按照此返回提供资质，返回值仅参考类目ID 即可。
     /// </pre>
     pub async fn get_cateogry(&self) -> LabradorResult<WechatMpCardCategoryResponse> {
-        let response: WechatApiResponse<WechatMpCardCategoryResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<WechatMpCardCategoryResponse> = self
+            .client
+            .wechat_client()
             .post("/card/getapplyprotocol", Value::Null)
             .await?;
         response.into_result()
@@ -461,9 +602,17 @@ impl<'a> WechatMpCard<'a> {
     /// <a href="https://developers.weixin.qq.com/doc/offiaccount/Cards_and_Offer/Third-party_developer_mode.html#_1-1-%E5%88%9B%E5%BB%BA%E5%AD%90%E5%95%86%E6%88%B7%E6%8E%A5%E5%8F%A3">文档</a>
     /// 支持调用该接口更新子商户信息。
     /// </pre>
-    pub async fn update_submerchant(&self, req: WechatMpCardCreateSubmerchantRequest) -> LabradorResult<WechatMpCardSubmerchantResponse> {
-        let response: WechatApiResponse<WechatMpCardSubmerchantResponse> = self.client.wechat_client()
-            .post("/card/submerchant/update", serde_json::to_value(req).unwrap_or(Value::Null))
+    pub async fn update_submerchant(
+        &self,
+        req: WechatMpCardCreateSubmerchantRequest,
+    ) -> LabradorResult<WechatMpCardSubmerchantResponse> {
+        let response: WechatApiResponse<WechatMpCardSubmerchantResponse> = self
+            .client
+            .wechat_client()
+            .post(
+                "/card/submerchant/update",
+                serde_json::to_value(req).unwrap_or(Value::Null),
+            )
             .await?;
         response.into_result()
     }
@@ -473,11 +622,16 @@ impl<'a> WechatMpCard<'a> {
     /// <a href="https://developers.weixin.qq.com/doc/offiaccount/Cards_and_Offer/Third-party_developer_mode.html#_1-1-%E5%88%9B%E5%BB%BA%E5%AD%90%E5%95%86%E6%88%B7%E6%8E%A5%E5%8F%A3">文档</a>
     /// 通过指定的子商户appid，拉取该子商户的基础信息。 注意，用母商户去调用接口，但接口内传入的是子商户的appid。
     /// </pre>
-    pub async fn get_submerchant(&self, merchant_id: i32) -> LabradorResult<WechatMpCardSubmerchantResponse> {
+    pub async fn get_submerchant(
+        &self,
+        merchant_id: i32,
+    ) -> LabradorResult<WechatMpCardSubmerchantResponse> {
         let req = json!({
             "merchant_id": merchant_id
         });
-        let response: WechatApiResponse<WechatMpCardSubmerchantResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<WechatMpCardSubmerchantResponse> = self
+            .client
+            .wechat_client()
             .post("/card/submerchant/get", req)
             .await?;
         response.into_result()
@@ -488,13 +642,20 @@ impl<'a> WechatMpCard<'a> {
     /// <a href="https://developers.weixin.qq.com/doc/offiaccount/Cards_and_Offer/Third-party_developer_mode.html#_1-1-%E5%88%9B%E5%BB%BA%E5%AD%90%E5%95%86%E6%88%B7%E6%8E%A5%E5%8F%A3">文档</a>
     /// 母商户可以通过该接口批量拉取子商户的相关信息，一次调用最多拉取100个子商户的信息，可以通过多次拉去满足不同的查询需求
     /// </pre>
-    pub async fn get_submerchant_batch(&self, begin_id: i64, limit: i64, status: &str) -> LabradorResult<WechatMpCardSubmerchantBatchResponse> {
+    pub async fn get_submerchant_batch(
+        &self,
+        begin_id: i64,
+        limit: i64,
+        status: &str,
+    ) -> LabradorResult<WechatMpCardSubmerchantBatchResponse> {
         let req = json!({
           "begin_id": begin_id,
           "limit": limit,
           "status": status
         });
-        let response: WechatApiResponse<WechatMpCardSubmerchantBatchResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<WechatMpCardSubmerchantBatchResponse> = self
+            .client
+            .wechat_client()
             .post("/card/submerchant/batchget", req)
             .await?;
         response.into_result()
@@ -512,7 +673,7 @@ pub struct WechatMpCardApiSignature {
     pub location_id: String,
     pub code: String,
     pub openid: String,
-    #[serde(rename="nonceStr")]
+    #[serde(rename = "nonceStr")]
     pub nonce_str: String,
     pub signature: String,
     pub timestamp: i64,
@@ -556,7 +717,6 @@ pub struct WechatMpCardCodeConsumeResponse {
 pub struct CodeConsumeCard {
     pub card_id: String,
 }
-
 
 #[allow(unused)]
 #[derive(Deserialize)]
@@ -661,7 +821,10 @@ pub enum AbstractCardCreateRequest {
 }
 
 impl Serialize for WechatMpCardCreateRequest {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         match &self.card {
             AbstractCardCreateRequest::Cash(v) => v.serialize(serializer),
             AbstractCardCreateRequest::Discount(v) => v.serialize(serializer),
@@ -712,7 +875,6 @@ pub struct CardLandingPage {
     pub thumb_url: String,
 }
 
-
 #[allow(unused)]
 #[derive(Serialize, Deserialize)]
 pub struct WechatMpCardLandingPageCreateResponse {
@@ -721,7 +883,6 @@ pub struct WechatMpCardLandingPageCreateResponse {
     /// 货架ID。货架的唯一标识
     pub page_id: i32,
 }
-
 
 #[allow(unused)]
 #[derive(Serialize, Deserialize)]
@@ -741,7 +902,6 @@ pub struct WechatMpCardCheckCodeResponse {
     pub exist_code: Vec<String>,
     pub not_exist_code: Vec<String>,
 }
-
 
 #[allow(unused)]
 #[derive(Serialize, Deserialize)]

@@ -44,7 +44,9 @@ impl<'a> WechatMpOcr<'a> {
     ///
     /// 本接口用于识别纸质菜单。
     pub async fn menu(&self, img_url: &str) -> LabradorResult<MenuOcrResponse> {
-        let response: WechatApiResponse<MenuOcrResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<MenuOcrResponse> = self
+            .client
+            .wechat_client()
             .get(&format!("/cv/ocr/menu?img_url={}", img_url))
             .await?;
         response.into_result()
@@ -53,9 +55,13 @@ impl<'a> WechatMpOcr<'a> {
     /// 菜单识别（通过文件上传）
     pub async fn menu_file(&self, file_path: &str) -> LabradorResult<MenuOcrResponse> {
         let (file_name, content) = read_file_with_name(file_path)?;
-        let form = reqwest::multipart::Form::new()
-            .part("img", reqwest::multipart::Part::bytes(content).file_name(file_name));
-        let response: WechatApiResponse<MenuOcrResponse> = self.client.wechat_client()
+        let form = reqwest::multipart::Form::new().part(
+            "img",
+            reqwest::multipart::Part::bytes(content).file_name(file_name),
+        );
+        let response: WechatApiResponse<MenuOcrResponse> = self
+            .client
+            .wechat_client()
             .post("/cv/ocr/menu", RequestBody::Multipart(form))
             .await?;
         response.into_result()
@@ -65,7 +71,9 @@ impl<'a> WechatMpOcr<'a> {
 
     /// 通用印刷体识别（通过图片URL）
     pub async fn comm(&self, img_url: &str) -> LabradorResult<OcrCommResponse> {
-        let response: WechatApiResponse<OcrCommResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<OcrCommResponse> = self
+            .client
+            .wechat_client()
             .get(&format!("/cv/ocr/comm?img_url={}", img_url))
             .await?;
         response.into_result()
@@ -74,9 +82,13 @@ impl<'a> WechatMpOcr<'a> {
     /// 通用印刷体识别（通过文件上传）
     pub async fn comm_file(&self, file_path: &str) -> LabradorResult<OcrCommResponse> {
         let (file_name, content) = read_file_with_name(file_path)?;
-        let form = reqwest::multipart::Form::new()
-            .part("img", reqwest::multipart::Part::bytes(content).file_name(file_name));
-        let response: WechatApiResponse<OcrCommResponse> = self.client.wechat_client()
+        let form = reqwest::multipart::Form::new().part(
+            "img",
+            reqwest::multipart::Part::bytes(content).file_name(file_name),
+        );
+        let response: WechatApiResponse<OcrCommResponse> = self
+            .client
+            .wechat_client()
             .post("/cv/ocr/comm", RequestBody::Multipart(form))
             .await?;
         response.into_result()
@@ -86,7 +98,9 @@ impl<'a> WechatMpOcr<'a> {
 
     /// 行驶证识别（通过图片URL）
     pub async fn driving(&self, img_url: &str) -> LabradorResult<OcrDrivingResponse> {
-        let response: WechatApiResponse<OcrDrivingResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<OcrDrivingResponse> = self
+            .client
+            .wechat_client()
             .get(&format!("/cv/ocr/driving?img_url={}", img_url))
             .await?;
         response.into_result()
@@ -95,9 +109,13 @@ impl<'a> WechatMpOcr<'a> {
     /// 行驶证识别（通过文件上传）
     pub async fn driving_file(&self, file_path: &str) -> LabradorResult<OcrDrivingResponse> {
         let (file_name, content) = read_file_with_name(file_path)?;
-        let form = reqwest::multipart::Form::new()
-            .part("img", reqwest::multipart::Part::bytes(content).file_name(file_name));
-        let response: WechatApiResponse<OcrDrivingResponse> = self.client.wechat_client()
+        let form = reqwest::multipart::Form::new().part(
+            "img",
+            reqwest::multipart::Part::bytes(content).file_name(file_name),
+        );
+        let response: WechatApiResponse<OcrDrivingResponse> = self
+            .client
+            .wechat_client()
             .post("/cv/ocr/driving", RequestBody::Multipart(form))
             .await?;
         response.into_result()
@@ -107,7 +125,9 @@ impl<'a> WechatMpOcr<'a> {
 
     /// 银行卡识别（通过图片URL）
     pub async fn bank_card(&self, img_url: &str) -> LabradorResult<OcrBankCardResponse> {
-        let response: WechatApiResponse<OcrBankCardResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<OcrBankCardResponse> = self
+            .client
+            .wechat_client()
             .get(&format!("/cv/ocr/bankcard?img_url={}", img_url))
             .await?;
         response.into_result()
@@ -116,9 +136,13 @@ impl<'a> WechatMpOcr<'a> {
     /// 银行卡识别（通过文件上传）
     pub async fn bank_card_file(&self, file_path: &str) -> LabradorResult<OcrBankCardResponse> {
         let (file_name, content) = read_file_with_name(file_path)?;
-        let form = reqwest::multipart::Form::new()
-            .part("img", reqwest::multipart::Part::bytes(content).file_name(file_name));
-        let response: WechatApiResponse<OcrBankCardResponse> = self.client.wechat_client()
+        let form = reqwest::multipart::Form::new().part(
+            "img",
+            reqwest::multipart::Part::bytes(content).file_name(file_name),
+        );
+        let response: WechatApiResponse<OcrBankCardResponse> = self
+            .client
+            .wechat_client()
             .post("/cv/ocr/bankcard", RequestBody::Multipart(form))
             .await?;
         response.into_result()
@@ -128,7 +152,9 @@ impl<'a> WechatMpOcr<'a> {
 
     /// 营业执照识别（通过图片URL）
     pub async fn biz_license(&self, img_url: &str) -> LabradorResult<OcrBizLicenseResponse> {
-        let response: WechatApiResponse<OcrBizLicenseResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<OcrBizLicenseResponse> = self
+            .client
+            .wechat_client()
             .get(&format!("/cv/ocr/bizlicense?img_url={}", img_url))
             .await?;
         response.into_result()
@@ -137,9 +163,13 @@ impl<'a> WechatMpOcr<'a> {
     /// 营业执照识别（通过文件上传）
     pub async fn biz_license_file(&self, file_path: &str) -> LabradorResult<OcrBizLicenseResponse> {
         let (file_name, content) = read_file_with_name(file_path)?;
-        let form = reqwest::multipart::Form::new()
-            .part("img", reqwest::multipart::Part::bytes(content).file_name(file_name));
-        let response: WechatApiResponse<OcrBizLicenseResponse> = self.client.wechat_client()
+        let form = reqwest::multipart::Form::new().part(
+            "img",
+            reqwest::multipart::Part::bytes(content).file_name(file_name),
+        );
+        let response: WechatApiResponse<OcrBizLicenseResponse> = self
+            .client
+            .wechat_client()
             .post("/cv/ocr/bizlicense", RequestBody::Multipart(form))
             .await?;
         response.into_result()
@@ -148,19 +178,31 @@ impl<'a> WechatMpOcr<'a> {
     // ==================== 驾驶证识别 ====================
 
     /// 驾驶证识别（通过图片URL）
-    pub async fn driving_license(&self, img_url: &str) -> LabradorResult<OcrDrivingLicenseResponse> {
-        let response: WechatApiResponse<OcrDrivingLicenseResponse> = self.client.wechat_client()
+    pub async fn driving_license(
+        &self,
+        img_url: &str,
+    ) -> LabradorResult<OcrDrivingLicenseResponse> {
+        let response: WechatApiResponse<OcrDrivingLicenseResponse> = self
+            .client
+            .wechat_client()
             .get(&format!("/cv/ocr/drivinglicense?img_url={}", img_url))
             .await?;
         response.into_result()
     }
 
     /// 驾驶证识别（通过文件上传）
-    pub async fn driving_license_file(&self, file_path: &str) -> LabradorResult<OcrDrivingLicenseResponse> {
+    pub async fn driving_license_file(
+        &self,
+        file_path: &str,
+    ) -> LabradorResult<OcrDrivingLicenseResponse> {
         let (file_name, content) = read_file_with_name(file_path)?;
-        let form = reqwest::multipart::Form::new()
-            .part("img", reqwest::multipart::Part::bytes(content).file_name(file_name));
-        let response: WechatApiResponse<OcrDrivingLicenseResponse> = self.client.wechat_client()
+        let form = reqwest::multipart::Form::new().part(
+            "img",
+            reqwest::multipart::Part::bytes(content).file_name(file_name),
+        );
+        let response: WechatApiResponse<OcrDrivingLicenseResponse> = self
+            .client
+            .wechat_client()
             .post("/cv/ocr/drivinglicense", RequestBody::Multipart(form))
             .await?;
         response.into_result()
@@ -170,7 +212,9 @@ impl<'a> WechatMpOcr<'a> {
 
     /// 身份证OCR识别接口（通过图片URL）
     pub async fn id_card(&self, img_url: &str) -> LabradorResult<OcrIdCardResponse> {
-        let response: WechatApiResponse<OcrIdCardResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<OcrIdCardResponse> = self
+            .client
+            .wechat_client()
             .get(&format!("/cv/ocr/idcard?img_url={}", img_url))
             .await?;
         response.into_result()
@@ -179,9 +223,13 @@ impl<'a> WechatMpOcr<'a> {
     /// 身份证OCR识别接口（通过文件上传）
     pub async fn id_card_file(&self, file_path: &str) -> LabradorResult<OcrIdCardResponse> {
         let (file_name, content) = read_file_with_name(file_path)?;
-        let form = reqwest::multipart::Form::new()
-            .part("img", reqwest::multipart::Part::bytes(content).file_name(file_name));
-        let response: WechatApiResponse<OcrIdCardResponse> = self.client.wechat_client()
+        let form = reqwest::multipart::Form::new().part(
+            "img",
+            reqwest::multipart::Part::bytes(content).file_name(file_name),
+        );
+        let response: WechatApiResponse<OcrIdCardResponse> = self
+            .client
+            .wechat_client()
             .post("/cv/ocr/idcard", RequestBody::Multipart(form))
             .await?;
         response.into_result()
@@ -211,7 +259,8 @@ impl MenuOcrResponse {
     /// 解析菜单项
     pub fn parse_menu_items(&self) -> Result<Vec<MenuItem>, serde_json::Error> {
         let parsed: Value = serde_json::from_str(&self.content)?;
-        let items = parsed["menu_items"].as_array()
+        let items = parsed["menu_items"]
+            .as_array()
             .map(|arr| {
                 arr.iter()
                     .filter_map(|v| {

@@ -22,20 +22,20 @@
 //!
 //! 提供支付宝开放平台的授权、用户信息等接口实现
 
-use crate::errors::{LabradorResult};
+use super::client::AlipayClient;
+use crate::alipay::method::AlipayMethod;
+use crate::alipay::AlipayBizRequest;
+use crate::errors::LabradorResult;
+use crate::platforms::alipay::AlipayResponse;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use crate::alipay::AlipayBizRequest;
-use crate::alipay::method::AlipayMethod;
-use crate::platforms::alipay::AlipayResponse;
-use super::client::{AlipayClient};
 
 /// 开放平台服务
 pub struct AlipayOpenService<'a> {
     client: &'a AlipayClient,
 }
 
-impl <'a> AlipayOpenService<'a> {
+impl<'a> AlipayOpenService<'a> {
     /// 创建新的开放平台服务
     pub fn new(client: &'a AlipayClient) -> Self {
         Self { client }
@@ -61,9 +61,8 @@ impl <'a> AlipayOpenService<'a> {
         }
         request.set_biz_model(biz_content);
         request.set_method(AlipayMethod::SystemOauthToken);
-        let response: AlipayResponse<SystemOauthTokenResponse> = self.client
-            .request(request, None, None, None)
-            .await?;
+        let response: AlipayResponse<SystemOauthTokenResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }
@@ -88,9 +87,8 @@ impl <'a> AlipayOpenService<'a> {
         }
         request.set_biz_model(biz_content);
         request.set_method(AlipayMethod::OpenAuthTokenApp);
-        let response: AlipayResponse<OpenAuthTokenAppResponse> = self.client
-            .request(request, None, None, None)
-            .await?;
+        let response: AlipayResponse<OpenAuthTokenAppResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }
@@ -106,13 +104,9 @@ impl <'a> AlipayOpenService<'a> {
         biz_content.insert("auth_token".to_string(), auth_token.to_string());
         request.set_biz_model(biz_content);
         request.set_method(AlipayMethod::Custom("alipay.user.info.share".to_string()));
-        let response: AlipayResponse<UserInfoShareResponse> = self.client
-            .request(
-                request,
-                Some(auth_token),
-                None,
-                None,
-            )
+        let response: AlipayResponse<UserInfoShareResponse> = self
+            .client
+            .request(request, Some(auth_token), None, None)
             .await?;
 
         response.into_result()
@@ -127,15 +121,11 @@ impl <'a> AlipayOpenService<'a> {
         let mut biz_content = BTreeMap::new();
         biz_content.insert("app_auth_token".to_string(), app_auth_token);
         request.set_biz_model(biz_content);
-        request.set_method(AlipayMethod::Custom("alipay.open.auth.token.app.query".to_string()));
-        let response: AlipayResponse<OpenAuthTokenAppQueryResponse> = self.client
-            .request(
-                request,
-                None,
-                None,
-                None,
-            )
-            .await?;
+        request.set_method(AlipayMethod::Custom(
+            "alipay.open.auth.token.app.query".to_string(),
+        ));
+        let response: AlipayResponse<OpenAuthTokenAppQueryResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }
@@ -153,15 +143,11 @@ impl <'a> AlipayOpenService<'a> {
         let scopes_json = serde_json::to_string(&scopes).unwrap_or_default();
         biz_content.insert("scopes".to_string(), scopes_json);
         request.set_biz_model(biz_content);
-        request.set_method(AlipayMethod::Custom("alipay.open.auth.appauth.query".to_string()));
-        let response: AlipayResponse<OpenAuthAppAuthQueryResponse> = self.client
-            .request(
-                request,
-                None,
-                None,
-                None,
-            )
-            .await?;
+        request.set_method(AlipayMethod::Custom(
+            "alipay.open.auth.appauth.query".to_string(),
+        ));
+        let response: AlipayResponse<OpenAuthAppAuthQueryResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }
@@ -175,15 +161,11 @@ impl <'a> AlipayOpenService<'a> {
         let mut biz_content = BTreeMap::new();
         biz_content.insert("app_auth_token".to_string(), app_auth_token);
         request.set_biz_model(biz_content);
-        request.set_method(AlipayMethod::Custom("alipay.open.auth.appauth.cancel".to_string()));
-        let response: AlipayResponse<OpenAuthAppAuthCancelResponse> = self.client
-            .request(
-                request,
-                None,
-                None,
-                None,
-            )
-            .await?;
+        request.set_method(AlipayMethod::Custom(
+            "alipay.open.auth.appauth.cancel".to_string(),
+        ));
+        let response: AlipayResponse<OpenAuthAppAuthCancelResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }

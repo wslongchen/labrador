@@ -19,13 +19,13 @@
  *
  */
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use crate::errors::LabradorResult;
-use crate::HashAlgorithm;
 use crate::wechat::client::WechatApiResponse;
 use crate::wechat::mp::WechatMpClient;
+use crate::HashAlgorithm;
 
 /// 客服接口.
 #[derive(Debug, Clone)]
@@ -35,12 +35,9 @@ pub struct WechatMpCustomService<'a> {
 
 #[allow(unused)]
 impl<'a> WechatMpCustomService<'a> {
-
     #[inline]
     pub fn new(client: &'a WechatMpClient) -> WechatMpCustomService<'a> {
-        WechatMpCustomService {
-            client,
-        }
+        WechatMpCustomService { client }
     }
 
     /// <pre>
@@ -48,31 +45,58 @@ impl<'a> WechatMpCustomService<'a> {
     /// 详情请见: <a href="https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Service_Center_messages.html">发送客服消息</a>
     /// 接口url格式：https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token=ACCESS_TOKEN
     /// </pre>
-    pub async fn send_custom_message(&self, request: &CustomMessageRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
-            .post("/cgi-bin/message/custom/send", serde_json::to_value(request).unwrap())
+    pub async fn send_custom_message(
+        &self,
+        request: &CustomMessageRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
+            .post(
+                "/cgi-bin/message/custom/send",
+                serde_json::to_value(request).unwrap(),
+            )
             .await?;
         Ok(response)
     }
 
-
     /// 客服接口 - 发送文字消息
-    pub async fn send_text(&self, openid: &str, content: &str) -> LabradorResult<WechatApiResponse> {
-        self.send_custom_message(&CustomMessageRequest::Text(TextMessage::new(openid, content))).await
+    pub async fn send_text(
+        &self,
+        openid: &str,
+        content: &str,
+    ) -> LabradorResult<WechatApiResponse> {
+        self.send_custom_message(&CustomMessageRequest::Text(TextMessage::new(
+            openid, content,
+        )))
+        .await
     }
 
     /// 客服接口 - 发送图片消息
-    pub async fn send_image(&self, openid: &str, media_id: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn send_image(
+        &self,
+        openid: &str,
+        media_id: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let req = SendImageRequest::new(openid, media_id);
-        self.send_custom_message(&CustomMessageRequest::Image(ImageMessage::new(openid, media_id))).await
+        self.send_custom_message(&CustomMessageRequest::Image(ImageMessage::new(
+            openid, media_id,
+        )))
+        .await
     }
 
     /// 客服接口 - 发送声音消息
-    pub async fn send_voice(&self, openid: &str, media_id: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn send_voice(
+        &self,
+        openid: &str,
+        media_id: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let req = SendVoiceRequest::new(openid, media_id);
-        self.send_custom_message(&CustomMessageRequest::Voice(VoiceMessage::new(openid, media_id))).await
+        self.send_custom_message(&CustomMessageRequest::Voice(VoiceMessage::new(
+            openid, media_id,
+        )))
+        .await
     }
-
 
     //*******************客服管理接口***********************//
 
@@ -81,14 +105,21 @@ impl<'a> WechatMpCustomService<'a> {
     /// 详情请见：<a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1458044813&token=&lang=zh_CN">客服管理</a>
     /// 接口url格式：https://api.weixin.qq.com/customservice/kfaccount/add?access_token=ACCESS_TOKEN
     /// </pre>
-    pub async fn add_account(&self, account: &str, nickname: &str, password: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn add_account(
+        &self,
+        account: &str,
+        nickname: &str,
+        password: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let encrypted_password = HashAlgorithm::Md5.hash_hex(password.as_bytes());
         let data = json!({
             "kf_account": account.to_owned(),
             "nickname": nickname.to_owned(),
             "password": encrypted_password
         });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/customservice/kfaccount/add", data)
             .await?;
         Ok(response)
@@ -99,14 +130,21 @@ impl<'a> WechatMpCustomService<'a> {
     /// 详情请见：<a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1458044813&token=&lang=zh_CN">客服管理</a>
     /// 接口url格式：https://api.weixin.qq.com/customservice/kfaccount/update?access_token=ACCESS_TOKEN
     /// </pre>
-    pub async fn update_account(&self, account: &str, nickname: &str, password: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn update_account(
+        &self,
+        account: &str,
+        nickname: &str,
+        password: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let encrypted_password = HashAlgorithm::Md5.hash_hex(password.as_bytes());
         let data = json!({
             "kf_account": account.to_owned(),
             "nickname": nickname.to_owned(),
             "password": encrypted_password
         });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/customservice/kfaccount/update", data)
             .await?;
         Ok(response)
@@ -118,8 +156,13 @@ impl<'a> WechatMpCustomService<'a> {
     /// 接口url格式：https://api.weixin.qq.com/customservice/kfaccount/del?access_token=ACCESS_TOKEN&kf_account=KFACCOUNT
     /// </pre>
     pub async fn delete_account(&self, account: &str) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
-            .get(&format!("/customservice/kfaccount/del?kf_account={}", account))
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
+            .get(&format!(
+                "/customservice/kfaccount/del?kf_account={}",
+                account
+            ))
             .await?;
         Ok(response)
     }
@@ -131,7 +174,9 @@ impl<'a> WechatMpCustomService<'a> {
     /// 接口url格式：https://api.weixin.qq.com/cgi-bin/customservice/getkflist?access_token=ACCESS_TOKEN
     /// </pre>
     pub async fn get_accounts(&self) -> LabradorResult<Vec<KFAccount>> {
-        let response: WechatApiResponse<GetKFListResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<GetKFListResponse> = self
+            .client
+            .wechat_client()
             .get("/cgi-bin/customservice/getkflist")
             .await?;
         let data = response.into_result()?;
@@ -144,7 +189,9 @@ impl<'a> WechatMpCustomService<'a> {
     /// 接口url格式：https://api.weixin.qq.com/cgi-bin/customservice/getonlinekflist?access_token=ACCESS_TOKEN
     /// </pre>
     pub async fn get_online_accounts(&self) -> LabradorResult<Vec<OnlineKFAccount>> {
-        let response: WechatApiResponse<GetKFOnlineListResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<GetKFOnlineListResponse> = self
+            .client
+            .wechat_client()
             .get("/cgi-bin/customservice/getonlinekflist")
             .await?;
         let data = response.into_result()?;
@@ -223,9 +270,12 @@ impl SendVoiceRequest {
             }
         });
         if let Some(ref account) = self.account {
-            data.as_object_mut().unwrap().insert("customservice".to_string(), json!({
-                "kf_account": account
-            }));
+            data.as_object_mut().unwrap().insert(
+                "customservice".to_string(),
+                json!({
+                    "kf_account": account
+                }),
+            );
         }
         data
     }
@@ -265,9 +315,12 @@ impl SendImageRequest {
             }
         });
         if let Some(ref account) = self.account {
-            data.as_object_mut().unwrap().insert("customservice".to_string(), json!({
-                "kf_account": account
-            }));
+            data.as_object_mut().unwrap().insert(
+                "customservice".to_string(),
+                json!({
+                    "kf_account": account
+                }),
+            );
         }
         data
     }
@@ -307,15 +360,16 @@ impl SendTextRequest {
             }
         });
         if let Some(ref account) = self.account {
-            data.as_object_mut().unwrap().insert("customservice".to_string(), json!({
-                "kf_account": account
-            }));
+            data.as_object_mut().unwrap().insert(
+                "customservice".to_string(),
+                json!({
+                    "kf_account": account
+                }),
+            );
         }
         data
     }
 }
-
-
 
 /// 客服消息请求
 #[derive(Debug, Clone, Serialize)]
@@ -340,7 +394,6 @@ pub enum CustomMessageRequest {
     /// 小程序卡片消息
     Miniprogrampage(MiniProgramPageMessage),
 }
-
 
 /// 客服消息类型
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -642,7 +695,12 @@ pub struct MsgMenuItem {
 
 impl MsgMenuMessage {
     /// 创建新的菜单消息
-    pub fn new(touser: &str, head_content: &str, list: Vec<MsgMenuItem>, tail_content: &str) -> Self {
+    pub fn new(
+        touser: &str,
+        head_content: &str,
+        list: Vec<MsgMenuItem>,
+        tail_content: &str,
+    ) -> Self {
         Self {
             touser: touser.to_string(),
             msgtype: CustomMessageType::Msgmenu,
@@ -722,7 +780,13 @@ pub struct MiniProgramPageContent {
 
 impl MiniProgramPageMessage {
     /// 创建新的小程序卡片消息
-    pub fn new(touser: &str, title: &str, appid: &str, pagepath: &str, thumb_media_id: &str) -> Self {
+    pub fn new(
+        touser: &str,
+        title: &str,
+        appid: &str,
+        pagepath: &str,
+        thumb_media_id: &str,
+    ) -> Self {
         Self {
             touser: touser.to_string(),
             msgtype: CustomMessageType::Miniprogrampage,

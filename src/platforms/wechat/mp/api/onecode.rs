@@ -19,9 +19,9 @@
  *
  */
 
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use base64::{Engine as _, engine::general_purpose::STANDARD};
 
 use crate::errors::{LabraError, LabradorResult};
 use crate::wechat::client::WechatApiResponse;
@@ -45,8 +45,13 @@ impl<'a> WechatMpOneCode<'a> {
     /// 申请二维码
     ///
     /// 用于申请生成一批二维码。
-    pub async fn apply_code(&self, request: &ApplyCodeRequest) -> LabradorResult<ApplyCodeResponse> {
-        let response: WechatApiResponse<ApplyCodeResponse> = self.client.wechat_client()
+    pub async fn apply_code(
+        &self,
+        request: &ApplyCodeRequest,
+    ) -> LabradorResult<ApplyCodeResponse> {
+        let response: WechatApiResponse<ApplyCodeResponse> = self
+            .client
+            .wechat_client()
             .post("/intp/marketcode/applycode", request)
             .await?;
         response.into_result()
@@ -55,7 +60,11 @@ impl<'a> WechatMpOneCode<'a> {
     /// 查询二维码申请单
     ///
     /// 查询二维码申请单状态及详细信息。
-    pub async fn query_apply(&self, application_id: Option<u64>, isv_application_id: Option<&str>) -> LabradorResult<ApplyQueryResponse> {
+    pub async fn query_apply(
+        &self,
+        application_id: Option<u64>,
+        isv_application_id: Option<&str>,
+    ) -> LabradorResult<ApplyQueryResponse> {
         let mut request = serde_json::Map::new();
         if let Some(id) = application_id {
             request.insert("application_id".to_string(), json!(id));
@@ -63,7 +72,9 @@ impl<'a> WechatMpOneCode<'a> {
         if let Some(isv_id) = isv_application_id {
             request.insert("isv_application_id".to_string(), json!(isv_id));
         }
-        let response: WechatApiResponse<ApplyQueryResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<ApplyQueryResponse> = self
+            .client
+            .wechat_client()
             .post("/intp/marketcode/applycodequery", Value::Object(request))
             .await?;
         response.into_result()
@@ -72,18 +83,26 @@ impl<'a> WechatMpOneCode<'a> {
     /// 下载二维码包
     ///
     /// 下载生成的二维码数据包。需先对返回的buffer做base64解码，再按文档解密。
-    pub async fn download_code_package(&self, application_id: u64, code_start: u64, code_end: u64) -> LabradorResult<Vec<u8>> {
+    pub async fn download_code_package(
+        &self,
+        application_id: u64,
+        code_start: u64,
+        code_end: u64,
+    ) -> LabradorResult<Vec<u8>> {
         let request = json!({
             "application_id": application_id,
             "code_start": code_start,
             "code_end": code_end,
         });
-        let response: WechatApiResponse<DownloadCodeResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<DownloadCodeResponse> = self
+            .client
+            .wechat_client()
             .post("/intp/marketcode/applycodedownload", request)
             .await?;
         let data = response.into_result()?;
         // base64解码
-        let decoded = STANDARD.decode(data.buffer)
+        let decoded = STANDARD
+            .decode(data.buffer)
             .map_err(|e| LabraError::Crypto(format!("base64解码失败: {}", e)))?;
         Ok(decoded)
     }
@@ -91,8 +110,13 @@ impl<'a> WechatMpOneCode<'a> {
     /// 激活二维码
     ///
     /// 激活指定范围的二维码用于实际营销活动。
-    pub async fn activate_code(&self, request: &ActivateCodeRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+    pub async fn activate_code(
+        &self,
+        request: &ActivateCodeRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/intp/marketcode/codeactive", request)
             .await?;
         Ok(response)
@@ -101,13 +125,20 @@ impl<'a> WechatMpOneCode<'a> {
     /// 查询二维码激活状态
     ///
     /// 查询指定范围的二维码的激活状态。
-    pub async fn query_activate_status(&self, application_id: u64, code_start: u64, code_end: u64) -> LabradorResult<Vec<CodeActivateStatus>> {
+    pub async fn query_activate_status(
+        &self,
+        application_id: u64,
+        code_start: u64,
+        code_end: u64,
+    ) -> LabradorResult<Vec<CodeActivateStatus>> {
         let request = json!({
             "application_id": application_id,
             "code_start": code_start,
             "code_end": code_end,
         });
-        let response: WechatApiResponse<QueryActivateResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<QueryActivateResponse> = self
+            .client
+            .wechat_client()
             .post("/intp/marketcode/codeactivequery", request)
             .await?;
         Ok(response.into_result()?.code_list)
@@ -118,7 +149,9 @@ impl<'a> WechatMpOneCode<'a> {
     /// 将用户扫码后获得的ticket转换为对应的code。
     pub async fn ticket_to_code(&self, ticket: &str) -> LabradorResult<String> {
         let request = json!({ "ticket": ticket });
-        let response: WechatApiResponse<TicketToCodeResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<TicketToCodeResponse> = self
+            .client
+            .wechat_client()
             .post("/intp/marketcode/tickettocode", request)
             .await?;
         Ok(response.into_result()?.code)

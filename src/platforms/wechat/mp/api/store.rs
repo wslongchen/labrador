@@ -16,11 +16,11 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 use serde::{Deserialize, Serialize};
-use serde_json::{json};
+use serde_json::json;
 
 use crate::errors::LabradorResult;
 use crate::wechat::client::WechatApiResponse;
@@ -43,7 +43,9 @@ impl<'a> WechatMpStore<'a> {
     ///
     /// 本接口用于获取门店小程序可选的类目列表。
     pub async fn get_cate_list(&self) -> LabradorResult<Vec<StoreCategory>> {
-        let response: WechatApiResponse<GetCateListResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<GetCateListResponse> = self
+            .client
+            .wechat_client()
             .get("/wxa/get_store_category")
             .await?;
         Ok(response.into_result()?.data)
@@ -52,8 +54,13 @@ impl<'a> WechatMpStore<'a> {
     /// 申请门店小程序
     ///
     /// 本接口用于申请开通门店小程序。
-    pub async fn apply_store(&self, request: &ApplyStoreRequest) -> LabradorResult<ApplyStoreResponse> {
-        let response: WechatApiResponse<ApplyStoreResponse> = self.client.wechat_client()
+    pub async fn apply_store(
+        &self,
+        request: &ApplyStoreRequest,
+    ) -> LabradorResult<ApplyStoreResponse> {
+        let response: WechatApiResponse<ApplyStoreResponse> = self
+            .client
+            .wechat_client()
             .post("/wxa/apply_store_wxa", request)
             .await?;
         response.into_result()
@@ -64,7 +71,9 @@ impl<'a> WechatMpStore<'a> {
     /// 本接口用于查询门店小程序的审核结果。
     pub async fn get_audit_info(&self, apply_id: i64) -> LabradorResult<AuditInfo> {
         let request = json!({ "apply_id": apply_id });
-        let response: WechatApiResponse<AuditInfo> = self.client.wechat_client()
+        let response: WechatApiResponse<AuditInfo> = self
+            .client
+            .wechat_client()
             .post("/wxa/get_merchant_audit_info", request)
             .await?;
         response.into_result()
@@ -73,8 +82,13 @@ impl<'a> WechatMpStore<'a> {
     /// 修改门店小程序信息
     ///
     /// 本接口用于修改门店小程序信息。
-    pub async fn modify_store(&self, request: &ModifyStoreRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+    pub async fn modify_store(
+        &self,
+        request: &ModifyStoreRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/wxa/modify_merchant", request)
             .await?;
         Ok(response)
@@ -84,17 +98,21 @@ impl<'a> WechatMpStore<'a> {
     ///
     /// 本接口用于获取腾讯地图的省市区列表。
     pub async fn get_district_list(&self) -> LabradorResult<Vec<DistrictInfo>> {
-        let response: WechatApiResponse<GetDistrictListResponse> = self.client.wechat_client()
-            .get("/wxa/get_district")
-            .await?;
+        let response: WechatApiResponse<GetDistrictListResponse> =
+            self.client.wechat_client().get("/wxa/get_district").await?;
         Ok(response.into_result()?.data)
     }
 
     /// 搜索周边门店
     ///
     /// 本接口用于搜索周边门店。
-    pub async fn poi_list_search(&self, request: &PoiSearchRequest) -> LabradorResult<PoiSearchResponse> {
-        let response: WechatApiResponse<PoiSearchResponse> = self.client.wechat_client()
+    pub async fn poi_list_search(
+        &self,
+        request: &PoiSearchRequest,
+    ) -> LabradorResult<PoiSearchResponse> {
+        let response: WechatApiResponse<PoiSearchResponse> = self
+            .client
+            .wechat_client()
             .post("/wxa/search_map_poi", request)
             .await?;
         response.into_result()
@@ -103,8 +121,13 @@ impl<'a> WechatMpStore<'a> {
     /// 添加门店
     ///
     /// 本接口用于添加门店（包括门店小程序的门店）。
-    pub async fn add_entity_shop(&self, request: &AddEntityShopRequest) -> LabradorResult<AddEntityShopResponse> {
-        let response: WechatApiResponse<AddEntityShopResponse> = self.client.wechat_client()
+    pub async fn add_entity_shop(
+        &self,
+        request: &AddEntityShopRequest,
+    ) -> LabradorResult<AddEntityShopResponse> {
+        let response: WechatApiResponse<AddEntityShopResponse> = self
+            .client
+            .wechat_client()
             .post("/wxa/add_store_entity", request)
             .await?;
         response.into_result()
@@ -115,7 +138,9 @@ impl<'a> WechatMpStore<'a> {
     /// 本接口用于获取单个门店的详细信息。
     pub async fn get_poi(&self, poi_id: &str) -> LabradorResult<StoreInfo> {
         let request = json!({ "poi_id": poi_id });
-        let response: WechatApiResponse<StoreInfo> = self.client.wechat_client()
+        let response: WechatApiResponse<StoreInfo> = self
+            .client
+            .wechat_client()
             .post("/wxa/get_store_info", request)
             .await?;
         response.into_result()
@@ -129,7 +154,9 @@ impl<'a> WechatMpStore<'a> {
             "offset": offset,
             "limit": limit
         });
-        let response: WechatApiResponse<StoreListResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<StoreListResponse> = self
+            .client
+            .wechat_client()
             .post("/wxa/get_store_list", request)
             .await?;
         response.into_result()
@@ -140,7 +167,9 @@ impl<'a> WechatMpStore<'a> {
     /// 本接口用于删除门店。
     pub async fn delete_poi(&self, poi_id: &str) -> LabradorResult<WechatApiResponse> {
         let request = json!({ "poi_id": poi_id });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/wxa/del_store", request)
             .await?;
         Ok(response)
@@ -149,8 +178,13 @@ impl<'a> WechatMpStore<'a> {
     /// 更新门店信息
     ///
     /// 本接口用于更新门店信息。
-    pub async fn update_poi(&self, request: &UpdateStoreRequest) -> LabradorResult<UpdateStoreResponse> {
-        let response: WechatApiResponse<UpdateStoreResponse> = self.client.wechat_client()
+    pub async fn update_poi(
+        &self,
+        request: &UpdateStoreRequest,
+    ) -> LabradorResult<UpdateStoreResponse> {
+        let response: WechatApiResponse<UpdateStoreResponse> = self
+            .client
+            .wechat_client()
             .post("/wxa/update_store", request)
             .await?;
         response.into_result()
@@ -159,8 +193,13 @@ impl<'a> WechatMpStore<'a> {
     /// 在地图中创建门店
     ///
     /// 本接口用于在腾讯地图中创建门店。
-    pub async fn create_map_poi(&self, request: &CreateMapPoiRequest) -> LabradorResult<CreateMapPoiResponse> {
-        let response: WechatApiResponse<CreateMapPoiResponse> = self.client.wechat_client()
+    pub async fn create_map_poi(
+        &self,
+        request: &CreateMapPoiRequest,
+    ) -> LabradorResult<CreateMapPoiResponse> {
+        let response: WechatApiResponse<CreateMapPoiResponse> = self
+            .client
+            .wechat_client()
             .post("/wxa/create_map_poi", request)
             .await?;
         response.into_result()

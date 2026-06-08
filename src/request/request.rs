@@ -20,12 +20,12 @@
  */
 //! HTTP请求实现
 
+use super::{HttpMethod, RequestBody};
+use crate::errors::{LabraError, LabradorResult};
+use http::{header, HeaderMap, HeaderValue};
 use std::convert::TryFrom;
 use std::fmt;
 use std::fmt::Formatter;
-use http::{header, HeaderMap, HeaderValue};
-use crate::errors::{LabraError, LabradorResult};
-use super::{HttpMethod, RequestBody};
 
 /// HTTP请求
 #[derive(Clone)]
@@ -84,7 +84,7 @@ impl Request {
     pub fn body(&self) -> &RequestBody {
         &self.body
     }
-    
+
     /// 获取可变请求体
     pub fn body_mut(&mut self) -> &mut RequestBody {
         &mut self.body

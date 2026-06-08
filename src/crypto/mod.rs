@@ -25,21 +25,20 @@ use thiserror::Error;
 
 // cfg_if! {
 //     if #[cfg(feature = "openssl-crypto")] {
-        /// OpenSSL后端实现
-        #[allow(unused)]
-        mod openssl_iml;
+/// OpenSSL后端实现
+#[allow(unused)]
+mod openssl_iml;
 // use openssl_iml as crypto;
 pub use openssl_iml::OpenSslCrypto;
 // } else {
-        /// 纯Rust后端实现（使用ring、aes等）
-        #[allow(unused)]
-        mod rust_impl;
+/// 纯Rust后端实现（使用ring、aes等）
+#[allow(unused)]
+mod rust_impl;
 use crate::crypto::crypto::extract_der_from_pem;
 use rust_impl as crypto;
 pub use rust_impl::RustCrypto;
 // }
 // }
-
 
 /// 加密
 pub trait Crypto: Send + Sync {
@@ -50,22 +49,51 @@ pub trait Crypto: Send + Sync {
     fn hmac(&self, algorithm: HmacAlgorithm, key: &[u8], data: &[u8]) -> LabradorResult<Vec<u8>>;
 
     /// AES加密
-    fn aes_encrypt(&self, mode: AesMode, key: &[u8], iv: &[u8], plaintext: &[u8]) -> LabradorResult<Vec<u8>>;
+    fn aes_encrypt(
+        &self,
+        mode: AesMode,
+        key: &[u8],
+        iv: &[u8],
+        plaintext: &[u8],
+    ) -> LabradorResult<Vec<u8>>;
 
     /// AES解密
-    fn aes_decrypt(&self, mode: AesMode, key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>>;
+    fn aes_decrypt(
+        &self,
+        mode: AesMode,
+        key: &[u8],
+        iv: &[u8],
+        ciphertext: &[u8],
+    ) -> LabradorResult<Vec<u8>>;
 
     /// RSA签名
-    fn rsa_sign(&self, private_key: &[u8], data: &[u8], hash_type: HashType) -> LabradorResult<Vec<u8>>;
+    fn rsa_sign(
+        &self,
+        private_key: &[u8],
+        data: &[u8],
+        hash_type: HashType,
+    ) -> LabradorResult<Vec<u8>>;
 
     /// RSA验证
-    fn rsa_verify(&self, public_key: &[u8], data: &[u8], signature: &[u8], hash_type: HashType) -> LabradorResult<bool>;
+    fn rsa_verify(
+        &self,
+        public_key: &[u8],
+        data: &[u8],
+        signature: &[u8],
+        hash_type: HashType,
+    ) -> LabradorResult<bool>;
 
     /// 生成随机字节
     fn random_bytes(&self, len: usize) -> LabradorResult<Vec<u8>>;
 
     /// PBKDF2密钥派生
-    fn pbkdf2(&self, password: &[u8], salt: &[u8], iterations: u32, key_len: usize) -> LabradorResult<Vec<u8>>;
+    fn pbkdf2(
+        &self,
+        password: &[u8],
+        salt: &[u8],
+        iterations: u32,
+        key_len: usize,
+    ) -> LabradorResult<Vec<u8>>;
 }
 
 /// 哈希算法
@@ -86,7 +114,7 @@ pub enum HashAlgorithm {
 #[allow(unused)]
 pub enum HashType {
     Sha1,
-    Sha256
+    Sha256,
 }
 
 impl fmt::Display for HashAlgorithm {
@@ -205,7 +233,8 @@ impl AesEncryptor {
                     return Err(CryptoError::Key(format!(
                         "无效的AES密钥长度: {} (必须是16, 24或32字节)",
                         key_len
-                    )).into());
+                    ))
+                    .into());
                 }
             }
             AesMode::Gcm => {
@@ -213,7 +242,8 @@ impl AesEncryptor {
                     return Err(CryptoError::Key(format!(
                         "无效的AES-GCM密钥长度: {} (必须是16或32字节)",
                         key_len
-                    )).into());
+                    ))
+                    .into());
                 }
             }
         }
@@ -243,7 +273,8 @@ impl AesEncryptor {
                     return Err(CryptoError::Key(format!(
                         "无效的IV长度: {} (必须是16字节)",
                         iv.len()
-                    )).into());
+                    ))
+                    .into());
                 }
             }
         }
@@ -264,12 +295,23 @@ impl AesEncryptor {
     pub fn decrypt(&self, ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
         crypto::aes_decrypt(self.mode, &self.key, &self.iv, ciphertext)
     }
-    
-    pub fn gcm_decrypt(&self, nonce: &[u8], associated_data: &[u8], ciphertext: &[u8], tag: &[u8]) -> LabradorResult<Vec<u8>> {
+
+    pub fn gcm_decrypt(
+        &self,
+        nonce: &[u8],
+        associated_data: &[u8],
+        ciphertext: &[u8],
+        tag: &[u8],
+    ) -> LabradorResult<Vec<u8>> {
         crypto::aes_gcm_decrypt(&self.key, nonce, associated_data, ciphertext, tag)
     }
-    
-    pub fn gcm_encrypt(&self, nonce: &[u8], associated_data: &[u8], plaintext: &[u8]) -> LabradorResult<Vec<u8>> {
+
+    pub fn gcm_encrypt(
+        &self,
+        nonce: &[u8],
+        associated_data: &[u8],
+        plaintext: &[u8],
+    ) -> LabradorResult<Vec<u8>> {
         crypto::aes_gcm_encrypt(&self.key, nonce, associated_data, plaintext)
     }
 }
@@ -363,11 +405,15 @@ impl RsaEncryptor {
     }
 
     /// 验证签名
-    pub fn verify(&self, data: &[u8], signature: &[u8], hash_type: HashType) -> LabradorResult<bool> {
+    pub fn verify(
+        &self,
+        data: &[u8],
+        signature: &[u8],
+        hash_type: HashType,
+    ) -> LabradorResult<bool> {
         crypto::rsa_verify(&self.public_key, data, signature, hash_type)
     }
 }
-
 
 /// 统一的加密工具
 pub struct CryptoUtils;
@@ -499,7 +545,6 @@ impl CryptoUtils {
     }
 }
 
-
 /// 向后兼容的PrpCrypto结构
 #[derive(Debug, Clone)]
 pub struct PrpCrypto {
@@ -512,14 +557,22 @@ impl PrpCrypto {
     }
 
     /// # 加密消息(aes_128_cbc)
-    pub fn aes_128_cbc_encrypt_data(&self, plaintext: &str, iv_data: Option<Vec<u8>>) -> LabradorResult<Vec<u8>> {
+    pub fn aes_128_cbc_encrypt_data(
+        &self,
+        plaintext: &str,
+        iv_data: Option<Vec<u8>>,
+    ) -> LabradorResult<Vec<u8>> {
         let iv = iv_data.unwrap_or_else(|| self.key[..16].to_vec());
         let encryptor = AesEncryptor::new(AesMode::Cbc, &self.key, &iv)?;
         encryptor.encrypt(plaintext.as_bytes())
     }
 
     /// # 解密消息(aes_128_cbc)
-    pub fn aes_128_cbc_decrypt_data(&self, ciphertext: Vec<u8>, iv_data: Option<Vec<u8>>) -> LabradorResult<Vec<u8>> {
+    pub fn aes_128_cbc_decrypt_data(
+        &self,
+        ciphertext: Vec<u8>,
+        iv_data: Option<Vec<u8>>,
+    ) -> LabradorResult<Vec<u8>> {
         let iv = iv_data.unwrap_or_else(|| self.key[..16].to_vec());
         let encryptor = AesEncryptor::new(AesMode::Cbc, &self.key, &iv)?;
         encryptor.decrypt(&ciphertext)
@@ -559,7 +612,11 @@ impl PrpCrypto {
         encryptor.verify(content.as_bytes(), &signature, HashType::Sha256)
     }
 
-    pub fn rsa_sha256_verify_with_pem(public_key: &str, content: &str, sign: &str) -> LabradorResult<bool> {
+    pub fn rsa_sha256_verify_with_pem(
+        public_key: &str,
+        content: &str,
+        sign: &str,
+    ) -> LabradorResult<bool> {
         let signature = CryptoUtils::base64_decode(sign)?;
         let encryptor = RsaEncryptor::with_public_key(public_key.as_bytes(), RsaKeyFormat::Pem);
         encryptor.verify(content.as_bytes(), &signature, HashType::Sha256)
@@ -583,13 +640,24 @@ impl PrpCrypto {
     }
 
     /// # 加密(aes_256_gcm)
-    pub fn aes_256_gcm_encrypt(&self, associated_data: &[u8], nonce: &[u8], plain_text: &[u8]) -> LabradorResult<Vec<u8>> {
+    pub fn aes_256_gcm_encrypt(
+        &self,
+        associated_data: &[u8],
+        nonce: &[u8],
+        plain_text: &[u8],
+    ) -> LabradorResult<Vec<u8>> {
         // GCM模式在backend中统一处理
         crypto::aes_gcm_encrypt(&self.key, nonce, associated_data, plain_text)
     }
 
     /// # 解密(aes_256_gcm)
-    pub fn aes_256_gcm_decrypt(&self, associated_data: &[u8], nonce: &[u8], ciphertext: &[u8], tag: &[u8]) -> LabradorResult<Vec<u8>> {
+    pub fn aes_256_gcm_decrypt(
+        &self,
+        associated_data: &[u8],
+        nonce: &[u8],
+        ciphertext: &[u8],
+        tag: &[u8],
+    ) -> LabradorResult<Vec<u8>> {
         crypto::aes_gcm_decrypt(&self.key, nonce, associated_data, ciphertext, tag)
     }
 
@@ -606,7 +674,8 @@ impl PrpCrypto {
         let iv = vec![0u8; 16]; // 占位
         let encryptor = AesEncryptor::new(AesMode::Ecb, &self.key, &iv)?;
         let decrypted = encryptor.decrypt(data)?;
-        String::from_utf8(decrypted).map_err(|e| CryptoError::Decryption(format!("UTF-8解码失败: {}", e)).into())
+        String::from_utf8(decrypted)
+            .map_err(|e| CryptoError::Decryption(format!("UTF-8解码失败: {}", e)).into())
     }
 
     /// # 加密(aes_128_cfb)
@@ -627,10 +696,10 @@ impl PrpCrypto {
         let iv = &self.key; // CFB模式通常使用key作为IV
         let encryptor = AesEncryptor::new(AesMode::Cfb, &self.key, iv)?;
         let decrypted = encryptor.decrypt(data)?;
-        String::from_utf8(decrypted).map_err(|e| CryptoError::Decryption(format!("UTF-8解码失败: {}", e)).into())
+        String::from_utf8(decrypted)
+            .map_err(|e| CryptoError::Decryption(format!("UTF-8解码失败: {}", e)).into())
     }
 }
-
 
 // 定义错误类型
 #[derive(Error, Debug)]

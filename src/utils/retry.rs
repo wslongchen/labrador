@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 use std::time::Duration;
@@ -50,9 +50,7 @@ where
                 time::sleep(delay).await;
 
                 // 增加延迟时间（指数退避）
-                delay = Duration::from_millis(
-                    (delay.as_millis() as f32 * backoff_factor) as u64
-                );
+                delay = Duration::from_millis((delay.as_millis() as f32 * backoff_factor) as u64);
             }
         }
     }

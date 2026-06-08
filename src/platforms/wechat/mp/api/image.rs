@@ -16,15 +16,15 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
-use serde::Deserialize;
 use crate::errors::LabradorResult;
 use crate::request::RequestBody;
 use crate::utils::file::read_file_with_name;
 use crate::wechat::client::WechatApiResponse;
 use crate::wechat::mp::api::Coordinate;
 use crate::wechat::mp::WechatMpClient;
+use serde::Deserialize;
 
 /// 图像处理模块
 #[derive(Debug, Clone)]
@@ -45,27 +45,38 @@ impl<'a> WechatMpImage<'a> {
     /// # 参数说明
     /// * `img_url` - 图片URL
     /// * `ratio` - 裁剪比例，可选值：1:1, 3:4, 4:3, 16:9, 9:16
-    pub async fn img_aicrop(&self, img_url: &str, ratio: Option<&str>) -> LabradorResult<AiCropResponse> {
+    pub async fn img_aicrop(
+        &self,
+        img_url: &str,
+        ratio: Option<&str>,
+    ) -> LabradorResult<AiCropResponse> {
         let mut url = format!("/cv/img/aicrop?img_url={}", img_url);
         if let Some(r) = ratio {
             url.push_str(&format!("&ratio={}", r));
         }
-        let response: WechatApiResponse<AiCropResponse> = self.client.wechat_client()
-            .get(&url)
-            .await?;
+        let response: WechatApiResponse<AiCropResponse> =
+            self.client.wechat_client().get(&url).await?;
         response.into_result()
     }
 
     /// 图片智能裁剪（通过文件上传）
-    pub async fn img_aicrop_file(&self, file_path: &str, ratio: Option<&str>) -> LabradorResult<AiCropResponse> {
+    pub async fn img_aicrop_file(
+        &self,
+        file_path: &str,
+        ratio: Option<&str>,
+    ) -> LabradorResult<AiCropResponse> {
         let (file_name, content) = read_file_with_name(file_path)?;
         let mut url = "/cv/img/aicrop".to_string();
         if let Some(r) = ratio {
             url.push_str(&format!("?ratio={}", r));
         }
-        let form = reqwest::multipart::Form::new()
-            .part("img", reqwest::multipart::Part::bytes(content).file_name(file_name));
-        let response: WechatApiResponse<AiCropResponse> = self.client.wechat_client()
+        let form = reqwest::multipart::Form::new().part(
+            "img",
+            reqwest::multipart::Part::bytes(content).file_name(file_name),
+        );
+        let response: WechatApiResponse<AiCropResponse> = self
+            .client
+            .wechat_client()
             .post(&url, RequestBody::Multipart(form))
             .await?;
         response.into_result()
@@ -75,7 +86,9 @@ impl<'a> WechatMpImage<'a> {
     ///
     /// 识别图片中的二维码、条码、DataMatrix和PDF417。
     pub async fn img_qrcode(&self, img_url: &str) -> LabradorResult<QrCodeResponse> {
-        let response: WechatApiResponse<QrCodeResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<QrCodeResponse> = self
+            .client
+            .wechat_client()
             .get(&format!("/cv/img/qrcode?img_url={}", img_url))
             .await?;
         response.into_result()
@@ -84,9 +97,13 @@ impl<'a> WechatMpImage<'a> {
     /// 二维码/条码识别（通过文件上传）
     pub async fn img_qrcode_file(&self, file_path: &str) -> LabradorResult<QrCodeResponse> {
         let (file_name, content) = read_file_with_name(file_path)?;
-        let form = reqwest::multipart::Form::new()
-            .part("img", reqwest::multipart::Part::bytes(content).file_name(file_name));
-        let response: WechatApiResponse<QrCodeResponse> = self.client.wechat_client()
+        let form = reqwest::multipart::Form::new().part(
+            "img",
+            reqwest::multipart::Part::bytes(content).file_name(file_name),
+        );
+        let response: WechatApiResponse<QrCodeResponse> = self
+            .client
+            .wechat_client()
             .post("/cv/img/qrcode", RequestBody::Multipart(form))
             .await?;
         response.into_result()

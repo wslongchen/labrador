@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 //! HTTP响应实现
 
@@ -87,14 +87,12 @@ impl Response {
 
     /// 解析JSON响应
     pub fn json<T: DeserializeOwned>(&self) -> LabradorResult<T> {
-        serde_json::from_slice(&self.body)
-            .map_err(LabraError::Json)
+        serde_json::from_slice(&self.body).map_err(LabraError::Json)
     }
 
     /// 获取文本响应
     pub fn text(&self) -> LabradorResult<String> {
-        String::from_utf8(self.body.to_vec())
-            .map_err(LabraError::Utf8)
+        String::from_utf8(self.body.to_vec()).map_err(LabraError::Utf8)
     }
 
     /// 获取原始字节
@@ -104,8 +102,11 @@ impl Response {
 
     /// 检查是否成功
     pub fn is_success(&self) -> bool {
-        self.status.is_success() || self.status.is_redirection() || self.status.is_informational()
-        || self.status.is_server_error() || self.status.is_client_error()
+        self.status.is_success()
+            || self.status.is_redirection()
+            || self.status.is_informational()
+            || self.status.is_server_error()
+            || self.status.is_client_error()
     }
 
     /// 检查是否是客户端错误

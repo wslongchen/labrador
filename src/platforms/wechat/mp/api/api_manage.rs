@@ -16,13 +16,13 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
-use serde::Deserialize;
-use serde_json::json;
 use crate::errors::LabradorResult;
 use crate::wechat::client::WechatApiResponse;
 use crate::wechat::mp::WechatMpClient;
+use serde::Deserialize;
+use serde_json::json;
 
 /// OpenAPI管理模块
 #[derive(Debug, Clone)]
@@ -42,7 +42,9 @@ impl<'a> WechatMpApiManage<'a> {
     /// 本接口用于查询API调用次数和频率限制。
     pub async fn get_api_quota(&self, cgi_path: &str) -> LabradorResult<ApiQuotaResponse> {
         let request = json!({ "cgi_path": cgi_path });
-        let response: WechatApiResponse<ApiQuotaResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<ApiQuotaResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/openapi/quota/get", request)
             .await?;
         response.into_result()
@@ -53,7 +55,9 @@ impl<'a> WechatMpApiManage<'a> {
     /// 本接口用于清空API调用次数（仅限2019年之前的旧接口）。
     #[deprecated = "建议使用 clear_quota_by_appsecret"]
     pub async fn clear_quota(&self) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .get("/cgi-bin/clear_quota")
             .await?;
         Ok(response)
@@ -62,12 +66,18 @@ impl<'a> WechatMpApiManage<'a> {
     /// 使用AppSecret清除API调用配额
     ///
     /// 本接口用于清空API调用次数（使用AppSecret鉴权）。
-    pub async fn clear_quota_by_appsecret(&self, appid: &str, appsecret: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn clear_quota_by_appsecret(
+        &self,
+        appid: &str,
+        appsecret: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let request = json!({
             "appid": appid,
             "appsecret": appsecret
         });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/clear_quota/v2", request)
             .await?;
         Ok(response)
@@ -78,7 +88,9 @@ impl<'a> WechatMpApiManage<'a> {
     /// 本接口用于清空指定的API调用次数。
     pub async fn clear_api_quota(&self, cgi_path: &str) -> LabradorResult<WechatApiResponse> {
         let request = json!({ "cgi_path": cgi_path });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/openapi/quota/clear", request)
             .await?;
         Ok(response)
@@ -89,7 +101,9 @@ impl<'a> WechatMpApiManage<'a> {
     /// 本接口用于根据调用接口返回的rid（request id）查询详细信息。
     pub async fn get_rid_info(&self, rid: &str) -> LabradorResult<RidInfoResponse> {
         let request = json!({ "rid": rid });
-        let response: WechatApiResponse<RidInfoResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<RidInfoResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/openapi/rid/get", request)
             .await?;
         response.into_result()

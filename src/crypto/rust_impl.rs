@@ -59,7 +59,6 @@ impl Crypto for RustCrypto {
         }
     }
 
-
     fn hmac(&self, algorithm: HmacAlgorithm, key: &[u8], data: &[u8]) -> LabradorResult<Vec<u8>> {
         use hmac::Mac;
         match algorithm {
@@ -90,46 +89,68 @@ impl Crypto for RustCrypto {
         }
     }
 
-    fn aes_encrypt(&self, mode: AesMode, key: &[u8], iv: &[u8], plaintext: &[u8]) -> LabradorResult<Vec<u8>> {
+    fn aes_encrypt(
+        &self,
+        mode: AesMode,
+        key: &[u8],
+        iv: &[u8],
+        plaintext: &[u8],
+    ) -> LabradorResult<Vec<u8>> {
         match mode {
             AesMode::Cbc => aes_cbc_encrypt(key, iv, plaintext),
-            AesMode::Gcm => Err(CryptoError::AlgorithmUnsupported("AES-ECB模式请单独调用gcm_encrypt".to_string()).into()),
+            AesMode::Gcm => Err(CryptoError::AlgorithmUnsupported(
+                "AES-ECB模式请单独调用gcm_encrypt".to_string(),
+            )
+            .into()),
             AesMode::Ctr => aes_ctr_encrypt(key, iv, plaintext),
             AesMode::Ecb => aes_ecb_encrypt(key, plaintext),
             AesMode::Cfb => aes_cfb_encrypt(key, iv, plaintext),
         }
     }
 
-
-    fn aes_decrypt(&self, mode: AesMode, key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
+    fn aes_decrypt(
+        &self,
+        mode: AesMode,
+        key: &[u8],
+        iv: &[u8],
+        ciphertext: &[u8],
+    ) -> LabradorResult<Vec<u8>> {
         match mode {
             AesMode::Cbc => aes_cbc_decrypt(key, iv, ciphertext),
-            AesMode::Gcm => Err(CryptoError::AlgorithmUnsupported("AES-ECB模式请单独调用gcm_decrypt".to_string()).into()),
+            AesMode::Gcm => Err(CryptoError::AlgorithmUnsupported(
+                "AES-ECB模式请单独调用gcm_decrypt".to_string(),
+            )
+            .into()),
             AesMode::Ctr => aes_ctr_decrypt(key, iv, ciphertext),
             AesMode::Ecb => aes_ecb_decrypt(key, ciphertext),
             AesMode::Cfb => aes_cfb_decrypt(key, iv, ciphertext),
         }
     }
 
-    fn rsa_sign(&self, private_key: &[u8], data: &[u8], hash_type: HashType) -> LabradorResult<Vec<u8>> {
+    fn rsa_sign(
+        &self,
+        private_key: &[u8],
+        data: &[u8],
+        hash_type: HashType,
+    ) -> LabradorResult<Vec<u8>> {
         use rsa::pkcs1::DecodeRsaPrivateKey;
         use rsa::pkcs8::DecodePrivateKey;
         use rsa::{Pkcs1v15Sign, RsaPrivateKey};
 
         // 尝试不同格式加载私钥
         let private_key_result = match hash_type {
-            HashType::Sha1 => {
-                RsaPrivateKey::from_pkcs1_der(private_key)
-                    .or_else(|_| RsaPrivateKey::from_pkcs8_der(private_key).map_err(|err| CryptoError::Signing(format!("加载私钥失败: {}", err))))
-            }
-            HashType::Sha256 => {
+            HashType::Sha1 => RsaPrivateKey::from_pkcs1_der(private_key).or_else(|_| {
                 RsaPrivateKey::from_pkcs8_der(private_key)
-                    .or_else(|_| RsaPrivateKey::from_pkcs1_der(private_key).map_err(|err| CryptoError::Signing(format!("加载私钥失败: {}", err))))
-            }
+                    .map_err(|err| CryptoError::Signing(format!("加载私钥失败: {}", err)))
+            }),
+            HashType::Sha256 => RsaPrivateKey::from_pkcs8_der(private_key).or_else(|_| {
+                RsaPrivateKey::from_pkcs1_der(private_key)
+                    .map_err(|err| CryptoError::Signing(format!("加载私钥失败: {}", err)))
+            }),
         };
 
-        let private_key = private_key_result
-            .map_err(|e| CryptoError::Signing(format!("加载私钥失败: {}", e)))?;
+        let private_key =
+            private_key_result.map_err(|e| CryptoError::Signing(format!("加载私钥失败: {}", e)))?;
 
         match hash_type {
             HashType::Sha1 => {
@@ -149,7 +170,13 @@ impl Crypto for RustCrypto {
         }
     }
 
-    fn rsa_verify(&self, public_key: &[u8], data: &[u8], signature: &[u8], hash_type: HashType) -> LabradorResult<bool> {
+    fn rsa_verify(
+        &self,
+        public_key: &[u8],
+        data: &[u8],
+        signature: &[u8],
+        hash_type: HashType,
+    ) -> LabradorResult<bool> {
         use rsa::pkcs1::DecodeRsaPublicKey;
         use rsa::pkcs8::DecodePublicKey;
         use rsa::{Pkcs1v15Sign, RsaPublicKey};
@@ -170,16 +197,14 @@ impl Crypto for RustCrypto {
         };
 
         match hash_type {
-            HashType::Sha1 => {
-                public_key
-                    .verify(Pkcs1v15Sign::new::<sha1::Sha1>(), &hashed, signature).map(|_| true)
-                    .map_err(|e| CryptoError::Verification(format!("验证失败: {}", e)).into())
-            }
-            HashType::Sha256 => {
-                public_key
-                    .verify(Pkcs1v15Sign::new::<sha2::Sha256>(), &hashed, signature).map(|_| true)
-                    .map_err(|e| CryptoError::Verification(format!("验证失败: {}", e)).into())
-            }
+            HashType::Sha1 => public_key
+                .verify(Pkcs1v15Sign::new::<sha1::Sha1>(), &hashed, signature)
+                .map(|_| true)
+                .map_err(|e| CryptoError::Verification(format!("验证失败: {}", e)).into()),
+            HashType::Sha256 => public_key
+                .verify(Pkcs1v15Sign::new::<sha2::Sha256>(), &hashed, signature)
+                .map(|_| true)
+                .map_err(|e| CryptoError::Verification(format!("验证失败: {}", e)).into()),
         }
     }
 
@@ -191,7 +216,13 @@ impl Crypto for RustCrypto {
         Ok(bytes)
     }
 
-    fn pbkdf2(&self, password: &[u8], salt: &[u8], iterations: u32, key_len: usize) -> LabradorResult<Vec<u8>> {
+    fn pbkdf2(
+        &self,
+        password: &[u8],
+        salt: &[u8],
+        iterations: u32,
+        key_len: usize,
+    ) -> LabradorResult<Vec<u8>> {
         use ring::pbkdf2;
         let iterations = NonZeroU32::new(iterations)
             .ok_or_else(|| CryptoError::Other("迭代次数必须大于0".to_string()))?;
@@ -231,7 +262,7 @@ where
     // 将 buffer 按块大小分成切片并加密
     for chunk in buffer.chunks_exact_mut(block_size) {
         let block = GenericArray::from_mut_slice(chunk);
-        cipher.encrypt_block_mut(block);  // 逐块加密
+        cipher.encrypt_block_mut(block); // 逐块加密
     }
 
     Ok(buffer)
@@ -265,7 +296,7 @@ fn aes_ecb_encrypt(key: &[u8], plaintext: &[u8]) -> LabradorResult<Vec<u8>> {
             "无效的AES密钥长度: {} (必须是16, 24或32字节)",
             key.len()
         ))
-            .into()),
+        .into()),
     }
 }
 
@@ -279,7 +310,7 @@ fn aes_ecb_decrypt(key: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
             "无效的AES密钥长度: {} (必须是16, 24或32字节)",
             key.len()
         ))
-            .into()),
+        .into()),
     }
 }
 
@@ -406,7 +437,6 @@ fn aes_ecb_decrypt(key: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
 //     }
 // }
 
-
 // AES-CBC加密
 fn aes_cbc_encrypt(key: &[u8], iv: &[u8], plaintext: &[u8]) -> LabradorResult<Vec<u8>> {
     use aes::cipher::{generic_array::GenericArray, BlockEncryptMut, KeyIvInit};
@@ -530,7 +560,8 @@ fn aes_cbc_encrypt(key: &[u8], iv: &[u8], plaintext: &[u8]) -> LabradorResult<Ve
         _ => Err(CryptoError::Encryption(format!(
             "无效的AES密钥长度: {} (必须是16, 24或32字节)",
             key.len()
-        )).into()),
+        ))
+        .into()),
     }
 }
 
@@ -550,7 +581,8 @@ fn aes_cbc_decrypt(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<V
             let mut buffer = ciphertext.to_vec();
 
             // 使用 decrypt_padded_mut 方法
-            let result = cipher.decrypt_padded_mut::<Pkcs7>(&mut buffer)
+            let result = cipher
+                .decrypt_padded_mut::<Pkcs7>(&mut buffer)
                 .map_err(|e| CryptoError::Decryption(format!("解密失败: {}", e)))?
                 .to_vec();
 
@@ -563,7 +595,8 @@ fn aes_cbc_decrypt(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<V
             let mut cipher = Aes192CbcDec::new(key_arr, iv_arr);
 
             let mut buffer = ciphertext.to_vec();
-            let result = cipher.decrypt_padded_mut::<Pkcs7>(&mut buffer)
+            let result = cipher
+                .decrypt_padded_mut::<Pkcs7>(&mut buffer)
                 .map_err(|e| CryptoError::Decryption(format!("解密失败: {}", e)))?
                 .to_vec();
 
@@ -576,7 +609,8 @@ fn aes_cbc_decrypt(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<V
             let mut cipher = Aes256CbcDec::new(key_arr, iv_arr);
 
             let mut buffer = ciphertext.to_vec();
-            let result = cipher.decrypt_padded_mut::<Pkcs7>(&mut buffer)
+            let result = cipher
+                .decrypt_padded_mut::<Pkcs7>(&mut buffer)
                 .map_err(|e| CryptoError::Decryption(format!("解密失败: {}", e)))?
                 .to_vec();
 
@@ -585,7 +619,8 @@ fn aes_cbc_decrypt(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<V
         _ => Err(CryptoError::Decryption(format!(
             "无效的AES密钥长度: {} (必须是16, 24或32字节)",
             key.len()
-        )).into()),
+        ))
+        .into()),
     }
 }
 
@@ -630,7 +665,8 @@ fn aes_ctr_encrypt(key: &[u8], iv: &[u8], plaintext: &[u8]) -> LabradorResult<Ve
         _ => Err(CryptoError::Encryption(format!(
             "无效的AES密钥长度: {} (必须是16, 24或32字节)",
             key.len()
-        )).into()),
+        ))
+        .into()),
     }
 }
 
@@ -671,7 +707,8 @@ fn aes_cfb_encrypt(key: &[u8], iv: &[u8], plaintext: &[u8]) -> LabradorResult<Ve
         _ => Err(CryptoError::Encryption(format!(
             "无效的AES密钥长度: {} (必须是16, 24或32字节)",
             key.len()
-        )).into()),
+        ))
+        .into()),
     }
 }
 
@@ -705,16 +742,16 @@ fn aes_cfb_decrypt(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<V
         _ => Err(CryptoError::Decryption(format!(
             "无效的AES密钥长度: {} (必须是16, 24或32字节)",
             key.len()
-        )).into()),
+        ))
+        .into()),
     }
 }
-
 
 // 简化的AES-GCM加密（无关联数据）
 fn aes_gcm_encrypt_simple(key: &[u8], nonce: &[u8], plaintext: &[u8]) -> LabradorResult<Vec<u8>> {
     use aes_gcm::{
         aead::{Aead, KeyInit},
-        Aes128Gcm, Aes256Gcm, Key, Nonce
+        Aes128Gcm, Aes256Gcm, Key, Nonce,
     };
     match key.len() {
         16 => {
@@ -722,7 +759,8 @@ fn aes_gcm_encrypt_simple(key: &[u8], nonce: &[u8], plaintext: &[u8]) -> Labrado
             let cipher = Aes128Gcm::new(key);
             let nonce = Nonce::from_slice(nonce);
 
-            cipher.encrypt(nonce, plaintext)
+            cipher
+                .encrypt(nonce, plaintext)
                 .map_err(|e| CryptoError::Encryption(format!("GCM加密失败: {}", e)).into())
         }
         32 => {
@@ -730,21 +768,28 @@ fn aes_gcm_encrypt_simple(key: &[u8], nonce: &[u8], plaintext: &[u8]) -> Labrado
             let cipher = Aes256Gcm::new(key);
             let nonce = Nonce::from_slice(nonce);
 
-            cipher.encrypt(nonce, plaintext)
+            cipher
+                .encrypt(nonce, plaintext)
                 .map_err(|e| CryptoError::Encryption(format!("GCM加密失败: {}", e)).into())
         }
         _ => Err(CryptoError::Encryption(format!(
             "无效的AES-GCM密钥长度: {} (必须是16或32字节)",
             key.len()
-        )).into()),
+        ))
+        .into()),
     }
 }
 
 // 简化的AES-GCM解密（无关联数据）
-fn aes_gcm_decrypt_simple(key: &[u8], nonce: &[u8], ciphertext: &[u8], tag: &[u8]) -> LabradorResult<Vec<u8>> {
+fn aes_gcm_decrypt_simple(
+    key: &[u8],
+    nonce: &[u8],
+    ciphertext: &[u8],
+    tag: &[u8],
+) -> LabradorResult<Vec<u8>> {
     use aes_gcm::{
         aead::{Aead, KeyInit, Payload},
-        Aes128Gcm, Aes256Gcm, Key, Nonce
+        Aes128Gcm, Aes256Gcm, Key, Nonce,
     };
     // 合并密文和标签
     let mut combined = ciphertext.to_vec();
@@ -756,7 +801,8 @@ fn aes_gcm_decrypt_simple(key: &[u8], nonce: &[u8], ciphertext: &[u8], tag: &[u8
             let cipher = Aes128Gcm::new(key);
             let nonce = Nonce::from_slice(nonce);
 
-            cipher.decrypt(nonce, Payload::from(&combined[..]))
+            cipher
+                .decrypt(nonce, Payload::from(&combined[..]))
                 .map_err(|e| CryptoError::Decryption(format!("GCM解密失败: {}", e)).into())
         }
         32 => {
@@ -764,16 +810,17 @@ fn aes_gcm_decrypt_simple(key: &[u8], nonce: &[u8], ciphertext: &[u8], tag: &[u8
             let cipher = Aes256Gcm::new(key);
             let nonce = Nonce::from_slice(nonce);
 
-            cipher.decrypt(nonce, Payload::from(&combined[..]))
+            cipher
+                .decrypt(nonce, Payload::from(&combined[..]))
                 .map_err(|e| CryptoError::Decryption(format!("GCM解密失败: {}", e)).into())
         }
         _ => Err(CryptoError::Decryption(format!(
             "无效的AES-GCM密钥长度: {} (必须是16或32字节)",
             key.len()
-        )).into()),
+        ))
+        .into()),
     }
 }
-
 
 // 公共接口函数
 pub fn hash(algorithm: HashAlgorithm, data: &[u8]) -> Vec<u8> {
@@ -784,18 +831,33 @@ pub fn hmac(algorithm: HmacAlgorithm, key: &[u8], data: &[u8]) -> LabradorResult
     RustCrypto.hmac(algorithm, key, data)
 }
 
-pub fn aes_encrypt(mode: AesMode, key: &[u8], iv: &[u8], plaintext: &[u8]) -> LabradorResult<Vec<u8>> {
+pub fn aes_encrypt(
+    mode: AesMode,
+    key: &[u8],
+    iv: &[u8],
+    plaintext: &[u8],
+) -> LabradorResult<Vec<u8>> {
     RustCrypto.aes_encrypt(mode, key, iv, plaintext)
 }
 
-pub fn aes_decrypt(mode: AesMode, key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
+pub fn aes_decrypt(
+    mode: AesMode,
+    key: &[u8],
+    iv: &[u8],
+    ciphertext: &[u8],
+) -> LabradorResult<Vec<u8>> {
     RustCrypto.aes_decrypt(mode, key, iv, ciphertext)
 }
 
-pub fn aes_gcm_encrypt(key: &[u8], nonce: &[u8], associated_data: &[u8], plaintext: &[u8]) -> LabradorResult<Vec<u8>> {
+pub fn aes_gcm_encrypt(
+    key: &[u8],
+    nonce: &[u8],
+    associated_data: &[u8],
+    plaintext: &[u8],
+) -> LabradorResult<Vec<u8>> {
     use aes_gcm::{
         aead::{AeadInPlace, KeyInit},
-        Aes128Gcm, Aes256Gcm, Key, Nonce
+        Aes128Gcm, Aes256Gcm, Key, Nonce,
     };
     match key.len() {
         16 => {
@@ -805,7 +867,8 @@ pub fn aes_gcm_encrypt(key: &[u8], nonce: &[u8], associated_data: &[u8], plainte
 
             // 创建缓冲区并加密
             let mut buffer = plaintext.to_vec();
-            cipher.encrypt_in_place_detached(nonce, associated_data, &mut buffer)
+            cipher
+                .encrypt_in_place_detached(nonce, associated_data, &mut buffer)
                 .map_err(|e| CryptoError::Encryption(format!("GCM加密失败: {}", e)))?
                 .to_vec();
 
@@ -818,7 +881,8 @@ pub fn aes_gcm_encrypt(key: &[u8], nonce: &[u8], associated_data: &[u8], plainte
             let nonce = Nonce::from_slice(nonce);
 
             let mut buffer = plaintext.to_vec();
-            cipher.encrypt_in_place_detached(nonce, associated_data, &mut buffer)
+            cipher
+                .encrypt_in_place_detached(nonce, associated_data, &mut buffer)
                 .map_err(|e| CryptoError::Encryption(format!("GCM加密失败: {}", e)))?
                 .to_vec();
 
@@ -827,14 +891,21 @@ pub fn aes_gcm_encrypt(key: &[u8], nonce: &[u8], associated_data: &[u8], plainte
         _ => Err(CryptoError::Encryption(format!(
             "无效的AES-GCM密钥长度: {} (必须是16或32字节)",
             key.len()
-        )).into()),
+        ))
+        .into()),
     }
 }
 
-pub fn aes_gcm_decrypt(key: &[u8], nonce: &[u8], associated_data: &[u8], ciphertext: &[u8], tag: &[u8]) -> LabradorResult<Vec<u8>> {
+pub fn aes_gcm_decrypt(
+    key: &[u8],
+    nonce: &[u8],
+    associated_data: &[u8],
+    ciphertext: &[u8],
+    tag: &[u8],
+) -> LabradorResult<Vec<u8>> {
     use aes_gcm::{
         aead::{AeadInPlace, KeyInit},
-        Aes128Gcm, Aes256Gcm, Key, Nonce, Tag
+        Aes128Gcm, Aes256Gcm, Key, Nonce, Tag,
     };
     match key.len() {
         16 => {
@@ -845,7 +916,8 @@ pub fn aes_gcm_decrypt(key: &[u8], nonce: &[u8], associated_data: &[u8], ciphert
             // 复制密文并解密
             let mut buffer = ciphertext.to_vec();
             let tag = Tag::from_slice(tag);
-            cipher.decrypt_in_place_detached(nonce, associated_data, &mut buffer, tag)
+            cipher
+                .decrypt_in_place_detached(nonce, associated_data, &mut buffer, tag)
                 .map_err(|e| CryptoError::Decryption(format!("GCM解密失败: {}", e)))?;
 
             Ok(buffer)
@@ -857,7 +929,8 @@ pub fn aes_gcm_decrypt(key: &[u8], nonce: &[u8], associated_data: &[u8], ciphert
 
             let mut buffer = ciphertext.to_vec();
             let tag = Tag::from_slice(tag);
-            cipher.decrypt_in_place_detached(nonce, associated_data, &mut buffer, tag)
+            cipher
+                .decrypt_in_place_detached(nonce, associated_data, &mut buffer, tag)
                 .map_err(|e| CryptoError::Decryption(format!("GCM解密失败: {}", e)))?;
 
             Ok(buffer)
@@ -865,7 +938,8 @@ pub fn aes_gcm_decrypt(key: &[u8], nonce: &[u8], associated_data: &[u8], ciphert
         _ => Err(CryptoError::Decryption(format!(
             "无效的AES-GCM密钥长度: {} (必须是16或32字节)",
             key.len()
-        )).into()),
+        ))
+        .into()),
     }
 }
 
@@ -873,7 +947,12 @@ pub fn random_bytes(len: usize) -> LabradorResult<Vec<u8>> {
     RustCrypto.random_bytes(len)
 }
 
-pub fn pbkdf2(password: &[u8], salt: &[u8], iterations: u32, key_len: usize) -> LabradorResult<Vec<u8>> {
+pub fn pbkdf2(
+    password: &[u8],
+    salt: &[u8],
+    iterations: u32,
+    key_len: usize,
+) -> LabradorResult<Vec<u8>> {
     RustCrypto.pbkdf2(password, salt, iterations, key_len)
 }
 
@@ -881,7 +960,12 @@ pub fn rsa_sign(private_key: &[u8], data: &[u8], hash_type: HashType) -> Labrado
     RustCrypto.rsa_sign(private_key, data, hash_type)
 }
 
-pub fn rsa_verify(public_key: &[u8], data: &[u8], signature: &[u8], hash_type: HashType) -> LabradorResult<bool> {
+pub fn rsa_verify(
+    public_key: &[u8],
+    data: &[u8],
+    signature: &[u8],
+    hash_type: HashType,
+) -> LabradorResult<bool> {
     RustCrypto.rsa_verify(public_key, data, signature, hash_type)
 }
 
@@ -890,13 +974,14 @@ pub fn rsa_encrypt(public_key: &[u8], plaintext: &[u8]) -> LabradorResult<Vec<u8
     use rsa::pkcs8::DecodePublicKey;
     use rsa::{Oaep, RsaPublicKey};
     use sha2::Sha256;
-    
+
     let public_key = RsaPublicKey::from_public_key_der(public_key)
         .or_else(|_| RsaPublicKey::from_pkcs1_der(public_key))
         .map_err(|e| CryptoError::Encryption(format!("加载公钥失败: {}", e)))?;
 
     let padding = Oaep::new::<Sha256>();
-    public_key.encrypt(&mut rand::thread_rng(), padding, plaintext)
+    public_key
+        .encrypt(&mut rand::thread_rng(), padding, plaintext)
         .map_err(|e| CryptoError::Encryption(format!("RSA加密失败: {}", e)).into())
 }
 
@@ -921,18 +1006,17 @@ pub fn rsa_decrypt(private_key: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<
         .map_err(|e| CryptoError::Decryption(format!("加载私钥失败: {}", e)))?;
 
     let padding = Oaep::new::<Sha256>();
-    private_key.decrypt(padding, ciphertext)
+    private_key
+        .decrypt(padding, ciphertext)
         .map_err(|e| CryptoError::Decryption(format!("RSA解密失败: {}", e)).into())
 }
 
-
 #[cfg(test)]
 mod tests {
-    use crate::{RsaEncryptor, RsaKeyFormat};
-    use crate::utils::encryption::{base64_decode, base64_encode};
     use super::*;
-    
-    
+    use crate::utils::encryption::{base64_decode, base64_encode};
+    use crate::{RsaEncryptor, RsaKeyFormat};
+
     #[test]
     fn test_rsa() {
         let private_key = "";
@@ -940,6 +1024,5 @@ mod tests {
         let si = RsaEncryptor::with_private_key(&private_key, RsaKeyFormat::Pkcs1);
         let s = si.sign("ssss".as_bytes(), HashType::Sha256).unwrap();
         println!("{}", base64_encode(&s));
-        
     }
 }

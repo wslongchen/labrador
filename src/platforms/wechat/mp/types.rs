@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 /// ticket类型
@@ -47,16 +47,13 @@ pub static SECRET: &str = "secret";
 pub static ACCESS_TOKEN: &str = "access_token";
 pub static REFRESH_TOKEN: &str = "refresh_token";
 
-
-
-
 pub enum TicketType {
     /// jsapi
     JSAPI,
     /// sdk
     SDK,
     /// 微信卡券
-    WxCard
+    WxCard,
 }
 
 impl ToString for TicketType {

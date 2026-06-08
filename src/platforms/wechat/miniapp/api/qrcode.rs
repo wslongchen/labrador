@@ -16,14 +16,14 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
-use bytes::Bytes;
-use serde::{Deserialize, Serialize};
 use crate::errors::{LabraError, LabradorResult};
 use crate::request::{HttpMethod, RequestBody};
 use crate::wechat::client::WechatApiResponse;
 use crate::wechat::miniapp::WechatMiniAppClient;
+use bytes::Bytes;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub struct WechatMxaQrcode<'a> {
@@ -34,27 +34,32 @@ pub struct WechatMxaQrcode<'a> {
 impl<'a> WechatMxaQrcode<'a> {
     #[inline]
     pub fn new(client: &'a WechatMiniAppClient) -> WechatMxaQrcode<'a> {
-        WechatMxaQrcode {
-            client,
-        }
+        WechatMxaQrcode { client }
     }
 
     /// 获取小程序码（数量有限，请勿滥用）
     pub async fn get_wxacode(&self, request: &WxacodeRequest) -> LabradorResult<Bytes> {
-        let response = self.client.wechat_client()
-            .request_internal(HttpMethod::Post,"/wxa/getwxacode", Some(RequestBody::from(request)))
+        let response = self
+            .client
+            .wechat_client()
+            .request_internal(
+                HttpMethod::Post,
+                "/wxa/getwxacode",
+                Some(RequestBody::from(request)),
+            )
             .await?;
 
         // 检查是否是错误响应
-        let content_type = response.headers()
+        let content_type = response
+            .headers()
             .get("content-type")
             .and_then(|v| v.to_str().ok());
 
         if let Some(content_type) = content_type {
             if content_type.contains("application/json") {
                 // 如果是JSON响应，说明出错了
-                let error: WechatApiResponse<WechatApiResponse> = serde_json::from_slice(&response.bytes())
-                    .map_err(LabraError::Json)?;
+                let error: WechatApiResponse<WechatApiResponse> =
+                    serde_json::from_slice(&response.bytes()).map_err(LabraError::Json)?;
                 return error.into_result().map(|_| Bytes::new());
             }
         }
@@ -74,21 +79,31 @@ impl<'a> WechatMxaQrcode<'a> {
     /// scene 字段的值会作为 query 参数传递给小程序/小游戏。用户扫描该码进入小程序/小游戏后，开发者可以获取到二维码中的 scene 值，再做处理逻辑。
     /// 调试阶段可以使用开发工具的条件编译自定义参数 scene=xxxx 进行模拟，开发工具模拟时的 scene 的参数值需要进行 encodeURIComponent
     /// </pre>
-    pub async fn get_wxacode_unlimited(&self, request: &WxacodeUnlimitedRequest) -> LabradorResult<Bytes> {
-        let response = self.client.wechat_client()
-            .request_internal(HttpMethod::Post,"/wxa/getwxacodeunlimit", Some(RequestBody::from(request)))
+    pub async fn get_wxacode_unlimited(
+        &self,
+        request: &WxacodeUnlimitedRequest,
+    ) -> LabradorResult<Bytes> {
+        let response = self
+            .client
+            .wechat_client()
+            .request_internal(
+                HttpMethod::Post,
+                "/wxa/getwxacodeunlimit",
+                Some(RequestBody::from(request)),
+            )
             .await?;
 
         // 检查是否是错误响应
-        let content_type = response.headers()
+        let content_type = response
+            .headers()
             .get("content-type")
             .and_then(|v| v.to_str().ok());
 
         if let Some(content_type) = content_type {
             if content_type.contains("application/json") {
                 // 如果是JSON响应，说明出错了
-                let error: WechatApiResponse<WechatApiResponse> = serde_json::from_slice(&response.bytes())
-                    .map_err(LabraError::Json)?;
+                let error: WechatApiResponse<WechatApiResponse> =
+                    serde_json::from_slice(&response.bytes()).map_err(LabraError::Json)?;
                 return error.into_result().map(|_| Bytes::new());
             }
         }
@@ -106,20 +121,27 @@ impl<'a> WechatMxaQrcode<'a> {
     /// [`path`] 扫码进入的小程序页面路径，最大长度 128 字节，不能为空；对于小游戏，可以只传入 query 部分，来实现传参效果，如：传入 "?foo=bar"，即可在 wx.getLaunchOptionsSync 接口中的 query 参数获取到 {foo:"bar"}。
     /// [`width`] 二维码的宽度，单位 px。最小 280px，最大 1280px;默认是430
     pub async fn create_wxaqrcode(&self, request: &WxaqrcodeRequest) -> LabradorResult<Bytes> {
-        let response = self.client.wechat_client()
-            .request_internal(HttpMethod::Post,"/cgi-bin/wxaapp/createwxaqrcode", Some(RequestBody::from(request)))
+        let response = self
+            .client
+            .wechat_client()
+            .request_internal(
+                HttpMethod::Post,
+                "/cgi-bin/wxaapp/createwxaqrcode",
+                Some(RequestBody::from(request)),
+            )
             .await?;
 
         // 检查是否是错误响应
-        let content_type = response.headers()
+        let content_type = response
+            .headers()
             .get("content-type")
             .and_then(|v| v.to_str().ok());
 
         if let Some(content_type) = content_type {
             if content_type.contains("application/json") {
                 // 如果是JSON响应，说明出错了
-                let error: WechatApiResponse<WechatApiResponse> = serde_json::from_slice(&response.bytes())
-                    .map_err(LabraError::Json)?;
+                let error: WechatApiResponse<WechatApiResponse> =
+                    serde_json::from_slice(&response.bytes()).map_err(LabraError::Json)?;
                 return error.into_result().map(|_| Bytes::new());
             }
         }
@@ -128,8 +150,13 @@ impl<'a> WechatMxaQrcode<'a> {
     }
 
     /// 获取小程序URL Scheme
-    pub async fn generate_url_scheme(&self, request: &UrlSchemeRequest) -> LabradorResult<UrlSchemeResponse> {
-        let response: WechatApiResponse<UrlSchemeResponse> = self.client.wechat_client()
+    pub async fn generate_url_scheme(
+        &self,
+        request: &UrlSchemeRequest,
+    ) -> LabradorResult<UrlSchemeResponse> {
+        let response: WechatApiResponse<UrlSchemeResponse> = self
+            .client
+            .wechat_client()
             .post("/wxa/generatescheme", RequestBody::from(request))
             .await?;
 
@@ -137,8 +164,13 @@ impl<'a> WechatMxaQrcode<'a> {
     }
 
     /// 获取小程序URL Link
-    pub async fn generate_url_link(&self, request: &UrlLinkRequest) -> LabradorResult<UrlLinkResponse> {
-        let response: WechatApiResponse<UrlLinkResponse> = self.client.wechat_client()
+    pub async fn generate_url_link(
+        &self,
+        request: &UrlLinkRequest,
+    ) -> LabradorResult<UrlLinkResponse> {
+        let response: WechatApiResponse<UrlLinkResponse> = self
+            .client
+            .wechat_client()
             .post("/wxa/generate_urllink", RequestBody::from(request))
             .await?;
 
@@ -146,15 +178,19 @@ impl<'a> WechatMxaQrcode<'a> {
     }
 
     /// 获取小程序Short Link
-    pub async fn generate_short_link(&self, request: &ShortLinkRequest) -> LabradorResult<ShortLinkResponse> {
-        let response: WechatApiResponse<ShortLinkResponse> = self.client.wechat_client()
+    pub async fn generate_short_link(
+        &self,
+        request: &ShortLinkRequest,
+    ) -> LabradorResult<ShortLinkResponse> {
+        let response: WechatApiResponse<ShortLinkResponse> = self
+            .client
+            .wechat_client()
             .post("/wxa/genwxashortlink", RequestBody::from(request))
             .await?;
 
         response.into_result()
     }
 }
-
 
 /// 小程序码请求
 #[derive(Debug, Clone, Serialize)]
@@ -342,7 +378,6 @@ impl WxaqrcodeRequest {
         self
     }
 }
-
 
 /// URL Scheme请求
 #[derive(Debug, Clone, Serialize)]

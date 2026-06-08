@@ -19,7 +19,7 @@
  *
  */
 use serde::{Deserialize, Serialize};
-use serde_json::{json};
+use serde_json::json;
 use std::collections::HashMap;
 
 use crate::errors::LabradorResult;
@@ -42,12 +42,18 @@ impl<'a> WechatMpTemplateMessage<'a> {
     /// 设置所属行业
     ///
     /// 设置行业可在微信公众平台后台完成，每月可修改行业1次。帐号仅可使用所属行业中相关的模板。
-    pub async fn set_industry(&self, industry_id1: &str, industry_id2: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn set_industry(
+        &self,
+        industry_id1: &str,
+        industry_id2: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let req = json!({
             "industry_id1": industry_id1,
             "industry_id2": industry_id2,
         });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/template/api_set_industry", req)
             .await?;
         Ok(response)
@@ -55,7 +61,9 @@ impl<'a> WechatMpTemplateMessage<'a> {
 
     /// 获取设置的行业信息
     pub async fn get_industry(&self) -> LabradorResult<IndustryResponse> {
-        let response: WechatApiResponse<IndustryResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<IndustryResponse> = self
+            .client
+            .wechat_client()
             .get("/cgi-bin/template/get_industry")
             .await?;
         response.into_result()
@@ -67,7 +75,9 @@ impl<'a> WechatMpTemplateMessage<'a> {
     /// `template_id_short` 模板库中模板的编号，有“TM**”和“OPENTMTM**”等形式。
     pub async fn get_template_id(&self, template_id_short: &str) -> LabradorResult<String> {
         let req = json!({ "template_id_short": template_id_short });
-        let response: WechatApiResponse<GetTemplateIdResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<GetTemplateIdResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/template/api_add_template", req)
             .await?;
         Ok(response.into_result()?.template_id)
@@ -77,7 +87,9 @@ impl<'a> WechatMpTemplateMessage<'a> {
     ///
     /// 获取已添加至帐号下的所有模板列表。
     pub async fn get_template_list(&self) -> LabradorResult<Vec<TemplateMessageInfo>> {
-        let response: WechatApiResponse<GetTemplateListResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<GetTemplateListResponse> = self
+            .client
+            .wechat_client()
             .get("/cgi-bin/template/get_all_private_template")
             .await?;
         Ok(response.into_result()?.template_list)
@@ -88,7 +100,9 @@ impl<'a> WechatMpTemplateMessage<'a> {
     /// 删除帐号下的某个模板。
     pub async fn delete_template(&self, template_id: &str) -> LabradorResult<WechatApiResponse> {
         let req = json!({ "template_id": template_id });
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/template/del_private_template", req)
             .await?;
         Ok(response)
@@ -97,8 +111,13 @@ impl<'a> WechatMpTemplateMessage<'a> {
     /// 发送模板消息
     ///
     /// 该接口用于发送模板消息。
-    pub async fn send_template_message(&self, request: &TemplateMessageRequest) -> LabradorResult<TemplateMessageResponse> {
-        let response: WechatApiResponse<TemplateMessageResponse> = self.client.wechat_client()
+    pub async fn send_template_message(
+        &self,
+        request: &TemplateMessageRequest,
+    ) -> LabradorResult<TemplateMessageResponse> {
+        let response: WechatApiResponse<TemplateMessageResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/message/template/send", request)
             .await?;
         response.into_result()
@@ -107,9 +126,17 @@ impl<'a> WechatMpTemplateMessage<'a> {
     /// 查询模板消息发送状态
     ///
     /// 该接口用于查询模板消息的发送状态。
-    pub async fn get_template_message_status(&self, msg_id: i64) -> LabradorResult<TemplateMessageStatus> {
-        let response: WechatApiResponse<TemplateMessageStatus> = self.client.wechat_client()
-            .post("/cgi-bin/message/template/queryblock", json!({ "msg_id": msg_id }))
+    pub async fn get_template_message_status(
+        &self,
+        msg_id: i64,
+    ) -> LabradorResult<TemplateMessageStatus> {
+        let response: WechatApiResponse<TemplateMessageStatus> = self
+            .client
+            .wechat_client()
+            .post(
+                "/cgi-bin/message/template/queryblock",
+                json!({ "msg_id": msg_id }),
+            )
             .await?;
         response.into_result()
     }

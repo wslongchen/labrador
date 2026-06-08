@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 use openssl::hash::MessageDigest;
 use openssl::pkey::PKey;
@@ -28,7 +28,6 @@ use super::*;
 
 /// OpenSSL后端实现
 pub struct OpenSslCrypto;
-
 
 impl Crypto for OpenSslCrypto {
     fn hash(&self, algorithm: HashAlgorithm, data: &[u8]) -> Vec<u8> {
@@ -46,8 +45,8 @@ impl Crypto for OpenSslCrypto {
     }
 
     fn hmac(&self, algorithm: HmacAlgorithm, key: &[u8], data: &[u8]) -> LabradorResult<Vec<u8>> {
-        let pkey = PKey::hmac(key)
-            .map_err(|e| CryptoError::Other(format!("创建HMAC密钥失败: {}", e)))?;
+        let pkey =
+            PKey::hmac(key).map_err(|e| CryptoError::Other(format!("创建HMAC密钥失败: {}", e)))?;
 
         let digest = match algorithm {
             HmacAlgorithm::Sha1 => MessageDigest::sha1(),
@@ -59,14 +58,22 @@ impl Crypto for OpenSslCrypto {
         let mut signer = Signer::new(digest, &pkey)
             .map_err(|e| CryptoError::Other(format!("创建签名器失败: {}", e)))?;
 
-        signer.update(data)
+        signer
+            .update(data)
             .map_err(|e| CryptoError::Other(format!("更新数据失败: {}", e)))?;
 
-        signer.sign_to_vec()
+        signer
+            .sign_to_vec()
             .map_err(|e| CryptoError::Other(format!("签名失败: {}", e)).into())
     }
 
-    fn aes_encrypt(&self, mode: AesMode, key: &[u8], iv: &[u8], plaintext: &[u8]) -> LabradorResult<Vec<u8>> {
+    fn aes_encrypt(
+        &self,
+        mode: AesMode,
+        key: &[u8],
+        iv: &[u8],
+        plaintext: &[u8],
+    ) -> LabradorResult<Vec<u8>> {
         let cipher = match mode {
             AesMode::Cbc => match key.len() {
                 16 => symm::Cipher::aes_128_cbc(),
@@ -105,7 +112,13 @@ impl Crypto for OpenSslCrypto {
             .map_err(|e| CryptoError::Encryption(format!("加密失败: {}", e)).into())
     }
 
-    fn aes_decrypt(&self, mode: AesMode, key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
+    fn aes_decrypt(
+        &self,
+        mode: AesMode,
+        key: &[u8],
+        iv: &[u8],
+        ciphertext: &[u8],
+    ) -> LabradorResult<Vec<u8>> {
         let cipher = match mode {
             AesMode::Cbc => match key.len() {
                 16 => symm::Cipher::aes_128_cbc(),
@@ -144,7 +157,12 @@ impl Crypto for OpenSslCrypto {
             .map_err(|e| CryptoError::Decryption(format!("解密失败: {}", e)).into())
     }
 
-    fn rsa_sign(&self, private_key: &[u8], data: &[u8], hash_type: HashType) -> LabradorResult<Vec<u8>> {
+    fn rsa_sign(
+        &self,
+        private_key: &[u8],
+        data: &[u8],
+        hash_type: HashType,
+    ) -> LabradorResult<Vec<u8>> {
         let digest = match hash_type {
             HashType::Sha1 => MessageDigest::sha1(),
             HashType::Sha256 => MessageDigest::sha256(),
@@ -155,10 +173,12 @@ impl Crypto for OpenSslCrypto {
             let mut signer = Signer::new(digest, &pkey)
                 .map_err(|e| CryptoError::Signing(format!("创建签名器失败: {}", e)))?;
 
-            signer.update(data)
+            signer
+                .update(data)
                 .map_err(|e| CryptoError::Signing(format!("更新数据失败: {}", e)))?;
 
-            return signer.sign_to_vec()
+            return signer
+                .sign_to_vec()
                 .map_err(|e| CryptoError::Signing(format!("签名失败: {}", e)).into());
         }
 
@@ -170,13 +190,16 @@ impl Crypto for OpenSslCrypto {
             let mut signer = Signer::new(digest, &pkey)
                 .map_err(|e| CryptoError::Signing(format!("创建签名器失败: {}", e)))?;
 
-            signer.set_rsa_padding(Padding::PKCS1)
+            signer
+                .set_rsa_padding(Padding::PKCS1)
                 .map_err(|e| CryptoError::Signing(format!("设置填充失败: {}", e)))?;
 
-            signer.update(data)
+            signer
+                .update(data)
                 .map_err(|e| CryptoError::Signing(format!("更新数据失败: {}", e)))?;
 
-            return signer.sign_to_vec()
+            return signer
+                .sign_to_vec()
                 .map_err(|e| CryptoError::Signing(format!("签名失败: {}", e)).into());
         }
 
@@ -188,20 +211,29 @@ impl Crypto for OpenSslCrypto {
             let mut signer = Signer::new(digest, &pkey)
                 .map_err(|e| CryptoError::Signing(format!("创建签名器失败: {}", e)))?;
 
-            signer.set_rsa_padding(Padding::PKCS1)
+            signer
+                .set_rsa_padding(Padding::PKCS1)
                 .map_err(|e| CryptoError::Signing(format!("设置填充失败: {}", e)))?;
 
-            signer.update(data)
+            signer
+                .update(data)
                 .map_err(|e| CryptoError::Signing(format!("更新数据失败: {}", e)))?;
 
-            return signer.sign_to_vec()
+            return signer
+                .sign_to_vec()
                 .map_err(|e| CryptoError::Signing(format!("签名失败: {}", e)).into());
         }
 
         Err(CryptoError::Signing("无法加载私钥".to_string()).into())
     }
 
-    fn rsa_verify(&self, public_key: &[u8], data: &[u8], signature: &[u8], hash_type: HashType) -> LabradorResult<bool> {
+    fn rsa_verify(
+        &self,
+        public_key: &[u8],
+        data: &[u8],
+        signature: &[u8],
+        hash_type: HashType,
+    ) -> LabradorResult<bool> {
         let digest = match hash_type {
             HashType::Sha1 => MessageDigest::sha1(),
             HashType::Sha256 => MessageDigest::sha256(),
@@ -215,13 +247,16 @@ impl Crypto for OpenSslCrypto {
             let mut verifier = Verifier::new(digest, &pkey)
                 .map_err(|e| CryptoError::Verification(format!("创建验证器失败: {}", e)))?;
 
-            verifier.set_rsa_padding(Padding::PKCS1)
+            verifier
+                .set_rsa_padding(Padding::PKCS1)
                 .map_err(|e| CryptoError::Verification(format!("设置填充失败: {}", e)))?;
 
-            verifier.update(data)
+            verifier
+                .update(data)
                 .map_err(|e| CryptoError::Verification(format!("更新数据失败: {}", e)))?;
 
-            return verifier.verify(signature)
+            return verifier
+                .verify(signature)
                 .map_err(|e| CryptoError::Verification(format!("验证失败: {}", e)).into());
         }
 
@@ -233,13 +268,16 @@ impl Crypto for OpenSslCrypto {
             let mut verifier = Verifier::new(digest, &pkey)
                 .map_err(|e| CryptoError::Verification(format!("创建验证器失败: {}", e)))?;
 
-            verifier.set_rsa_padding(Padding::PKCS1)
+            verifier
+                .set_rsa_padding(Padding::PKCS1)
                 .map_err(|e| CryptoError::Verification(format!("设置填充失败: {}", e)))?;
 
-            verifier.update(data)
+            verifier
+                .update(data)
                 .map_err(|e| CryptoError::Verification(format!("更新数据失败: {}", e)))?;
 
-            return verifier.verify(signature)
+            return verifier
+                .verify(signature)
                 .map_err(|e| CryptoError::Verification(format!("验证失败: {}", e)).into());
         }
 
@@ -253,7 +291,13 @@ impl Crypto for OpenSslCrypto {
         Ok(bytes)
     }
 
-    fn pbkdf2(&self, password: &[u8], salt: &[u8], iterations: u32, key_len: usize) -> LabradorResult<Vec<u8>> {
+    fn pbkdf2(
+        &self,
+        password: &[u8],
+        salt: &[u8],
+        iterations: u32,
+        key_len: usize,
+    ) -> LabradorResult<Vec<u8>> {
         let mut derived_key = vec![0u8; key_len];
         openssl::pkcs5::pbkdf2_hmac(
             password,
@@ -261,7 +305,8 @@ impl Crypto for OpenSslCrypto {
             iterations as usize,
             MessageDigest::sha256(),
             &mut derived_key,
-        ).map_err(|e| CryptoError::Other(format!("PBKDF2失败: {}", e)))?;
+        )
+        .map_err(|e| CryptoError::Other(format!("PBKDF2失败: {}", e)))?;
 
         Ok(derived_key)
     }
@@ -276,15 +321,30 @@ pub fn hmac(algorithm: HmacAlgorithm, key: &[u8], data: &[u8]) -> LabradorResult
     OpenSslCrypto.hmac(algorithm, key, data)
 }
 
-pub fn aes_encrypt(mode: AesMode, key: &[u8], iv: &[u8], plaintext: &[u8]) -> LabradorResult<Vec<u8>> {
+pub fn aes_encrypt(
+    mode: AesMode,
+    key: &[u8],
+    iv: &[u8],
+    plaintext: &[u8],
+) -> LabradorResult<Vec<u8>> {
     OpenSslCrypto.aes_encrypt(mode, key, iv, plaintext)
 }
 
-pub fn aes_decrypt(mode: AesMode, key: &[u8], iv: &[u8], ciphertext: &[u8]) -> LabradorResult<Vec<u8>> {
+pub fn aes_decrypt(
+    mode: AesMode,
+    key: &[u8],
+    iv: &[u8],
+    ciphertext: &[u8],
+) -> LabradorResult<Vec<u8>> {
     OpenSslCrypto.aes_decrypt(mode, key, iv, ciphertext)
 }
 
-pub fn aes_gcm_encrypt(key: &[u8], nonce: &[u8], associated_data: &[u8], plaintext: &[u8]) -> LabradorResult<Vec<u8>> {
+pub fn aes_gcm_encrypt(
+    key: &[u8],
+    nonce: &[u8],
+    associated_data: &[u8],
+    plaintext: &[u8],
+) -> LabradorResult<Vec<u8>> {
     let cipher = match key.len() {
         16 => symm::Cipher::aes_128_gcm(),
         32 => symm::Cipher::aes_256_gcm(),
@@ -292,8 +352,15 @@ pub fn aes_gcm_encrypt(key: &[u8], nonce: &[u8], associated_data: &[u8], plainte
     };
 
     let mut tag = vec![0u8; 16];
-    let encrypted = symm::encrypt_aead(cipher, key, Some(nonce), associated_data, plaintext, &mut tag)
-        .map_err(|e| CryptoError::Encryption(format!("加密失败: {}", e)))?;
+    let encrypted = symm::encrypt_aead(
+        cipher,
+        key,
+        Some(nonce),
+        associated_data,
+        plaintext,
+        &mut tag,
+    )
+    .map_err(|e| CryptoError::Encryption(format!("加密失败: {}", e)))?;
 
     // 合并加密数据和tag
     let mut result = encrypted;
@@ -301,7 +368,13 @@ pub fn aes_gcm_encrypt(key: &[u8], nonce: &[u8], associated_data: &[u8], plainte
     Ok(result)
 }
 
-pub fn aes_gcm_decrypt(key: &[u8], nonce: &[u8], associated_data: &[u8], ciphertext: &[u8], tag: &[u8]) -> LabradorResult<Vec<u8>> {
+pub fn aes_gcm_decrypt(
+    key: &[u8],
+    nonce: &[u8],
+    associated_data: &[u8],
+    ciphertext: &[u8],
+    tag: &[u8],
+) -> LabradorResult<Vec<u8>> {
     let cipher = match key.len() {
         16 => symm::Cipher::aes_128_gcm(),
         32 => symm::Cipher::aes_256_gcm(),
@@ -316,7 +389,12 @@ pub fn random_bytes(len: usize) -> LabradorResult<Vec<u8>> {
     OpenSslCrypto.random_bytes(len)
 }
 
-pub fn pbkdf2(password: &[u8], salt: &[u8], iterations: u32, key_len: usize) -> LabradorResult<Vec<u8>> {
+pub fn pbkdf2(
+    password: &[u8],
+    salt: &[u8],
+    iterations: u32,
+    key_len: usize,
+) -> LabradorResult<Vec<u8>> {
     OpenSslCrypto.pbkdf2(password, salt, iterations, key_len)
 }
 
@@ -324,14 +402,27 @@ pub fn rsa_sign(private_key: &[u8], data: &[u8], hash_type: HashType) -> Labrado
     OpenSslCrypto.rsa_sign(private_key, data, hash_type)
 }
 
-pub fn rsa_verify(public_key: &[u8], data: &[u8], signature: &[u8], hash_type: HashType) -> LabradorResult<bool> {
+pub fn rsa_verify(
+    public_key: &[u8],
+    data: &[u8],
+    signature: &[u8],
+    hash_type: HashType,
+) -> LabradorResult<bool> {
     OpenSslCrypto.rsa_verify(public_key, data, signature, hash_type)
 }
 
-pub fn rsa_encrypt(_public_key: &[u8], _plaintext: &[u8], _format: RsaKeyFormat) -> LabradorResult<Vec<u8>> {
+pub fn rsa_encrypt(
+    _public_key: &[u8],
+    _plaintext: &[u8],
+    _format: RsaKeyFormat,
+) -> LabradorResult<Vec<u8>> {
     Err(CryptoError::AlgorithmUnsupported("RSA加密暂不支持".to_string()).into())
 }
 
-pub fn rsa_decrypt(_private_key: &[u8], _ciphertext: &[u8], _format: RsaKeyFormat) -> LabradorResult<Vec<u8>> {
+pub fn rsa_decrypt(
+    _private_key: &[u8],
+    _ciphertext: &[u8],
+    _format: RsaKeyFormat,
+) -> LabradorResult<Vec<u8>> {
     Err(CryptoError::AlgorithmUnsupported("RSA解密暂不支持".to_string()).into())
 }

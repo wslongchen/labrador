@@ -16,9 +16,8 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
-
 
 /// 微信小程序配置
 #[derive(Debug, Clone)]

@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 use serde::{Deserialize, Serialize};
 
@@ -35,7 +35,6 @@ pub struct Code2SessionResponse {
     /// 错误信息
     pub errmsg: String,
 }
-
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct WechatResetUserSessionKeyResponse {

@@ -16,10 +16,10 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
-use crate::{AesEncryptor, AesMode, CryptoUtils, HashAlgorithm};
 use crate::errors::{LabraError, LabradorResult};
+use crate::{AesEncryptor, AesMode, CryptoUtils, HashAlgorithm};
 
 /// 微信消息加解密器
 pub struct MessageCrypto {
@@ -35,7 +35,9 @@ impl MessageCrypto {
     /// 创建新的消息加解密器
     pub fn new(app_id: &str, encoding_aes_key: &str, token: &str) -> LabradorResult<Self> {
         if encoding_aes_key.len() != 43 {
-            return Err(LabraError::Crypto("encoding_aes_key长度必须为43个字符".to_string()));
+            return Err(LabraError::Crypto(
+                "encoding_aes_key长度必须为43个字符".to_string(),
+            ));
         }
 
         Ok(Self {
@@ -47,7 +49,7 @@ impl MessageCrypto {
 
     /// 加密消息
     pub fn encrypt_message(&self, plaintext: &str) -> LabradorResult<String> {
-        use base64::{Engine as _, engine::general_purpose::STANDARD};
+        use base64::{engine::general_purpose::STANDARD, Engine as _};
 
         // 生成随机字符串
         let nonce = crate::utils::string::random_string(16);
@@ -61,7 +63,8 @@ impl MessageCrypto {
         data.extend_from_slice(self.app_id.as_bytes());
 
         // Base64解码AES密钥
-        let aes_key = STANDARD.decode(&self.encoding_aes_key)
+        let aes_key = STANDARD
+            .decode(&self.encoding_aes_key)
             .map_err(|e| LabraError::Crypto(format!("解码AES密钥失败: {}", e)))?;
 
         // 使用AES-CBC加密
@@ -92,8 +95,14 @@ impl MessageCrypto {
     }
 
     /// 解密消息
-    pub fn decrypt_message(&self, ciphertext: &str, timestamp: &str, nonce: &str, signature: &str) -> LabradorResult<String> {
-        use base64::{Engine as _, engine::general_purpose::STANDARD};
+    pub fn decrypt_message(
+        &self,
+        ciphertext: &str,
+        timestamp: &str,
+        nonce: &str,
+        signature: &str,
+    ) -> LabradorResult<String> {
+        use base64::{engine::general_purpose::STANDARD, Engine as _};
 
         // 验证签名
         let expected_signature = self.generate_signature(timestamp, nonce, ciphertext)?;
@@ -102,11 +111,13 @@ impl MessageCrypto {
         }
 
         // Base64解码加密数据
-        let encrypted_data = STANDARD.decode(ciphertext)
+        let encrypted_data = STANDARD
+            .decode(ciphertext)
             .map_err(|e| LabraError::Crypto(format!("解码加密数据失败: {}", e)))?;
 
         // Base64解码AES密钥
-        let aes_key = STANDARD.decode(&self.encoding_aes_key)
+        let aes_key = STANDARD
+            .decode(&self.encoding_aes_key)
             .map_err(|e| LabraError::Crypto(format!("解码AES密钥失败: {}", e)))?;
 
         // 使用AES-CBC解密
@@ -119,7 +130,9 @@ impl MessageCrypto {
             return Err(LabraError::Crypto("解密数据长度不足".to_string()));
         }
 
-        let message_len = u32::from_be_bytes([decrypted[16], decrypted[17], decrypted[18], decrypted[19]]) as usize;
+        let message_len =
+            u32::from_be_bytes([decrypted[16], decrypted[17], decrypted[18], decrypted[19]])
+                as usize;
 
         if decrypted.len() < 20 + message_len + self.app_id.len() {
             return Err(LabraError::Crypto("消息长度不匹配".to_string()));
@@ -138,13 +151,16 @@ impl MessageCrypto {
             return Err(LabraError::Crypto("app_id验证失败".to_string()));
         }
 
-        String::from_utf8(message.to_vec())
-            .map_err(|e| LabraError::Utf8(e))
+        String::from_utf8(message.to_vec()).map_err(|e| LabraError::Utf8(e))
     }
 
     /// 生成消息签名
-    fn generate_signature(&self, timestamp: &str, nonce: &str, ciphertext: &str) -> LabradorResult<String> {
-
+    fn generate_signature(
+        &self,
+        timestamp: &str,
+        nonce: &str,
+        ciphertext: &str,
+    ) -> LabradorResult<String> {
         // 构造签名字符串：token + timestamp + nonce + ciphertext
         let mut items = vec![&self.token, timestamp, nonce, ciphertext];
         items.sort();

@@ -19,11 +19,14 @@
  *
  */
 use serde::{Deserialize, Serialize};
-use serde_json::{json};
+use serde_json::json;
 
 use crate::errors::{LabraError, LabradorResult};
 use crate::wechat::client::WechatApiResponse;
-use crate::wechat::cp::types::{WELCOME_MSG_TYPE_FILE, WELCOME_MSG_TYPE_IMAGE, WELCOME_MSG_TYPE_LINK, WELCOME_MSG_TYPE_MINIPROGRAM, WELCOME_MSG_TYPE_VIDEO};
+use crate::wechat::cp::types::{
+    WELCOME_MSG_TYPE_FILE, WELCOME_MSG_TYPE_IMAGE, WELCOME_MSG_TYPE_LINK,
+    WELCOME_MSG_TYPE_MINIPROGRAM, WELCOME_MSG_TYPE_VIDEO,
+};
 use crate::wechat::cp::WechatCpClient;
 
 /// 企业微信外部联系人管理模块
@@ -48,14 +51,20 @@ impl<'a> WechatCpExternalContact<'a> {
     /// 注意:
     /// - 通过API添加的「联系我」不会在管理端进行展示，每个企业可通过API最多配置50万个「联系我」
     /// - 临时会话模式不占用「联系我」数量，但每日最多添加10万个，并且仅支持单人
-    pub async fn add_contact_way(&self, contact_way: ContactWay) -> LabradorResult<ContactWayResponse> {
+    pub async fn add_contact_way(
+        &self,
+        contact_way: ContactWay,
+    ) -> LabradorResult<ContactWayResponse> {
         // 校验用户数量
         if let Some(users) = &contact_way.user {
             if users.len() > 100 {
-                return Err(LabraError::RequestError("「联系我」使用人数默认限制不超过100人".to_string()));
+                return Err(LabraError::RequestError(
+                    "「联系我」使用人数默认限制不超过100人".to_string(),
+                ));
             }
         }
-        let response: WechatApiResponse<ContactWayResponse> = self.client
+        let response: WechatApiResponse<ContactWayResponse> = self
+            .client
             .post("/cgi-bin/externalcontact/add_contact_way", contact_way)
             .await?;
         response.into_result()
@@ -63,23 +72,35 @@ impl<'a> WechatCpExternalContact<'a> {
 
     /// 获取企业已配置的「联系我」方式
     pub async fn get_contact_way(&self, config_id: &str) -> LabradorResult<ContactWay> {
-        let response: WechatApiResponse<ContactWay> = self.client
-            .post("/cgi-bin/externalcontact/get_contact_way", json!({ "config_id": config_id }))
+        let response: WechatApiResponse<ContactWay> = self
+            .client
+            .post(
+                "/cgi-bin/externalcontact/get_contact_way",
+                json!({ "config_id": config_id }),
+            )
             .await?;
         response.into_result()
     }
 
     /// 更新企业已配置的「联系我」方式
-    pub async fn update_contact_way(&self, contact_way: ContactWay) -> LabradorResult<WechatApiResponse> {
+    pub async fn update_contact_way(
+        &self,
+        contact_way: ContactWay,
+    ) -> LabradorResult<WechatApiResponse> {
         if contact_way.config_id.is_none() {
-            return Err(LabraError::RequestError("更新「联系我」方式需要指定config_id".to_string()));
+            return Err(LabraError::RequestError(
+                "更新「联系我」方式需要指定config_id".to_string(),
+            ));
         }
         if let Some(users) = &contact_way.user {
             if users.len() > 100 {
-                return Err(LabraError::RequestError("「联系我」使用人数默认限制不超过100人".to_string()));
+                return Err(LabraError::RequestError(
+                    "「联系我」使用人数默认限制不超过100人".to_string(),
+                ));
             }
         }
-        let response: WechatApiResponse = self.client
+        let response: WechatApiResponse = self
+            .client
             .post("/cgi-bin/externalcontact/update_contact_way", contact_way)
             .await?;
         Ok(response)
@@ -87,8 +108,12 @@ impl<'a> WechatCpExternalContact<'a> {
 
     /// 删除企业已配置的「联系我」方式
     pub async fn delete_contact_way(&self, config_id: &str) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client
-            .post("/cgi-bin/externalcontact/del_contact_way", json!({ "config_id": config_id }))
+        let response: WechatApiResponse = self
+            .client
+            .post(
+                "/cgi-bin/externalcontact/del_contact_way",
+                json!({ "config_id": config_id }),
+            )
             .await?;
         Ok(response)
     }
@@ -96,12 +121,20 @@ impl<'a> WechatCpExternalContact<'a> {
     /// 结束临时会话
     ///
     /// 将指定的企业成员和客户之前的临时会话断开，断开前会自动下发已配置的结束语。
-    pub async fn close_temp_chat(&self, user_id: &str, external_user_id: &str) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client
-            .post("/cgi-bin/externalcontact/close_temp_chat", json!({
-                "userid": user_id,
-                "external_userid": external_user_id
-            }))
+    pub async fn close_temp_chat(
+        &self,
+        user_id: &str,
+        external_user_id: &str,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .post(
+                "/cgi-bin/externalcontact/close_temp_chat",
+                json!({
+                    "userid": user_id,
+                    "external_userid": external_user_id
+                }),
+            )
             .await?;
         Ok(response)
     }
@@ -112,7 +145,8 @@ impl<'a> WechatCpExternalContact<'a> {
     ///
     /// 企业可通过此接口获取指定成员添加的客户列表。
     pub async fn list_external_contacts(&self, userid: &str) -> LabradorResult<Vec<String>> {
-        let response: WechatApiResponse<ExternalContactListResponse> = self.client
+        let response: WechatApiResponse<ExternalContactListResponse> = self
+            .client
             .get(&format!("/cgi-bin/externalcontact/list?userid={}", userid))
             .await?;
         Ok(response.into_result()?.external_userid)
@@ -121,14 +155,19 @@ impl<'a> WechatCpExternalContact<'a> {
     /// 获取客户详情
     ///
     /// 企业可通过此接口，根据外部联系人的userid，拉取客户详情。
-    pub async fn get_contact_detail(&self, external_userid: &str, cursor: Option<&str>) -> LabradorResult<CpExternalContactDetail> {
-        let mut url = format!("/cgi-bin/externalcontact/get?external_userid={}", external_userid);
+    pub async fn get_contact_detail(
+        &self,
+        external_userid: &str,
+        cursor: Option<&str>,
+    ) -> LabradorResult<CpExternalContactDetail> {
+        let mut url = format!(
+            "/cgi-bin/externalcontact/get?external_userid={}",
+            external_userid
+        );
         if let Some(c) = cursor {
             url.push_str(&format!("&cursor={}", c));
         }
-        let response: WechatApiResponse<CpExternalContactDetail> = self.client
-            .get(&url)
-            .await?;
+        let response: WechatApiResponse<CpExternalContactDetail> = self.client.get(&url).await?;
         response.into_result()
     }
 
@@ -148,15 +187,20 @@ impl<'a> WechatCpExternalContact<'a> {
         if let Some(l) = limit {
             req["limit"] = json!(l);
         }
-        let response: WechatApiResponse<BatchExternalContactDetail> = self.client
+        let response: WechatApiResponse<BatchExternalContactDetail> = self
+            .client
             .post("/cgi-bin/externalcontact/batch/get_by_user", req)
             .await?;
         response.into_result()
     }
 
     /// 修改客户备注信息
-    pub async fn update_remark(&self, req: UpdateRemarkRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client
+    pub async fn update_remark(
+        &self,
+        req: UpdateRemarkRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
             .post("/cgi-bin/externalcontact/remark", req)
             .await?;
         Ok(response)
@@ -164,7 +208,8 @@ impl<'a> WechatCpExternalContact<'a> {
 
     /// 获取配置了客户联系功能的成员列表
     pub async fn list_followers(&self) -> LabradorResult<Vec<String>> {
-        let response: WechatApiResponse<FollowUserListResponse> = self.client
+        let response: WechatApiResponse<FollowUserListResponse> = self
+            .client
             .get("/cgi-bin/externalcontact/get_follow_user_list")
             .await?;
         Ok(response.into_result()?.follow_user)
@@ -173,20 +218,29 @@ impl<'a> WechatCpExternalContact<'a> {
     // ==================== 离职继承 ====================
 
     /// 获取待分配的离职成员列表
-    pub async fn list_unassigned(&self, cursor: Option<&str>, page_size: Option<u64>) -> LabradorResult<UnassignedListResponse> {
+    pub async fn list_unassigned(
+        &self,
+        cursor: Option<&str>,
+        page_size: Option<u64>,
+    ) -> LabradorResult<UnassignedListResponse> {
         let mut req = json!({ "page_size": page_size.unwrap_or(1000) });
         if let Some(c) = cursor {
             req["cursor"] = json!(c);
         }
-        let response: WechatApiResponse<UnassignedListResponse> = self.client
+        let response: WechatApiResponse<UnassignedListResponse> = self
+            .client
             .post("/cgi-bin/externalcontact/get_unassigned_list", req)
             .await?;
         response.into_result()
     }
 
     /// 分配离职成员的客户
-    pub async fn transfer_resigned_customer(&self, req: TransferCustomerRequest) -> LabradorResult<TransferCustomerResponse> {
-        let response: WechatApiResponse<TransferCustomerResponse> = self.client
+    pub async fn transfer_resigned_customer(
+        &self,
+        req: TransferCustomerRequest,
+    ) -> LabradorResult<TransferCustomerResponse> {
+        let response: WechatApiResponse<TransferCustomerResponse> = self
+            .client
             .post("/cgi-bin/externalcontact/resigned/transfer_customer", req)
             .await?;
         response.into_result()
@@ -206,7 +260,8 @@ impl<'a> WechatCpExternalContact<'a> {
         if let Some(c) = cursor {
             req["cursor"] = json!(c);
         }
-        let response: WechatApiResponse<TransferResultResponse> = self.client
+        let response: WechatApiResponse<TransferResultResponse> = self
+            .client
             .post("/cgi-bin/externalcontact/resigned/transfer_result", req)
             .await?;
         response.into_result()
@@ -215,8 +270,12 @@ impl<'a> WechatCpExternalContact<'a> {
     // ==================== 在职继承 ====================
 
     /// 转接在职成员的客户
-    pub async fn transfer_customer(&self, req: TransferCustomerRequest) -> LabradorResult<TransferCustomerResponse> {
-        let response: WechatApiResponse<TransferCustomerResponse> = self.client
+    pub async fn transfer_customer(
+        &self,
+        req: TransferCustomerRequest,
+    ) -> LabradorResult<TransferCustomerResponse> {
+        let response: WechatApiResponse<TransferCustomerResponse> = self
+            .client
             .post("/cgi-bin/externalcontact/transfer_customer", req)
             .await?;
         response.into_result()
@@ -236,7 +295,8 @@ impl<'a> WechatCpExternalContact<'a> {
         if let Some(c) = cursor {
             req["cursor"] = json!(c);
         }
-        let response: WechatApiResponse<TransferResultResponse> = self.client
+        let response: WechatApiResponse<TransferResultResponse> = self
+            .client
             .post("/cgi-bin/externalcontact/transfer_result", req)
             .await?;
         response.into_result()
@@ -262,31 +322,42 @@ impl<'a> WechatCpExternalContact<'a> {
         if let Some(c) = cursor {
             req["cursor"] = json!(c);
         }
-        let response: WechatApiResponse<GroupChatListResponse> = self.client
+        let response: WechatApiResponse<GroupChatListResponse> = self
+            .client
             .post("/cgi-bin/externalcontact/groupchat/list", req)
             .await?;
         response.into_result()
     }
 
     /// 获取客户群详情
-    pub async fn get_group_chat(&self, chat_id: &str, need_name: Option<u8>) -> LabradorResult<GroupChatInfo> {
+    pub async fn get_group_chat(
+        &self,
+        chat_id: &str,
+        need_name: Option<u8>,
+    ) -> LabradorResult<GroupChatInfo> {
         let req = json!({
             "chat_id": chat_id,
             "need_name": need_name.unwrap_or(0),
         });
-        let response: WechatApiResponse<GroupChatInfo> = self.client
+        let response: WechatApiResponse<GroupChatInfo> = self
+            .client
             .post("/cgi-bin/externalcontact/groupchat/get", req)
             .await?;
         response.into_result()
     }
 
     /// 分配离职成员的客户群
-    pub async fn transfer_group_chat(&self, chat_id_list: Vec<String>, new_owner: &str) -> LabradorResult<GroupChatTransferResponse> {
+    pub async fn transfer_group_chat(
+        &self,
+        chat_id_list: Vec<String>,
+        new_owner: &str,
+    ) -> LabradorResult<GroupChatTransferResponse> {
         let req = json!({
             "chat_id_list": chat_id_list,
             "new_owner": new_owner,
         });
-        let response: WechatApiResponse<GroupChatTransferResponse> = self.client
+        let response: WechatApiResponse<GroupChatTransferResponse> = self
+            .client
             .post("/cgi-bin/externalcontact/groupchat/transfer", req)
             .await?;
         response.into_result()
@@ -295,8 +366,12 @@ impl<'a> WechatCpExternalContact<'a> {
     // ==================== 消息群发 ====================
 
     /// 添加企业群发消息任务
-    pub async fn add_msg_template(&self, msg_template: MsgTemplate) -> LabradorResult<MsgTemplateAddResponse> {
-        let response: WechatApiResponse<MsgTemplateAddResponse> = self.client
+    pub async fn add_msg_template(
+        &self,
+        msg_template: MsgTemplate,
+    ) -> LabradorResult<MsgTemplateAddResponse> {
+        let response: WechatApiResponse<MsgTemplateAddResponse> = self
+            .client
             .post("/cgi-bin/externalcontact/add_msg_template", msg_template)
             .await?;
         response.into_result()
@@ -324,19 +399,26 @@ impl<'a> WechatCpExternalContact<'a> {
         if let Some(c) = cursor {
             req["cursor"] = json!(c);
         }
-        let response: WechatApiResponse<GroupMsgListResponse> = self.client
+        let response: WechatApiResponse<GroupMsgListResponse> = self
+            .client
             .post("/cgi-bin/externalcontact/get_group_msg_list_v2", req)
             .await?;
         response.into_result()
     }
 
     /// 获取群发成员发送任务列表
-    pub async fn get_group_msg_task(&self, msgid: &str, limit: Option<i32>, cursor: Option<&str>) -> LabradorResult<GroupMsgTaskResponse> {
+    pub async fn get_group_msg_task(
+        &self,
+        msgid: &str,
+        limit: Option<i32>,
+        cursor: Option<&str>,
+    ) -> LabradorResult<GroupMsgTaskResponse> {
         let mut req = json!({ "msgid": msgid, "limit": limit.unwrap_or(100) });
         if let Some(c) = cursor {
             req["cursor"] = json!(c);
         }
-        let response: WechatApiResponse<GroupMsgTaskResponse> = self.client
+        let response: WechatApiResponse<GroupMsgTaskResponse> = self
+            .client
             .post("/cgi-bin/externalcontact/get_group_msg_task", req)
             .await?;
         response.into_result()
@@ -358,7 +440,8 @@ impl<'a> WechatCpExternalContact<'a> {
         if let Some(c) = cursor {
             req["cursor"] = json!(c);
         }
-        let response: WechatApiResponse<GroupMsgSendResultResponse> = self.client
+        let response: WechatApiResponse<GroupMsgSendResultResponse> = self
+            .client
             .post("/cgi-bin/externalcontact/get_group_msg_send_result", req)
             .await?;
         response.into_result()
@@ -368,8 +451,12 @@ impl<'a> WechatCpExternalContact<'a> {
     ///
     /// 企业微信在向企业推送添加外部联系人事件时，会额外返回一个welcome_code，
     /// 企业以此为凭据调用接口，即可通过成员向新添加的客户发送个性化的欢迎语。
-    pub async fn send_welcome_msg(&self, welcome_msg: WelcomeMsg) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client
+    pub async fn send_welcome_msg(
+        &self,
+        welcome_msg: WelcomeMsg,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
             .post("/cgi-bin/externalcontact/send_welcome_msg", welcome_msg)
             .await?;
         Ok(response)
@@ -378,36 +465,62 @@ impl<'a> WechatCpExternalContact<'a> {
     // ==================== 入群欢迎语素材 ====================
 
     /// 添加入群欢迎语素材
-    pub async fn add_group_welcome_template(&self, template: GroupWelcomeTemplate) -> LabradorResult<String> {
-        let response: WechatApiResponse<AddGroupWelcomeTemplateResponse> = self.client
-            .post("/cgi-bin/externalcontact/group_welcome_template/add", template)
+    pub async fn add_group_welcome_template(
+        &self,
+        template: GroupWelcomeTemplate,
+    ) -> LabradorResult<String> {
+        let response: WechatApiResponse<AddGroupWelcomeTemplateResponse> = self
+            .client
+            .post(
+                "/cgi-bin/externalcontact/group_welcome_template/add",
+                template,
+            )
             .await?;
         Ok(response.into_result()?.template_id)
     }
 
     /// 编辑入群欢迎语素材
-    pub async fn edit_group_welcome_template(&self, template: GroupWelcomeTemplate) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client
-            .post("/cgi-bin/externalcontact/group_welcome_template/edit", template)
+    pub async fn edit_group_welcome_template(
+        &self,
+        template: GroupWelcomeTemplate,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .post(
+                "/cgi-bin/externalcontact/group_welcome_template/edit",
+                template,
+            )
             .await?;
         Ok(response)
     }
 
     /// 获取入群欢迎语素材
-    pub async fn get_group_welcome_template(&self, template_id: &str) -> LabradorResult<GroupWelcomeTemplate> {
-        let response: WechatApiResponse<GroupWelcomeTemplate> = self.client
-            .post("/cgi-bin/externalcontact/group_welcome_template/get", json!({ "template_id": template_id }))
+    pub async fn get_group_welcome_template(
+        &self,
+        template_id: &str,
+    ) -> LabradorResult<GroupWelcomeTemplate> {
+        let response: WechatApiResponse<GroupWelcomeTemplate> = self
+            .client
+            .post(
+                "/cgi-bin/externalcontact/group_welcome_template/get",
+                json!({ "template_id": template_id }),
+            )
             .await?;
         response.into_result()
     }
 
     /// 删除入群欢迎语素材
-    pub async fn delete_group_welcome_template(&self, template_id: &str, agent_id: Option<&str>) -> LabradorResult<WechatApiResponse> {
+    pub async fn delete_group_welcome_template(
+        &self,
+        template_id: &str,
+        agent_id: Option<&str>,
+    ) -> LabradorResult<WechatApiResponse> {
         let mut req = json!({ "template_id": template_id });
         if let Some(a) = agent_id {
             req["agentid"] = json!(a);
         }
-        let response: WechatApiResponse = self.client
+        let response: WechatApiResponse = self
+            .client
             .post("/cgi-bin/externalcontact/group_welcome_template/del", req)
             .await?;
         Ok(response)
@@ -416,7 +529,11 @@ impl<'a> WechatCpExternalContact<'a> {
     // ==================== 客户标签管理 ====================
 
     /// 获取企业客户标签
-    pub async fn get_corp_tag_list(&self, tag_id: Option<Vec<String>>, group_id: Option<Vec<String>>) -> LabradorResult<TagGroupList> {
+    pub async fn get_corp_tag_list(
+        &self,
+        tag_id: Option<Vec<String>>,
+        group_id: Option<Vec<String>>,
+    ) -> LabradorResult<TagGroupList> {
         let mut req = json!({});
         if let Some(t) = tag_id {
             req["tag_id"] = json!(t);
@@ -424,7 +541,8 @@ impl<'a> WechatCpExternalContact<'a> {
         if let Some(g) = group_id {
             req["group_id"] = json!(g);
         }
-        let response: WechatApiResponse<TagGroupList> = self.client
+        let response: WechatApiResponse<TagGroupList> = self
+            .client
             .post("/cgi-bin/externalcontact/get_corp_tag_list", req)
             .await?;
         response.into_result()
@@ -432,26 +550,37 @@ impl<'a> WechatCpExternalContact<'a> {
 
     /// 添加企业客户标签
     pub async fn add_corp_tag(&self, tag_group: TagGroup) -> LabradorResult<TagGroup> {
-        let response: WechatApiResponse<TagGroup> = self.client
+        let response: WechatApiResponse<TagGroup> = self
+            .client
             .post("/cgi-bin/externalcontact/add_corp_tag", tag_group)
             .await?;
         response.into_result()
     }
 
     /// 编辑企业客户标签
-    pub async fn edit_corp_tag(&self, id: &str, name: &str, order: Option<u64>) -> LabradorResult<WechatApiResponse> {
+    pub async fn edit_corp_tag(
+        &self,
+        id: &str,
+        name: &str,
+        order: Option<u64>,
+    ) -> LabradorResult<WechatApiResponse> {
         let mut req = json!({ "id": id, "name": name });
         if let Some(o) = order {
             req["order"] = json!(o);
         }
-        let response: WechatApiResponse = self.client
+        let response: WechatApiResponse = self
+            .client
             .post("/cgi-bin/externalcontact/edit_corp_tag", req)
             .await?;
         Ok(response)
     }
 
     /// 删除企业客户标签
-    pub async fn delete_corp_tag(&self, tag_id: Option<Vec<String>>, group_id: Option<Vec<String>>) -> LabradorResult<WechatApiResponse> {
+    pub async fn delete_corp_tag(
+        &self,
+        tag_id: Option<Vec<String>>,
+        group_id: Option<Vec<String>>,
+    ) -> LabradorResult<WechatApiResponse> {
         let mut req = json!({});
         if let Some(t) = tag_id {
             req["tag_id"] = json!(t);
@@ -459,7 +588,8 @@ impl<'a> WechatCpExternalContact<'a> {
         if let Some(g) = group_id {
             req["group_id"] = json!(g);
         }
-        let response: WechatApiResponse = self.client
+        let response: WechatApiResponse = self
+            .client
             .post("/cgi-bin/externalcontact/del_corp_tag", req)
             .await?;
         Ok(response)
@@ -483,7 +613,8 @@ impl<'a> WechatCpExternalContact<'a> {
         if let Some(r) = remove_tag {
             req["remove_tag"] = json!(r);
         }
-        let response: WechatApiResponse = self.client
+        let response: WechatApiResponse = self
+            .client
             .post("/cgi-bin/externalcontact/mark_tag", req)
             .await?;
         Ok(response)
@@ -509,7 +640,8 @@ impl<'a> WechatCpExternalContact<'a> {
         if let Some(p) = partyid_list {
             req["partyid"] = json!(p);
         }
-        let response: WechatApiResponse<UserBehaviorStatisticResponse> = self.client
+        let response: WechatApiResponse<UserBehaviorStatisticResponse> = self
+            .client
             .post("/cgi-bin/externalcontact/get_user_behavior_data", req)
             .await?;
         Ok(response.into_result()?.behavior_data)
@@ -535,7 +667,8 @@ impl<'a> WechatCpExternalContact<'a> {
         if let Some(o) = owner_filter {
             req["owner_filter"] = json!(o);
         }
-        let response: WechatApiResponse<GroupChatStatisticResponse> = self.client
+        let response: WechatApiResponse<GroupChatStatisticResponse> = self
+            .client
             .post("/cgi-bin/externalcontact/groupchat/statistic", req)
             .await?;
         response.into_result()
@@ -545,19 +678,28 @@ impl<'a> WechatCpExternalContact<'a> {
 
     /// 将微信外部联系人的userid转为微信openid
     pub async fn convert_to_openid(&self, external_userid: &str) -> LabradorResult<String> {
-        let response: WechatApiResponse<ConvertOpenidResponse> = self.client
-            .post("/cgi-bin/externalcontact/convert_to_openid", json!({ "external_userid": external_userid }))
+        let response: WechatApiResponse<ConvertOpenidResponse> = self
+            .client
+            .post(
+                "/cgi-bin/externalcontact/convert_to_openid",
+                json!({ "external_userid": external_userid }),
+            )
             .await?;
         Ok(response.into_result()?.openid)
     }
 
     /// 将unionid转为external_userid
-    pub async fn unionid_to_external_userid(&self, unionid: &str, openid: Option<&str>) -> LabradorResult<String> {
+    pub async fn unionid_to_external_userid(
+        &self,
+        unionid: &str,
+        openid: Option<&str>,
+    ) -> LabradorResult<String> {
         let mut req = json!({ "unionid": unionid });
         if let Some(o) = openid {
             req["openid"] = json!(o);
         }
-        let response: WechatApiResponse<UnionidToExternalUseridResponse> = self.client
+        let response: WechatApiResponse<UnionidToExternalUseridResponse> = self
+            .client
             .post("/cgi-bin/externalcontact/unionid_to_external_userid", req)
             .await?;
         Ok(response.into_result()?.external_userid)

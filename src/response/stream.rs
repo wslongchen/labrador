@@ -21,15 +21,15 @@
 
 //! 流式响应实现
 
-use futures::StreamExt;
+use crate::errors::LabraError;
 use bytes::Bytes;
 use futures::Stream;
+use futures::StreamExt;
 use http::HeaderMap;
 use reqwest;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use url::Url;
-use crate::errors::LabraError;
 
 /// 流式响应
 pub struct StreamResponse {
@@ -101,7 +101,8 @@ impl StreamResponse {
 
     /// 转换为字节流
     pub fn into_bytes_stream(self) -> impl Stream<Item = Result<Bytes, LabraError>> {
-        self.stream.bytes_stream()
+        self.stream
+            .bytes_stream()
             .map(|result| result.map_err(LabraError::Network))
     }
 
@@ -222,7 +223,8 @@ impl StreamResponseBuilder {
     /// 构建StreamResponse
     pub fn build(self, stream: reqwest::Response) -> StreamResponse {
         StreamResponse::new(
-            self.url.unwrap_or_else(|| "http://localhost".parse().unwrap()),
+            self.url
+                .unwrap_or_else(|| "http://localhost".parse().unwrap()),
             self.status.unwrap_or(reqwest::StatusCode::OK),
             self.headers.unwrap_or_default(),
             stream,

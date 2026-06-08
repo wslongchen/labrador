@@ -42,7 +42,8 @@ impl<'a> WechatCpAgent<'a> {
     /// 该API用于获取企业号某个应用的基本信息，包括头像、昵称、帐号类型、认证类型、可见范围等信息。
     /// 详情请见：<https://work.weixin.qq.com/api/doc/10087>
     pub async fn get(&self, agent_id: i32) -> LabradorResult<AgentInfo> {
-        let response: WechatApiResponse<AgentInfo> = self.client
+        let response: WechatApiResponse<AgentInfo> = self
+            .client
             .get(&format!("/cgi-bin/agent/get?agentid={}", agent_id))
             .await?;
         response.into_result()
@@ -53,9 +54,8 @@ impl<'a> WechatCpAgent<'a> {
     /// 仅企业可调用，可设置当前凭证对应的应用；第三方不可调用。
     /// 详情请见：<https://work.weixin.qq.com/api/doc/10088>
     pub async fn set(&self, agent_info: &SetAgentRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client
-            .post("/cgi-bin/agent/set", agent_info)
-            .await?;
+        let response: WechatApiResponse =
+            self.client.post("/cgi-bin/agent/set", agent_info).await?;
         Ok(response)
     }
 
@@ -64,9 +64,8 @@ impl<'a> WechatCpAgent<'a> {
     /// 企业仅可获取当前凭证对应的应用；第三方仅可获取被授权的应用。
     /// 详情请见：<https://work.weixin.qq.com/api/doc/11214>
     pub async fn list(&self) -> LabradorResult<Vec<AgentInfo>> {
-        let response: WechatApiResponse<AgentListResponse> = self.client
-            .get("/cgi-bin/agent/list")
-            .await?;
+        let response: WechatApiResponse<AgentListResponse> =
+            self.client.get("/cgi-bin/agent/list").await?;
         Ok(response.into_result()?.agentlist)
     }
 }

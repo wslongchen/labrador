@@ -21,11 +21,11 @@
 
 //! HTTP请求相关模块
 
-mod request;
 mod body;
+mod request;
 
-pub use body::{RequestBody};
-pub use request::{Request};
+pub use body::RequestBody;
+pub use request::Request;
 
 /// HTTP请求方法
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -85,16 +85,20 @@ impl From<reqwest::Method> for HttpMethod {
 
 impl std::fmt::Display for HttpMethod {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self {
-            HttpMethod::Get => "GET",
-            HttpMethod::Post => "POST",
-            HttpMethod::Put => "PUT",
-            HttpMethod::Delete => "DELETE",
-            HttpMethod::Head => "HEAD",
-            HttpMethod::Options => "OPTIONS",
-            HttpMethod::Patch => "PATCH",
-            HttpMethod::Trace => "TRACE",
-            HttpMethod::Connect => "CONNECT",
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                HttpMethod::Get => "GET",
+                HttpMethod::Post => "POST",
+                HttpMethod::Put => "PUT",
+                HttpMethod::Delete => "DELETE",
+                HttpMethod::Head => "HEAD",
+                HttpMethod::Options => "OPTIONS",
+                HttpMethod::Patch => "PATCH",
+                HttpMethod::Trace => "TRACE",
+                HttpMethod::Connect => "CONNECT",
+            }
+        )
     }
 }

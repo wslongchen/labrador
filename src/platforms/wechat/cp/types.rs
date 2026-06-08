@@ -16,10 +16,9 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 use serde::{Deserialize, Serialize};
-
 
 /**
  * 不弹出授权页面，直接跳转，只能获取用户openid.
@@ -35,7 +34,6 @@ pub static SNSAPI_USERINFO: &str = "snsapi_userinfo";
  * 手动授权,可获取成员的详细信息,包含手机、邮箱。只适用于企业微信或企业号.
  */
 pub static SNSAPI_PRIVATEINFO: &str = "snsapi_privateinfo";
-
 
 /**
  * 图片消息.
@@ -58,7 +56,6 @@ pub static WELCOME_MSG_TYPE_MINIPROGRAM: &str = "miniprogram";
  * 文件消息.
  */
 pub static WELCOME_MSG_TYPE_FILE: &str = "file";
-
 
 /**
  * 文本消息.

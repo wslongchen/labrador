@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 use serde::{Deserialize, Serialize};
@@ -49,7 +49,10 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// # 参数说明
     /// * `request` - 绑定/解绑请求参数，包含快递公司ID、绑定状态、账号密码等。
-    pub async fn bind_account(&self, request: &BindAccountRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn bind_account(
+        &self,
+        request: &BindAccountRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
@@ -88,7 +91,10 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// # 参数说明
     /// * `request` - 取消运单请求参数，包含运单ID、商户订单号等。
-    pub async fn cancel_order(&self, request: &CancelExpressOrderRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn cancel_order(
+        &self,
+        request: &CancelExpressOrderRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
@@ -104,7 +110,10 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// # 参数说明
     /// * `request` - 配置打印员请求参数，包含打印员openid或微信号、绑定/解绑标记。
-    pub async fn update_printer(&self, request: &UpdatePrinterRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn update_printer(
+        &self,
+        request: &UpdatePrinterRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
@@ -124,7 +133,10 @@ impl<'a> WechatMxaExpress<'a> {
         let response: WechatApiResponse<QuotaInfo> = self
             .client
             .wechat_client()
-            .get(&format!("/cgi-bin/express/business/quota/get?delivery_id={}&biz_id={}", delivery_id, biz_id))
+            .get(&format!(
+                "/cgi-bin/express/business/quota/get?delivery_id={}&biz_id={}",
+                delivery_id, biz_id
+            ))
             .await?;
         response.into_result()
     }
@@ -135,7 +147,10 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// # 参数说明
     /// * `request` - 查询运单请求参数。
-    pub async fn get_order(&self, request: &GetExpressOrderRequest) -> LabradorResult<ExpressOrderDetail> {
+    pub async fn get_order(
+        &self,
+        request: &GetExpressOrderRequest,
+    ) -> LabradorResult<ExpressOrderDetail> {
         let response: WechatApiResponse<ExpressOrderDetail> = self
             .client
             .wechat_client()
@@ -150,7 +165,10 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// # 参数说明
     /// * `request` - 模拟更新请求参数。
-    pub async fn test_update_order(&self, request: &TestUpdateOrderRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn test_update_order(
+        &self,
+        request: &TestUpdateOrderRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
@@ -192,7 +210,10 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// # 参数说明
     /// * `request` - 批量查询请求参数，包含订单号列表。
-    pub async fn batch_get_order(&self, request: &BatchGetOrderRequest) -> LabradorResult<Vec<ExpressOrderDetail>> {
+    pub async fn batch_get_order(
+        &self,
+        request: &BatchGetOrderRequest,
+    ) -> LabradorResult<Vec<ExpressOrderDetail>> {
         let response: WechatApiResponse<BatchGetOrderResponse> = self
             .client
             .wechat_client()
@@ -210,7 +231,10 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// # 返回
     /// 包含运单号、面单数据等信息的响应。
-    pub async fn add_order(&self, request: &AddExpressOrderRequest) -> LabradorResult<AddExpressOrderResponse> {
+    pub async fn add_order(
+        &self,
+        request: &AddExpressOrderRequest,
+    ) -> LabradorResult<AddExpressOrderResponse> {
         let response: WechatApiResponse<AddExpressOrderResponse> = self
             .client
             .wechat_client()
@@ -228,7 +252,10 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// # 参数说明
     /// * `request` - 更新审核结果请求。
-    pub async fn update_business(&self, request: &UpdateBusinessRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn update_business(
+        &self,
+        request: &UpdateBusinessRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
@@ -243,7 +270,10 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// # 参数说明
     /// * `request` - 更新轨迹请求。
-    pub async fn update_path(&self, request: &UpdatePathRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn update_path(
+        &self,
+        request: &UpdatePathRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
@@ -258,7 +288,10 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// # 参数说明
     /// * `request` - 预览模板请求。
-    pub async fn preview_template(&self, request: &PreviewTemplateRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn preview_template(
+        &self,
+        request: &PreviewTemplateRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()

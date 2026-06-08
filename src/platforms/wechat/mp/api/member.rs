@@ -18,10 +18,10 @@
  *  *
  *
  */
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-use crate::errors::{LabradorResult, LabraError};
+use crate::errors::{LabraError, LabradorResult};
 use crate::utils::time::timestamp_millis;
 use crate::wechat::client::WechatApiResponse;
 use crate::wechat::mp::types::MEMBER_CARD;
@@ -35,18 +35,18 @@ pub struct WechatMpMember<'a> {
 
 #[allow(unused)]
 impl<'a> WechatMpMember<'a> {
-
     #[inline]
     pub fn new(client: &'a WechatMpClient) -> WechatMpMember<'a> {
-        WechatMpMember {
-            client,
-        }
+        WechatMpMember { client }
     }
 
     /// <pre>
     /// 会员卡创建接口
     /// </pre>
-    pub async fn create_member_card_custom<D: Serialize>(&self, req: D) -> LabradorResult<WechatMpMemberCardCreateResponse> {
+    pub async fn create_member_card_custom<D: Serialize>(
+        &self,
+        req: D,
+    ) -> LabradorResult<WechatMpMemberCardCreateResponse> {
         let v = serde_json::to_value(req)?;
         let req = serde_json::from_value::<WechatMpMemberCardCreateRequest>(v)?;
         self.create_member_card(req).await
@@ -55,10 +55,18 @@ impl<'a> WechatMpMember<'a> {
     /// <pre>
     /// 会员卡创建接口
     /// </pre>
-    pub async fn create_member_card(&self, req: WechatMpMemberCardCreateRequest) -> LabradorResult<WechatMpMemberCardCreateResponse> {
+    pub async fn create_member_card(
+        &self,
+        req: WechatMpMemberCardCreateRequest,
+    ) -> LabradorResult<WechatMpMemberCardCreateResponse> {
         req.valid_check()?;
-        let response: WechatApiResponse<WechatMpMemberCardCreateResponse> = self.client.wechat_client()
-            .post("/card/create", serde_json::to_value(req).unwrap_or(Value::Null))
+        let response: WechatApiResponse<WechatMpMemberCardCreateResponse> = self
+            .client
+            .wechat_client()
+            .post(
+                "/card/create",
+                serde_json::to_value(req).unwrap_or(Value::Null),
+            )
             .await?;
         response.into_result()
     }
@@ -66,9 +74,17 @@ impl<'a> WechatMpMember<'a> {
     /// <pre>
     /// 会员卡激活接口
     /// </pre>
-    pub async fn activate_member_card(&self, req: WechatMpMemberCardActivateRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
-            .post("/card/membercard/activate", serde_json::to_value(req).unwrap_or(Value::Null))
+    pub async fn activate_member_card(
+        &self,
+        req: WechatMpMemberCardActivateRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
+            .post(
+                "/card/membercard/activate",
+                serde_json::to_value(req).unwrap_or(Value::Null),
+            )
             .await?;
         Ok(response)
     }
@@ -76,12 +92,18 @@ impl<'a> WechatMpMember<'a> {
     /// <pre>
     /// 拉取会员信息接口
     /// </pre>
-    pub async fn get_user_info(&self, card_id: &str, code: &str) -> LabradorResult<WechatMpMemberCardUserInfoResponse> {
+    pub async fn get_user_info(
+        &self,
+        card_id: &str,
+        code: &str,
+    ) -> LabradorResult<WechatMpMemberCardUserInfoResponse> {
         let req = json!({
             "card_id": card_id,
             "code": code
         });
-        let response: WechatApiResponse<WechatMpMemberCardUserInfoResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<WechatMpMemberCardUserInfoResponse> = self
+            .client
+            .wechat_client()
             .post("/card/membercard/userinfo/get", req)
             .await?;
         response.into_result()
@@ -94,9 +116,17 @@ impl<'a> WechatMpMember<'a> {
     /// 同时传入add_bonus和bonus时 add_bonus作为积分变动消息中的变量值，而bonus作为卡面上的总积分额度显示。余额变动同理。
     /// 2.开发者可以传入is_notify_bonus控制特殊的积分对账变动不发送消息，余额变动同理。
     /// </pre>
-    pub async fn update_user_member_card(&self, req: WechatMpMemberCardUpdateRequest) -> LabradorResult<WechatMpMemberCardUpdateResponse> {
-        let response: WechatApiResponse<WechatMpMemberCardUpdateResponse> = self.client.wechat_client()
-            .post("/card/membercard/updateuser", serde_json::to_value(req).unwrap_or(Value::Null))
+    pub async fn update_user_member_card(
+        &self,
+        req: WechatMpMemberCardUpdateRequest,
+    ) -> LabradorResult<WechatMpMemberCardUpdateResponse> {
+        let response: WechatApiResponse<WechatMpMemberCardUpdateResponse> = self
+            .client
+            .wechat_client()
+            .post(
+                "/card/membercard/updateuser",
+                serde_json::to_value(req).unwrap_or(Value::Null),
+            )
             .await?;
         response.into_result()
     }
@@ -104,9 +134,17 @@ impl<'a> WechatMpMember<'a> {
     /// <pre>
     /// 设置会员卡激活的字段（会员卡设置：wx_activate=true 时需要）.
     /// </pre>
-    pub async fn set_activate_user_form(&self, req: WechatMpMemberCardActivateUserFormRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
-            .post("/card/membercard/activateuserform/set", serde_json::to_value(req).unwrap_or(Value::Null))
+    pub async fn set_activate_user_form(
+        &self,
+        req: WechatMpMemberCardActivateUserFormRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
+            .post(
+                "/card/membercard/activateuserform/set",
+                serde_json::to_value(req).unwrap_or(Value::Null),
+            )
             .await?;
         Ok(response)
     }
@@ -114,7 +152,11 @@ impl<'a> WechatMpMember<'a> {
     /// <pre>
     /// 获取会员卡开卡插件参数(跳转型开卡组件需要参数).
     /// </pre>
-    pub async fn get_activate_plugin_param(&self, card_id: &str, out_str: &str) -> LabradorResult<ActivatePluginParam> {
+    pub async fn get_activate_plugin_param(
+        &self,
+        card_id: &str,
+        out_str: &str,
+    ) -> LabradorResult<ActivatePluginParam> {
         let url = self.get_activate_plugin_url(card_id, out_str).await?;
         let decode_url = urlencoding::encode(&url);
         let mut params = serde_urlencoded::from_str::<ActivatePluginParam>(decode_url.as_ref())?;
@@ -125,12 +167,18 @@ impl<'a> WechatMpMember<'a> {
     /// <pre>
     /// 获取开卡组件链接接口
     /// </pre>
-    pub async fn get_activate_plugin_url(&self, card_id: &str, out_str: &str) -> LabradorResult<String> {
+    pub async fn get_activate_plugin_url(
+        &self,
+        card_id: &str,
+        out_str: &str,
+    ) -> LabradorResult<String> {
         let req = json!({
            "card_id": card_id,
             "outer_str": out_str
         });
-        let response: WechatApiResponse<Value> = self.client.wechat_client()
+        let response: WechatApiResponse<Value> = self
+            .client
+            .wechat_client()
             .post("/card/membercard/activate/geturl", req)
             .await?;
         let data = response.into_result()?;
@@ -142,8 +190,13 @@ impl<'a> WechatMpMember<'a> {
     /// 更新会员卡信息
     /// </pre>
     pub async fn update_card_info(&self, req: MemberCardUpdateRequest) -> LabradorResult<bool> {
-        let response: WechatApiResponse<Value> = self.client.wechat_client()
-            .post("/card/update", serde_json::to_value(req).unwrap_or(Value::Null))
+        let response: WechatApiResponse<Value> = self
+            .client
+            .wechat_client()
+            .post(
+                "/card/update",
+                serde_json::to_value(req).unwrap_or(Value::Null),
+            )
             .await?;
         let data = response.into_result()?;
         let send_check = data["send_check"].as_bool().unwrap_or_default();
@@ -155,9 +208,17 @@ impl<'a> WechatMpMember<'a> {
     /// 解析跳转型开卡字段用户提交的资料.
     /// 开发者在URL上截取ticket后须先进行urldecode
     /// </pre>
-    pub async fn get_activate_tempinfo(&self, activate_ticket: &str) -> LabradorResult<WechatMpMemberCardActivateTempInfoResponse> {
-        let response: WechatApiResponse<WechatMpMemberCardActivateTempInfoResponse> = self.client.wechat_client()
-            .post("/card/membercard/activatetempinfo/get", json!({ "activate_ticket": activate_ticket }))
+    pub async fn get_activate_tempinfo(
+        &self,
+        activate_ticket: &str,
+    ) -> LabradorResult<WechatMpMemberCardActivateTempInfoResponse> {
+        let response: WechatApiResponse<WechatMpMemberCardActivateTempInfoResponse> = self
+            .client
+            .wechat_client()
+            .post(
+                "/card/membercard/activatetempinfo/get",
+                json!({ "activate_ticket": activate_ticket }),
+            )
             .await?;
         response.into_result()
     }
@@ -174,75 +235,128 @@ impl WechatMpMemberCardCreateRequest {
     pub fn valid_check(&self) -> LabradorResult<()> {
         let req = &self.card;
         if req.card_type.ne(MEMBER_CARD) {
-            return Err(LabraError::RequestError("卡券类型必须等于MEMBER_CARD".to_string()));
+            return Err(LabraError::RequestError(
+                "卡券类型必须等于MEMBER_CARD".to_string(),
+            ));
         }
         let member_card = &req.member_card;
         if member_card.prerogative.is_empty() {
-            return Err(LabraError::RequestError("会员卡特权说明不能为空:prerogative".to_string()));
+            return Err(LabraError::RequestError(
+                "会员卡特权说明不能为空:prerogative".to_string(),
+            ));
         }
         //卡片激活规则
-        if !member_card.auto_activate && member_card.wx_activate && member_card.activate_url.is_none() {
-            return Err(LabraError::RequestError("会员卡激活方式为接口激活，activate_url不能为空".to_string()));
+        if !member_card.auto_activate
+            && member_card.wx_activate
+            && member_card.activate_url.is_none()
+        {
+            return Err(LabraError::RequestError(
+                "会员卡激活方式为接口激活，activate_url不能为空".to_string(),
+            ));
         }
         let base_info = &member_card.base_info;
         if base_info.logo_url.is_empty() {
-            return Err(LabraError::RequestError("会员卡基本信息的商户logo:logo_url不能为空".to_string()));
+            return Err(LabraError::RequestError(
+                "会员卡基本信息的商户logo:logo_url不能为空".to_string(),
+            ));
         }
         if base_info.code_type.is_empty() {
-            return Err(LabraError::RequestError("会员卡基本信息的条码类型:code_type不能为空".to_string()));
+            return Err(LabraError::RequestError(
+                "会员卡基本信息的条码类型:code_type不能为空".to_string(),
+            ));
         }
         if base_info.brand_name.is_empty() {
-            return Err(LabraError::RequestError("会员卡基本信息的商户名字:brand_name不能为空".to_string()));
+            return Err(LabraError::RequestError(
+                "会员卡基本信息的商户名字:brand_name不能为空".to_string(),
+            ));
         }
         if base_info.brand_name.len() > 12 {
-            return Err(LabraError::RequestError("会员卡基本信息的商户名字:brand_name长度不能大于12个汉字".to_string()));
+            return Err(LabraError::RequestError(
+                "会员卡基本信息的商户名字:brand_name长度不能大于12个汉字".to_string(),
+            ));
         }
         if base_info.title.is_empty() {
-            return Err(LabraError::RequestError("会员卡基本信息的卡券名称:title不能为空".to_string()));
+            return Err(LabraError::RequestError(
+                "会员卡基本信息的卡券名称:title不能为空".to_string(),
+            ));
         }
         if base_info.title.len() > 9 {
-            return Err(LabraError::RequestError("会员卡基本信息的卡券名称:title长度不能大于9个汉字".to_string()));
+            return Err(LabraError::RequestError(
+                "会员卡基本信息的卡券名称:title长度不能大于9个汉字".to_string(),
+            ));
         }
         if base_info.color.is_empty() {
-            return Err(LabraError::RequestError("会员卡基本信息的卡颜色:color不能为空".to_string()));
+            return Err(LabraError::RequestError(
+                "会员卡基本信息的卡颜色:color不能为空".to_string(),
+            ));
         }
         if CardColor::from_str(&base_info.color) == CardColor::Unknow {
-            return Err(LabraError::RequestError(format!("会员卡基本信息的卡颜色:{} 不支持", base_info.color)));
+            return Err(LabraError::RequestError(format!(
+                "会员卡基本信息的卡颜色:{} 不支持",
+                base_info.color
+            )));
         }
         if base_info.notice.is_empty() {
-            return Err(LabraError::RequestError("会员卡基本信息的使用提醒:notice不能为空".to_string()));
+            return Err(LabraError::RequestError(
+                "会员卡基本信息的使用提醒:notice不能为空".to_string(),
+            ));
         }
         if base_info.description.is_empty() {
-            return Err(LabraError::RequestError("会员卡基本信息的使用说明:description不能为空".to_string()));
+            return Err(LabraError::RequestError(
+                "会员卡基本信息的使用说明:description不能为空".to_string(),
+            ));
         }
 
         let date_info = &base_info.date_info;
         let date_info_type = DateInfoType::from_str(&date_info.r#type);
         if date_info_type == DateInfoType::Unknow {
-            return Err(LabraError::RequestError(format!("会员卡基本信息的使用日期类型:{} 不合法", date_info.r#type)));
+            return Err(LabraError::RequestError(format!(
+                "会员卡基本信息的使用日期类型:{} 不合法",
+                date_info.r#type
+            )));
         }
         //固定时长
-        if date_info_type == DateInfoType::DATE_TYPE_FIX_TERM && (date_info.fixed_term.is_none() || date_info.fixed_begin_term.is_none()) {
-            return Err(LabraError::RequestError(format!("会员卡基本信息的使用日期为:固定日期 fixedTerm和fixedBeginTerm不能为空")));
+        if date_info_type == DateInfoType::DATE_TYPE_FIX_TERM
+            && (date_info.fixed_term.is_none() || date_info.fixed_begin_term.is_none())
+        {
+            return Err(LabraError::RequestError(format!(
+                "会员卡基本信息的使用日期为:固定日期 fixedTerm和fixedBeginTerm不能为空"
+            )));
         }
         //固定期限
-        if date_info_type == DateInfoType::DATE_TYPE_FIX_TIME_RANGE && (date_info.begin_timestamp.is_none() || date_info.end_timestamp.is_none()) {
-            return Err(LabraError::RequestError(format!("会员卡基本信息的使用日期为:固定期限 fixedTerm和fixedBeginTerm不能为空")));
+        if date_info_type == DateInfoType::DATE_TYPE_FIX_TIME_RANGE
+            && (date_info.begin_timestamp.is_none() || date_info.end_timestamp.is_none())
+        {
+            return Err(LabraError::RequestError(format!(
+                "会员卡基本信息的使用日期为:固定期限 fixedTerm和fixedBeginTerm不能为空"
+            )));
         }
         let current_tmp = timestamp_millis();
-        if date_info_type == DateInfoType::DATE_TYPE_FIX_TIME_RANGE && (date_info.begin_timestamp.unwrap_or_default() * 1000 < current_tmp || date_info.end_timestamp.unwrap_or_default() * 1000 < current_tmp || date_info.begin_timestamp.unwrap_or_default() > date_info.end_timestamp.unwrap_or_default()) {
+        if date_info_type == DateInfoType::DATE_TYPE_FIX_TIME_RANGE
+            && (date_info.begin_timestamp.unwrap_or_default() * 1000 < current_tmp
+                || date_info.end_timestamp.unwrap_or_default() * 1000 < current_tmp
+                || date_info.begin_timestamp.unwrap_or_default()
+                    > date_info.end_timestamp.unwrap_or_default())
+        {
             return Err(LabraError::RequestError(format!("会员卡基本信息的使用日期为:固定期限，beginTimestamp和endTimestamp的值不合法，请检查")));
         }
 
-        if !base_info.use_all_locations.unwrap_or_default() && base_info.location_id_list.is_none() {
-            return Err(LabraError::RequestError("会员卡基本信息的门店使用范围选择指定门店,门店列表:locationIdList不能为空".to_string()));
+        if !base_info.use_all_locations.unwrap_or_default() && base_info.location_id_list.is_none()
+        {
+            return Err(LabraError::RequestError(
+                "会员卡基本信息的门店使用范围选择指定门店,门店列表:locationIdList不能为空"
+                    .to_string(),
+            ));
         }
         // 校验高级信息
         if let Some(advanced_info) = &member_card.advanced_info {
             if let Some(busi_serv_list) = &advanced_info.business_service {
                 for bs in busi_serv_list {
                     if BusinessServiceType::from_str(bs) == BusinessServiceType::Unknow {
-                        return Err(LabraError::RequestError(format!("会员卡高级信息的商户服务:{} 不合法", bs)));
+                        return Err(LabraError::RequestError(format!(
+                            "会员卡高级信息的商户服务:{} 不合法",
+                            bs
+                        )));
                     }
                 }
             }
@@ -420,7 +534,7 @@ pub struct AdvancedInfo {
     /// 若不填写使用条件则在券面拼写 ：无最低消费限制，全场通用，不限品类；并在使用说明显示： 可与其他优惠共享
     pub use_condition: Option<UseCondition>,
     /// 封面摘要
-    #[serde(rename="abstract")]
+    #[serde(rename = "abstract")]
     pub abstracts: Option<Abstracts>,
     /// 图文列表.
     /// 显示在详情内页 ，优惠券券开发者须至少传入 一组图文列表
@@ -437,7 +551,7 @@ pub struct AdvancedInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeLimit {
     /// 限制类型枚举值,支持填入 MONDAY 周一 TUESDAY 周二 WEDNESDAY 周三 THURSDAY 周四 FRIDAY 周五 SATURDAY 周六 SUNDAY 周日 此处只控制显示， 不控制实际使用逻辑，不填默认不显示
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     pub r#type: Option<String>,
     /// 起始时间（小时）,当前type类型下的起始时间（小时） ，如当前结构体内填写了MONDAY， 此处填写了10，则此处表示周一 10:00可用
     pub begin_hour: Option<i64>,
@@ -460,7 +574,7 @@ pub struct TextImageList {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Abstracts {
     /// 指定可用的商品类目,仅用于代金券类型 ，填入后将在券面拼写适用于xxx
-    #[serde(rename="abstract")]
+    #[serde(rename = "abstract")]
     pub abstracts: Option<String>,
     /// 封面图片列表.
     /// 仅支持填入一 个封面图片链接， 上传图片接口 上传获取图片获得链接，填写 非CDN链接会报错，并在此填入。 建议图片尺寸像素850*350
@@ -553,7 +667,7 @@ pub struct MemberCardSkuInfo {
 }
 /// 会员卡颜色
 #[allow(non_camel_case_types)]
-#[derive(Debug, Clone, PartialEq,Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum CardColor {
     Color010,
     Color020,
@@ -589,14 +703,12 @@ impl CardColor {
             "#cc463d" => Self::Color100,
             "#cf3e36" => Self::Color101,
             "#5E6671" => Self::Color102,
-            _ => {
-                Self::Unknow
-            }
+            _ => Self::Unknow,
         }
     }
 }
 #[allow(non_camel_case_types)]
-#[derive(Debug, Clone, PartialEq,Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum DateInfoType {
     /// 永久有效类型
     DATE_TYPE_PERMANENT,
@@ -613,15 +725,13 @@ impl DateInfoType {
             "DATE_TYPE_PERMANENT" => Self::DATE_TYPE_PERMANENT,
             "DATE_TYPE_FIX_TIME_RANGE" => Self::DATE_TYPE_FIX_TIME_RANGE,
             "DATE_TYPE_FIX_TERM" => Self::DATE_TYPE_FIX_TERM,
-            _ => {
-                Self::Unknow
-            }
+            _ => Self::Unknow,
         }
     }
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Clone, PartialEq,Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum BusinessServiceType {
     /// 外卖服务
     BIZ_SERVICE_DELIVER,
@@ -641,15 +751,13 @@ impl BusinessServiceType {
             "BIZ_SERVICE_FREE_PARK" => Self::BIZ_SERVICE_FREE_PARK,
             "BIZ_SERVICE_WITH_PET" => Self::BIZ_SERVICE_WITH_PET,
             "BIZ_SERVICE_FREE_WIFI" => Self::BIZ_SERVICE_FREE_WIFI,
-            _ => {
-                Self::Unknow
-            }
+            _ => Self::Unknow,
         }
     }
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Clone, PartialEq,Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum CardRichFieldType {
     /// 自定义单选
     FORM_FIELD_RADIO,
@@ -667,9 +775,7 @@ impl CardRichFieldType {
             "FORM_FIELD_RADIO" => Self::FORM_FIELD_RADIO,
             "FORM_FIELD_SELECT" => Self::FORM_FIELD_SELECT,
             "FORM_FIELD_CHECK_BOX" => Self::FORM_FIELD_CHECK_BOX,
-            _ => {
-                Self::Unknow
-            }
+            _ => Self::Unknow,
         }
     }
 }
@@ -679,7 +785,7 @@ impl CardRichFieldType {
 pub struct DateInfo {
     /// 使用时间的类型.
     /// 支持固定时长有效类型 固定日期有效类型 永久有效类型：DATE_TYPE_FIX_TERM_RANGE、DATE_TYPE_FIX_TERM 、DATE_TYPE_PERMANENT
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     pub r#type: String,
     /// 起用时间.
     /// type为DATE_TYPE_FIX_TIME_RANGE时专用， 表示起用时间。从1970年1月1日00:00:00至起用时间的秒数 （ 东八区时间,UTC+8，单位为秒 ）
@@ -762,8 +868,6 @@ pub struct NameValues {
     pub value_list: Option<Vec<String>>,
 }
 
-
-
 /// <pre>
 /// 更新会员信息所需字段消息。
 ///
@@ -813,7 +917,6 @@ pub struct NotifyOptional {
     pub is_notify_custom_field3: Option<bool>,
 }
 
-
 /// 更新会员信息的接口调用后的返回结果
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WechatMpMemberCardUpdateResponse {
@@ -859,7 +962,6 @@ impl WechatMpMemberCardActivateUserFormRequest {
 /// 用户表单对象
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemberCardUserForm {
-
     /// 富文本类型字段列表
     pub rich_field_list: Vec<MemberCardUserFormRichField>,
     /// 文本选项类型列表
@@ -872,7 +974,7 @@ pub struct MemberCardUserForm {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemberCardUserFormRichField {
     /// 富文本类型
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     pub r#type: String,
     pub name: String,
     pub values: Vec<String>,
@@ -884,7 +986,6 @@ pub struct ActivatePluginParam {
     pub outer_str: String,
     pub biz: String,
 }
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemberCardUpdateRequest {

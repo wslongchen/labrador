@@ -22,7 +22,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::errors::{LabraError, LabradorResult};
 use crate::wechat::client::WechatApiResponse;
-use crate::wechat::cp::types::{GROUP_ROBOT_MSG_IMAGE, GROUP_ROBOT_MSG_MARKDOWN, GROUP_ROBOT_MSG_NEWS, GROUP_ROBOT_MSG_TEXT};
+use crate::wechat::cp::types::{
+    GROUP_ROBOT_MSG_IMAGE, GROUP_ROBOT_MSG_MARKDOWN, GROUP_ROBOT_MSG_NEWS, GROUP_ROBOT_MSG_TEXT,
+};
 use crate::wechat::cp::WechatCpClient;
 
 /// 企业微信群机器人消息发送模块
@@ -42,7 +44,8 @@ impl<'a> WechatCpGroupRobot<'a> {
 
     /// 获取webhook URL
     fn get_webhook_url(&self) -> LabradorResult<String> {
-        self.client.webhook_url()
+        self.client
+            .webhook_url()
             .ok_or_else(|| LabraError::Config("请先设置webhook_url".to_string()))
             .map(|s| s.to_string())
     }
@@ -59,8 +62,13 @@ impl<'a> WechatCpGroupRobot<'a> {
         mentioned_list: Vec<String>,
         mentioned_mobile_list: Vec<String>,
     ) -> LabradorResult<WechatApiResponse> {
-        self.send_text_with_url(&self.get_webhook_url()?, content, mentioned_list, mentioned_mobile_list)
-            .await
+        self.send_text_with_url(
+            &self.get_webhook_url()?,
+            content,
+            mentioned_list,
+            mentioned_mobile_list,
+        )
+        .await
     }
 
     /// 发送文本消息（指定webhook URL）
@@ -92,9 +100,7 @@ impl<'a> WechatCpGroupRobot<'a> {
             file: None,
         };
 
-        let response: WechatApiResponse = self.client
-            .post(webhook_url, msg)
-            .await?;
+        let response: WechatApiResponse = self.client.post(webhook_url, msg).await?;
         Ok(response)
     }
 
@@ -103,11 +109,16 @@ impl<'a> WechatCpGroupRobot<'a> {
     /// # 参数说明
     /// * `content` - markdown内容，最长不超过4096个字节，必须是utf8编码
     pub async fn send_markdown(&self, content: &str) -> LabradorResult<WechatApiResponse> {
-        self.send_markdown_with_url(&self.get_webhook_url()?, content).await
+        self.send_markdown_with_url(&self.get_webhook_url()?, content)
+            .await
     }
 
     /// 发送Markdown消息（指定webhook URL）
-    pub async fn send_markdown_with_url(&self, webhook_url: &str, content: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn send_markdown_with_url(
+        &self,
+        webhook_url: &str,
+        content: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let msg = RobotMessage {
             msgtype: GROUP_ROBOT_MSG_MARKDOWN.to_string(),
             text: None,
@@ -119,9 +130,7 @@ impl<'a> WechatCpGroupRobot<'a> {
             file: None,
         };
 
-        let response: WechatApiResponse = self.client
-            .post(webhook_url, msg)
-            .await?;
+        let response: WechatApiResponse = self.client.post(webhook_url, msg).await?;
         Ok(response)
     }
 
@@ -131,11 +140,17 @@ impl<'a> WechatCpGroupRobot<'a> {
     /// * `base64` - 图片内容的base64编码
     /// * `md5` - 图片内容（base64编码前）的md5值
     pub async fn send_image(&self, base64: &str, md5: &str) -> LabradorResult<WechatApiResponse> {
-        self.send_image_with_url(&self.get_webhook_url()?, base64, md5).await
+        self.send_image_with_url(&self.get_webhook_url()?, base64, md5)
+            .await
     }
 
     /// 发送图片消息（指定webhook URL）
-    pub async fn send_image_with_url(&self, webhook_url: &str, base64: &str, md5: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn send_image_with_url(
+        &self,
+        webhook_url: &str,
+        base64: &str,
+        md5: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let msg = RobotMessage {
             msgtype: GROUP_ROBOT_MSG_IMAGE.to_string(),
             text: None,
@@ -148,9 +163,7 @@ impl<'a> WechatCpGroupRobot<'a> {
             file: None,
         };
 
-        let response: WechatApiResponse = self.client
-            .post(webhook_url, msg)
-            .await?;
+        let response: WechatApiResponse = self.client.post(webhook_url, msg).await?;
         Ok(response)
     }
 
@@ -158,12 +171,20 @@ impl<'a> WechatCpGroupRobot<'a> {
     ///
     /// # 参数说明
     /// * `articles` - 图文消息列表，支持1到8条图文
-    pub async fn send_news(&self, articles: Vec<CpNewsArticle>) -> LabradorResult<WechatApiResponse> {
-        self.send_news_with_url(&self.get_webhook_url()?, articles).await
+    pub async fn send_news(
+        &self,
+        articles: Vec<CpNewsArticle>,
+    ) -> LabradorResult<WechatApiResponse> {
+        self.send_news_with_url(&self.get_webhook_url()?, articles)
+            .await
     }
 
     /// 发送图文消息（指定webhook URL）
-    pub async fn send_news_with_url(&self, webhook_url: &str, articles: Vec<CpNewsArticle>) -> LabradorResult<WechatApiResponse> {
+    pub async fn send_news_with_url(
+        &self,
+        webhook_url: &str,
+        articles: Vec<CpNewsArticle>,
+    ) -> LabradorResult<WechatApiResponse> {
         let msg = RobotMessage {
             msgtype: GROUP_ROBOT_MSG_NEWS.to_string(),
             text: None,
@@ -173,9 +194,7 @@ impl<'a> WechatCpGroupRobot<'a> {
             file: None,
         };
 
-        let response: WechatApiResponse = self.client
-            .post(webhook_url, msg)
-            .await?;
+        let response: WechatApiResponse = self.client.post(webhook_url, msg).await?;
         Ok(response)
     }
 
@@ -184,11 +203,16 @@ impl<'a> WechatCpGroupRobot<'a> {
     /// # 参数说明
     /// * `media_id` - 文件id，通过文件上传接口获取
     pub async fn send_file(&self, media_id: &str) -> LabradorResult<WechatApiResponse> {
-        self.send_file_with_url(&self.get_webhook_url()?, media_id).await
+        self.send_file_with_url(&self.get_webhook_url()?, media_id)
+            .await
     }
 
     /// 发送文件消息（指定webhook URL）
-    pub async fn send_file_with_url(&self, webhook_url: &str, media_id: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn send_file_with_url(
+        &self,
+        webhook_url: &str,
+        media_id: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let msg = RobotMessage {
             msgtype: "file".to_string(),
             text: None,
@@ -200,9 +224,7 @@ impl<'a> WechatCpGroupRobot<'a> {
             }),
         };
 
-        let response: WechatApiResponse = self.client
-            .post(webhook_url, msg)
-            .await?;
+        let response: WechatApiResponse = self.client.post(webhook_url, msg).await?;
         Ok(response)
     }
 }

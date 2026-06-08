@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -51,7 +51,10 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     }
 
     /// 预下配送单
-    pub async fn pre_add_order(&self, request: &PreAddOrderRequest) -> LabradorResult<PreAddOrderResponse> {
+    pub async fn pre_add_order(
+        &self,
+        request: &PreAddOrderRequest,
+    ) -> LabradorResult<PreAddOrderResponse> {
         let response: WechatApiResponse<PreAddOrderResponse> = self
             .client
             .wechat_client()
@@ -71,7 +74,10 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     }
 
     /// 预取消配送单
-    pub async fn pre_cancel_order(&self, request: &PreCancelOrderRequest) -> LabradorResult<PreCancelOrderResponse> {
+    pub async fn pre_cancel_order(
+        &self,
+        request: &PreCancelOrderRequest,
+    ) -> LabradorResult<PreCancelOrderResponse> {
         let response: WechatApiResponse<PreCancelOrderResponse> = self
             .client
             .wechat_client()
@@ -101,7 +107,10 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     }
 
     /// 重新下单
-    pub async fn re_add_order(&self, request: &ReAddOrderRequest) -> LabradorResult<ReAddOrderResponse> {
+    pub async fn re_add_order(
+        &self,
+        request: &ReAddOrderRequest,
+    ) -> LabradorResult<ReAddOrderResponse> {
         let response: WechatApiResponse<ReAddOrderResponse> = self
             .client
             .wechat_client()
@@ -111,17 +120,26 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     }
 
     /// 模拟更新配送单状态（用于测试）
-    pub async fn realmock_update_order(&self, request: &MockUpdateOrderRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn realmock_update_order(
+        &self,
+        request: &MockUpdateOrderRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/cgi-bin/express/local/business/realmock_update_order", request)
+            .post(
+                "/cgi-bin/express/local/business/realmock_update_order",
+                request,
+            )
             .await?;
         Ok(response)
     }
 
     /// 模拟配送公司更新配送单状态（用于沙盒环境）
-    pub async fn test_update_order(&self, request: &MockUpdateOrderRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn test_update_order(
+        &self,
+        request: &MockUpdateOrderRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
@@ -131,7 +149,10 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     }
 
     /// 拉取配送单信息
-    pub async fn get_order(&self, request: &GetDeliveryOrderRequest) -> LabradorResult<DeliveryOrderDetail> {
+    pub async fn get_order(
+        &self,
+        request: &GetDeliveryOrderRequest,
+    ) -> LabradorResult<DeliveryOrderDetail> {
         let response: WechatApiResponse<DeliveryOrderDetail> = self
             .client
             .wechat_client()
@@ -141,17 +162,26 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     }
 
     /// 异常件退回商家确认
-    pub async fn confirm_return(&self, request: &ConfirmReturnRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn confirm_return(
+        &self,
+        request: &ConfirmReturnRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/cgi-bin/express/local/business/order/confirm_return", request)
+            .post(
+                "/cgi-bin/express/local/business/order/confirm_return",
+                request,
+            )
             .await?;
         Ok(response)
     }
 
     /// 取消配送单
-    pub async fn cancel_order(&self, request: &CancelDeliveryOrderRequest) -> LabradorResult<CancelOrderResponse> {
+    pub async fn cancel_order(
+        &self,
+        request: &CancelDeliveryOrderRequest,
+    ) -> LabradorResult<CancelOrderResponse> {
         let response: WechatApiResponse<CancelOrderResponse> = self
             .client
             .wechat_client()
@@ -171,7 +201,10 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     }
 
     /// 添加配送单
-    pub async fn add_order(&self, request: &AddDeliveryOrderRequest) -> LabradorResult<AddDeliveryOrderResponse> {
+    pub async fn add_order(
+        &self,
+        request: &AddDeliveryOrderRequest,
+    ) -> LabradorResult<AddDeliveryOrderResponse> {
         let response: WechatApiResponse<AddDeliveryOrderResponse> = self
             .client
             .wechat_client()
@@ -183,7 +216,10 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     // --- 运力方使用接口 ---
 
     /// 更新配送单状态（供配送公司调用）
-    pub async fn delivery_update_order(&self, request: &DeliveryUpdateOrderRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn delivery_update_order(
+        &self,
+        request: &DeliveryUpdateOrderRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()

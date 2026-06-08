@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 use serde::Serialize;
 use serde_json::Value;
@@ -43,8 +43,13 @@ impl<'a> WechatMpMedicalAssistant<'a> {
     /// 发送医疗行业消息
     ///
     /// 该接口用于向用户发送医疗相关的消息通知。
-    pub async fn send_channel_msg(&self, request: &SendMedicalMsgRequest) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client.wechat_client()
+    pub async fn send_channel_msg(
+        &self,
+        request: &SendMedicalMsgRequest,
+    ) -> LabradorResult<WechatApiResponse> {
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cityservice/sendchannelmsg", request)
             .await?;
         Ok(response)

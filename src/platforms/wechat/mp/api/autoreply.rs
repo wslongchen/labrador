@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 use serde::Deserialize;
 
@@ -42,7 +42,9 @@ impl<'a> WechatMpAutoReply<'a> {
     /// 获取公众号当前使用的自动回复规则，包括关注后自动回复、消息自动回复、关键词自动回复。
     /// 本接口仅能获取公众号在公众平台官网的自动回复功能中设置的规则。
     pub async fn get_current_autoreply_info(&self) -> LabradorResult<AutoReplyInfo> {
-        let response: WechatApiResponse<AutoReplyInfo> = self.client.wechat_client()
+        let response: WechatApiResponse<AutoReplyInfo> = self
+            .client
+            .wechat_client()
             .get("/cgi-bin/get_current_autoreply_info")
             .await?;
         response.into_result()

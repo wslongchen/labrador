@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 use std::collections::BTreeMap;
 
@@ -70,7 +70,8 @@ impl RequestParametersHolder {
         let mut params_vec: Vec<(&String, &String)> = all_params.iter().collect();
         params_vec.sort_by(|a, b| a.0.cmp(b.0));
 
-        params_vec.iter()
+        params_vec
+            .iter()
             .map(|(k, v)| format!("{}={}", k, v))
             .collect::<Vec<String>>()
             .join("&")
@@ -182,13 +183,19 @@ impl AlipayMethod {
             Self::TradeQuery => "alipay_trade_query_response".to_string(),
             Self::TradeClose => "alipay_trade_close_response".to_string(),
             Self::TradeRefund => "alipay_trade_refund_response".to_string(),
-            Self::TradeFastpayRefundQuery => "alipay_trade_fastpay_refund_query_response".to_string(),
+            Self::TradeFastpayRefundQuery => {
+                "alipay_trade_fastpay_refund_query_response".to_string()
+            }
             Self::TradeCancel => "alipay_trade_cancel_response".to_string(),
             Self::TradeOrderSettle => "alipay_trade_order_settle_response".to_string(),
             Self::SystemOauthToken => "alipay_system_oauth_token_response".to_string(),
             Self::OpenAuthTokenApp => "alipay_open_auth_token_app_response".to_string(),
-            Self::OpenAppAlipaycertDownload => "alipay_open_app_alipaycert_download_response".to_string(),
-            Self::BillDownloadUrlQuery => "alipay_data_dataservice_bill_downloadurl_query_response".to_string(),
+            Self::OpenAppAlipaycertDownload => {
+                "alipay_open_app_alipaycert_download_response".to_string()
+            }
+            Self::BillDownloadUrlQuery => {
+                "alipay_data_dataservice_bill_downloadurl_query_response".to_string()
+            }
             Self::Custom(method) => format!("{}_response", method.replace(".", "_")),
         }
     }

@@ -18,19 +18,19 @@
  *  *
  *
  */
-use std::collections::BTreeMap;
-use base64::Engine;
+use crate::errors::{LabraError, LabradorResult};
+use crate::platforms::wechat::pay::WechatPayConfig;
+use crate::utils::string::random_string;
+use crate::utils::time::timestamp_millis;
+use crate::utils::xml::{XmlMap, XmlSerializer};
+use crate::{CryptoUtils, HashType, RsaEncryptor, RsaKeyFormat};
 use base64::engine::general_purpose;
+use base64::Engine;
 use chrono::{DateTime, Duration, Utc};
 use http::HeaderMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use crate::{CryptoUtils, HashType, RsaEncryptor, RsaKeyFormat};
-use crate::errors::{LabraError, LabradorResult};
-use crate::platforms::wechat::pay::{WechatPayConfig};
-use crate::utils::string::random_string;
-use crate::utils::time::{timestamp_millis};
-use crate::utils::xml::{XmlMap, XmlSerializer};
+use std::collections::BTreeMap;
 
 /// 交易类型
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -61,14 +61,14 @@ impl TradeType {
             TradeType::Miniapp => "JSAPI",
         }
     }
-    
+
     pub fn req_path(&self) -> &'static str {
         match self {
             TradeType::Micropay => "pay/micropay",
             _ => "pay/unifiedorder",
         }
     }
-    
+
     pub fn req_path_v3(&self) -> &'static str {
         match self {
             TradeType::H5 => "/v3/pay/transactions/h5",
@@ -79,7 +79,7 @@ impl TradeType {
             TradeType::Miniapp => "/v3/pay/transactions/jsapi",
         }
     }
-    
+
     pub fn isv_req_path_v3(&self) -> &'static str {
         match self {
             TradeType::H5 => "/v3/pay/partner/transactions/h5",
@@ -87,6 +87,7 @@ impl TradeType {
             TradeType::Native => "/v3/pay/partner/transactions/native",
             TradeType::App => "/v3/pay/partner/transactions/app",
             TradeType::Micropay => "/v3/pay/partner/transactions/codepay",
+            TradeType::Miniapp => "/v3/pay/partner/transactions/jsapi",
         }
     }
 }
@@ -106,8 +107,6 @@ impl FeeType {
         }
     }
 }
-
-
 
 /// 统一下单请求
 #[derive(Debug, Clone, Serialize)]
@@ -279,9 +278,15 @@ impl UnifiedOrderRequest {
         params.insert("body".to_string(), self.body.clone());
         params.insert("out_trade_no".to_string(), self.out_trade_no.clone());
         params.insert("total_fee".to_string(), self.total_fee.to_string());
-        params.insert("spbill_create_ip".to_string(), self.spbill_create_ip.clone());
+        params.insert(
+            "spbill_create_ip".to_string(),
+            self.spbill_create_ip.clone(),
+        );
         params.insert("notify_url".to_string(), self.notify_url.clone());
-        params.insert("trade_type".to_string(), self.trade_type.as_str().to_string());
+        params.insert(
+            "trade_type".to_string(),
+            self.trade_type.as_str().to_string(),
+        );
 
         if let Some(ref detail) = self.detail {
             params.insert("detail".to_string(), detail.clone());
@@ -293,10 +298,16 @@ impl UnifiedOrderRequest {
             params.insert("fee_type".to_string(), fee_type.as_str().to_string());
         }
         if let Some(ref time_start) = self.time_start {
-            params.insert("time_start".to_string(), time_start.format("%Y%m%d%H%M%S").to_string());
+            params.insert(
+                "time_start".to_string(),
+                time_start.format("%Y%m%d%H%M%S").to_string(),
+            );
         }
         if let Some(ref time_expire) = self.time_expire {
-            params.insert("time_expire".to_string(), time_expire.format("%Y%m%d%H%M%S").to_string());
+            params.insert(
+                "time_expire".to_string(),
+                time_expire.format("%Y%m%d%H%M%S").to_string(),
+            );
         }
         if let Some(ref goods_tag) = self.goods_tag {
             params.insert("goods_tag".to_string(), goods_tag.clone());
@@ -320,7 +331,10 @@ impl UnifiedOrderRequest {
     }
 
     /// 生成签名
-    pub fn generate_sign(params: &BTreeMap<String, String>, api_key: &str) -> LabradorResult<String> {
+    pub fn generate_sign(
+        params: &BTreeMap<String, String>,
+        api_key: &str,
+    ) -> LabradorResult<String> {
         // 构造签名字符串
         let mut sign_string = String::new();
         for (key, value) in params {
@@ -451,18 +465,23 @@ impl UnifiedOrderResponse {
     }
 
     /// 获取JSAPI支付参数
-    pub fn get_jsapi_params(&self, app_id: &str, api_key: &str) -> LabradorResult<JsapiPaymentParams> {
+    pub fn get_jsapi_params(
+        &self,
+        app_id: &str,
+        api_key: &str,
+    ) -> LabradorResult<JsapiPaymentParams> {
         if self.trade_type.as_deref() != Some("JSAPI") {
             return Err(LabraError::Validation("不是JSAPI支付类型".to_string()));
         }
 
-        let prepay_id = self.prepay_id.as_ref()
+        let prepay_id = self
+            .prepay_id
+            .as_ref()
             .ok_or_else(|| LabraError::Validation("缺少prepay_id".to_string()))?;
 
         JsapiPaymentParams::new(app_id, prepay_id, api_key)
     }
 }
-
 
 /// JSAPI支付参数
 #[derive(Debug, Clone, Serialize)]
@@ -578,7 +597,10 @@ impl OrderQueryRequest {
         }
 
         // 生成签名
-        let sign = UnifiedOrderRequest::generate_sign(&params, &config.api_key.to_owned().unwrap_or_default())?;
+        let sign = UnifiedOrderRequest::generate_sign(
+            &params,
+            &config.api_key.to_owned().unwrap_or_default(),
+        )?;
         params.insert("sign".to_string(), sign);
 
         // 转换为XML
@@ -716,7 +738,10 @@ impl OrderQueryResponse {
             params.insert("total_fee".to_string(), total_fee.to_string());
         }
         if let Some(ref settlement_total_fee) = self.settlement_total_fee {
-            params.insert("settlement_total_fee".to_string(), settlement_total_fee.to_string());
+            params.insert(
+                "settlement_total_fee".to_string(),
+                settlement_total_fee.to_string(),
+            );
         }
         if let Some(ref fee_type) = self.fee_type {
             params.insert("fee_type".to_string(), fee_type.clone());
@@ -780,13 +805,12 @@ impl RefundRequest {
             refund_desc: None,
         }
     }
-    
+
     /// 设置退款描述
     pub fn refund_desc(mut self, refund_desc: &str) -> Self {
         self.refund_desc = Some(refund_desc.to_string());
         self
     }
-    
 }
 
 /// 退款响应
@@ -894,13 +918,19 @@ impl RefundResponse {
             params.insert("refund_fee".to_string(), refund_fee.to_string());
         }
         if let Some(ref settlement_refund_fee) = self.settlement_refund_fee {
-            params.insert("settlement_refund_fee".to_string(), settlement_refund_fee.to_string());
+            params.insert(
+                "settlement_refund_fee".to_string(),
+                settlement_refund_fee.to_string(),
+            );
         }
         if let Some(ref total_fee) = self.total_fee {
             params.insert("total_fee".to_string(), total_fee.to_string());
         }
         if let Some(ref settlement_total_fee) = self.settlement_total_fee {
-            params.insert("settlement_total_fee".to_string(), settlement_total_fee.to_string());
+            params.insert(
+                "settlement_total_fee".to_string(),
+                settlement_total_fee.to_string(),
+            );
         }
         if let Some(ref fee_type) = self.fee_type {
             params.insert("fee_type".to_string(), fee_type.clone());
@@ -973,7 +1003,12 @@ pub struct RefundQueryRequest {
 }
 
 impl RefundQueryRequest {
-    pub fn new(transaction_id: Option<String>, out_trade_no: Option<String>, out_refund_no: Option<String>, refund_id: Option<String>) -> Self {
+    pub fn new(
+        transaction_id: Option<String>,
+        out_trade_no: Option<String>,
+        out_refund_no: Option<String>,
+        refund_id: Option<String>,
+    ) -> Self {
         Self {
             transaction_id,
             out_trade_no,
@@ -1036,7 +1071,10 @@ impl RefundQueryResponse {
             params.insert("total_fee".to_string(), total_fee.to_string());
         }
         if let Some(ref settlement_total_fee) = self.settlement_total_fee {
-            params.insert("settlement_total_fee".to_string(), settlement_total_fee.to_string());
+            params.insert(
+                "settlement_total_fee".to_string(),
+                settlement_total_fee.to_string(),
+            );
         }
         if let Some(ref fee_type) = self.fee_type {
             params.insert("fee_type".to_string(), fee_type.clone());
@@ -1112,12 +1150,18 @@ pub struct WechatPayNotifyResponse {
 impl WechatPayNotifyResponse {
     pub fn from_xml(xml: &str) -> LabradorResult<Self> {
         let mut response: Self = XmlSerializer::deserialize(xml)?;
-        if response.return_code.ne(&"SUCCESS")  && !response.return_code.is_empty() {
-            return Err(LabraError::RequestError(format!("微信回调失败: {}", response.return_msg)));
+        if response.return_code.ne(&"SUCCESS") && !response.return_code.is_empty() {
+            return Err(LabraError::RequestError(format!(
+                "微信回调失败: {}",
+                response.return_msg
+            )));
         }
 
         if response.result_code.ne(&"SUCCESS") && !response.result_code.is_empty() {
-            return Err(LabraError::RequestError(format!("微信回调失败: {}", response.return_msg)));
+            return Err(LabraError::RequestError(format!(
+                "微信回调失败: {}",
+                response.return_msg
+            )));
         }
         if response.err_code.is_none() {
             response.err_code = Some(response.return_code.to_string());
@@ -1126,12 +1170,8 @@ impl WechatPayNotifyResponse {
             response.err_code_des = Some(response.return_msg.to_string());
         }
         Ok(response)
-
     }
-
 }
-
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct WechatScanPayNotifyResponse {
@@ -1158,19 +1198,24 @@ impl WechatScanPayNotifyResponse {
 
         if let Some(return_code) = response.return_code.as_ref() {
             if return_code.ne(&"SUCCESS") {
-                return Err(LabraError::RequestError(format!("微信回调失败: {}", response.return_msg.unwrap_or_default())));
+                return Err(LabraError::RequestError(format!(
+                    "微信回调失败: {}",
+                    response.return_msg.unwrap_or_default()
+                )));
             }
 
             if let Some(result_code) = response.result_code.as_ref() {
                 if result_code.ne(&"SUCCESS") {
-                    return Err(LabraError::RequestError(format!("微信回调失败: {}", response.return_msg.unwrap_or_default())));
+                    return Err(LabraError::RequestError(format!(
+                        "微信回调失败: {}",
+                        response.return_msg.unwrap_or_default()
+                    )));
                 }
             }
         }
         Ok(response)
     }
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WechatPayShorturlRequest {
@@ -1190,9 +1235,7 @@ pub struct WechatPayShorturlRequest {
     pub sign: String,
     /// 加密字符串
     pub nonce_str: Option<String>,
-
 }
-
 
 #[allow(unused)]
 impl WechatPayShorturlRequest {
@@ -1205,11 +1248,11 @@ impl WechatPayShorturlRequest {
                 <long_url>{long_url}</long_url>\n\
                 <sign>{sign}</sign>\n\
             </xml>",
-            appid=self.appid.to_owned().unwrap_or_default(),
-            mch_id=self.mch_id.to_owned().unwrap_or_default(),
-            nonce_str=self.nonce_str.to_owned().unwrap_or_default(),
-            long_url=self.long_url.to_owned().unwrap_or_default(),
-            sign=self.sign,
+            appid = self.appid.to_owned().unwrap_or_default(),
+            mch_id = self.mch_id.to_owned().unwrap_or_default(),
+            nonce_str = self.nonce_str.to_owned().unwrap_or_default(),
+            long_url = self.long_url.to_owned().unwrap_or_default(),
+            sign = self.sign,
         );
         msg
     }
@@ -1219,8 +1262,14 @@ impl WechatPayShorturlRequest {
         if let Some(appid) = self.appid.to_owned() {
             pairs.insert("appid".to_string(), appid);
         }
-        pairs.insert("mch_id".to_string(), self.mch_id.to_owned().unwrap_or_default());
-        pairs.insert("long_url".to_string(), self.long_url.to_owned().unwrap_or_default());
+        pairs.insert(
+            "mch_id".to_string(),
+            self.mch_id.to_owned().unwrap_or_default(),
+        );
+        pairs.insert(
+            "long_url".to_string(),
+            self.long_url.to_owned().unwrap_or_default(),
+        );
         if let Some(nonce_str) = self.nonce_str.to_owned() {
             pairs.insert("nonce_str".to_string(), nonce_str);
         }
@@ -1239,8 +1288,6 @@ impl WechatPayShorturlRequest {
     }
 }
 
-
-
 ///
 /// <root>
 /// <out_refund_no><![CDATA[131811191610442717309]]></out_refund_no>
@@ -1258,7 +1305,7 @@ impl WechatPayShorturlRequest {
 /// <transaction_id><![CDATA[4200000215201811190261405420]]></transaction_id>
 /// </root>
 ///
-#[derive(Debug, Serialize, Deserialize,Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct WechatDecryptRefundNotifyResponse {
     /// 退款编号
     pub out_refund_no: String,
@@ -1312,12 +1359,14 @@ pub struct WechatEncryptResponse {
     pub return_msg: Option<String>,
 }
 
-
 impl WechatEncryptResponse {
     pub fn from_xml(xml: &str) -> LabradorResult<WechatEncryptResponse> {
         let response: WechatEncryptResponse = XmlSerializer::deserialize(xml)?;
-        if response.return_code.ne(&"SUCCESS")  && !response.return_code.is_empty() {
-            return Err(LabraError::RequestError(format!("微信回调失败: {}", response.return_msg.unwrap_or_default())));
+        if response.return_code.ne(&"SUCCESS") && !response.return_code.is_empty() {
+            return Err(LabraError::RequestError(format!(
+                "微信回调失败: {}",
+                response.return_msg.unwrap_or_default()
+            )));
         }
 
         Ok(response)
@@ -1366,8 +1415,6 @@ impl BillType {
     }
 }
 
-
-
 /// 撤销订单请求类
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WechatOrderReverseRequest {
@@ -1382,7 +1429,6 @@ pub struct WechatOrderReverseRequest {
     pub sign: String,
     /// 加密字符串
     pub nonce_str: Option<String>,
-
 }
 
 impl WechatOrderReverseRequest {
@@ -1396,12 +1442,12 @@ impl WechatOrderReverseRequest {
                 <transaction_id>{transaction_id}</transaction_id>\n\
                 <sign>{sign}</sign>\n\
             </xml>",
-            appid=self.appid.to_owned().unwrap_or_default(),
-            mch_id=self.mch_id,
-            nonce_str=self.nonce_str.to_owned().unwrap_or_default(),
-            transaction_id=self.transaction_id,
-            out_trade_no=self.out_trade_no,
-            sign=self.sign,
+            appid = self.appid.to_owned().unwrap_or_default(),
+            mch_id = self.mch_id,
+            nonce_str = self.nonce_str.to_owned().unwrap_or_default(),
+            transaction_id = self.transaction_id,
+            out_trade_no = self.out_trade_no,
+            sign = self.sign,
         );
         msg
     }
@@ -1430,8 +1476,6 @@ impl WechatOrderReverseRequest {
     }
 }
 
-
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WechatOrderReverseResponse {
     pub appid: Option<String>,
@@ -1453,17 +1497,21 @@ pub struct WechatOrderReverseResponse {
     pub err_code_des: Option<String>,
 }
 
-
 impl WechatOrderReverseResponse {
-
     pub fn from_xml(xml: &str) -> LabradorResult<Self> {
         let mut response: WechatOrderReverseResponse = XmlSerializer::deserialize(xml)?;
         if response.return_code.ne(&"SUCCESS") && !response.return_code.is_empty() {
-            return Err(LabraError::RequestError(format!("微信处理失败: {}", response.return_msg)));
+            return Err(LabraError::RequestError(format!(
+                "微信处理失败: {}",
+                response.return_msg
+            )));
         }
 
         if response.result_code.ne(&"SUCCESS") && !response.result_code.is_empty() {
-            return Err(LabraError::RequestError(format!("微信回调失败: {}", response.return_msg)));
+            return Err(LabraError::RequestError(format!(
+                "微信回调失败: {}",
+                response.return_msg
+            )));
         }
 
         if response.err_code.is_none() {
@@ -1488,7 +1536,10 @@ impl WechatOrderReverseResponse {
             params.insert("appid".to_string(), app_id.clone());
         }
         params.insert("mch_id".to_string(), self.mch_id.clone());
-        params.insert("nonce_str".to_string(), self.nonce_str.clone().unwrap_or_default());
+        params.insert(
+            "nonce_str".to_string(),
+            self.nonce_str.clone().unwrap_or_default(),
+        );
         params.insert("result_code".to_string(), self.result_code.clone());
         params.insert("return_code".to_string(), self.return_code.clone());
         params.insert("return_msg".to_string(), self.return_msg.clone());
@@ -1506,9 +1557,7 @@ impl WechatOrderReverseResponse {
         let calculated_sign = UnifiedOrderRequest::generate_sign(&params, api_key)?;
         Ok(calculated_sign == self.sign)
     }
-
 }
-
 
 // 微信支付V3版本 ↓
 
@@ -1542,6 +1591,7 @@ pub struct UnifiedOrderRequestV3 {
     ///
     /// 传递的支付结束时间需在下单时间的15天以内，如超过15天，微信支付会自动将该时间调整为下单时间后的第15天。
     /// ```
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub time_expire: Option<String>,
     #[serde(skip_serializing)]
     pub trade_type: TradeType,
@@ -1618,19 +1668,19 @@ impl UnifiedOrderRequestV3 {
         self.trade_type = trade_type;
         self
     }
-    
+
     /// 添加附加数据
     pub fn attach(&mut self, attach: &str) -> &mut Self {
         self.attach = Some(attach.to_string());
         self
     }
-    
+
     /// 添加商户号
     pub fn mch_id(&mut self, mch_id: &str) -> &mut Self {
         self.mch_id = mch_id.to_string();
         self
     }
-    
+
     /// 添加应用ID
     pub fn appid(&mut self, appid: &str) -> &mut Self {
         self.appid = Some(appid.to_string());
@@ -1652,7 +1702,7 @@ impl UnifiedOrderRequestV3 {
     /// 添加商户订单号
     pub fn out_trade_no(&mut self, out_trade_no: &str) -> &mut Self {
         self.out_trade_no = out_trade_no.to_string();
-         self
+        self
     }
 
     /// 添加交易结束时间
@@ -1691,7 +1741,6 @@ impl UnifiedOrderRequestV3 {
         self
     }
 }
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Amount {
@@ -1737,7 +1786,6 @@ pub struct SceneInfo {
     pub h5_info: Option<H5Info>,
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct H5Info {
     /// 场景类型 iOS, Android, Wap
@@ -1756,8 +1804,6 @@ pub struct H5Info {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub package_name: Option<String>,
 }
-
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct StoreInfo {
@@ -1799,8 +1845,7 @@ impl StoreInfo {
     }
 }
 
-
-#[derive(Default,Debug, Serialize, Deserialize, Clone)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct Payer {
     /// 用户号,用户在直连商户appid下的唯一标识。
     #[serde(skip_serializing_if = "String::is_empty")]
@@ -1827,7 +1872,6 @@ impl Payer {
     }
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Detail {
     /// 订单原价
@@ -1841,6 +1885,7 @@ pub struct Detail {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub invoice_id: Option<i32>,
     /// 单品列表
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub goods_detail: Option<Vec<GoodsDetail>>,
 }
 
@@ -1864,9 +1909,9 @@ pub struct WechatSettleInfo {
     ///
     /// 不需要分账（传入false或不传，默认为false）：
     /// 订单收款成功后，资金不会被冻结，而是直接转入基本账户的可用余额。
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub profit_sharing: Option<bool>,
 }
-
 
 /// 付款码支付请求 V3
 #[derive(Debug, Clone, Serialize)]
@@ -1963,7 +2008,6 @@ impl CodepayOrderRequestV3 {
         self
     }
 }
-
 
 // ==================== 合单支付 (Combine) V3 ====================
 
@@ -2115,7 +2159,10 @@ impl CombineOrderQueryRequestV3 {
     }
 
     pub fn req_path(&self) -> String {
-        format!("/v3/combine-transactions/out-trade-no/{}", self.combine_out_trade_no)
+        format!(
+            "/v3/combine-transactions/out-trade-no/{}",
+            self.combine_out_trade_no
+        )
     }
 }
 
@@ -2139,7 +2186,11 @@ pub struct SubOrderCloseInfo {
 }
 
 impl CombineCloseOrderRequestV3 {
-    pub fn new(combine_out_trade_no: &str, combine_mch_id: &str, sub_orders: Vec<SubOrderCloseInfo>) -> Self {
+    pub fn new(
+        combine_out_trade_no: &str,
+        combine_mch_id: &str,
+        sub_orders: Vec<SubOrderCloseInfo>,
+    ) -> Self {
         Self {
             combine_out_trade_no: combine_out_trade_no.to_string(),
             combine_mch_id: combine_mch_id.to_string(),
@@ -2148,10 +2199,12 @@ impl CombineCloseOrderRequestV3 {
     }
 
     pub fn req_path(&self) -> String {
-        format!("/v3/combine-transactions/out-trade-no/{}/close", self.combine_out_trade_no)
+        format!(
+            "/v3/combine-transactions/out-trade-no/{}/close",
+            self.combine_out_trade_no
+        )
     }
 }
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GoodsDetail {
@@ -2161,6 +2214,7 @@ pub struct GoodsDetail {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub wechatpay_goods_id: Option<String>,
     /// 商品名称
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub goods_name: Option<String>,
     /// 商品数量
     pub quantity: i32,
@@ -2175,7 +2229,12 @@ pub struct GoodsDetail {
 }
 
 impl GoodsDetail {
-    pub fn new(merchant_goods_id: String, goods_name: String, quantity: i32, unit_price: i32) -> Self {
+    pub fn new(
+        merchant_goods_id: String,
+        goods_name: String,
+        quantity: i32,
+        unit_price: i32,
+    ) -> Self {
         Self {
             merchant_goods_id,
             wechatpay_goods_id: None,
@@ -2187,7 +2246,6 @@ impl GoodsDetail {
         }
     }
 }
-
 
 #[allow(unused)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -2207,7 +2265,6 @@ pub struct PlatformCertificate {
     /// Base64编码后的密文
     pub serial_no: String,
 }
-
 
 #[allow(unused)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -2239,23 +2296,29 @@ pub struct WechatSignatureHeader {
 impl WechatSignatureHeader {
     pub fn from_header(header: &HeaderMap) -> Self {
         let timpestamp = header.get("Wechatpay-Timestamp");
-        let time_stamp = timpestamp.map(|h| h.to_str().unwrap_or_default().to_string()).unwrap_or_default();
+        let time_stamp = timpestamp
+            .map(|h| h.to_str().unwrap_or_default().to_string())
+            .unwrap_or_default();
         let nonce = header.get("Wechatpay-Nonce");
-        let nonce = nonce.map(|h| h.to_str().unwrap_or_default().to_string()).unwrap_or_default();
+        let nonce = nonce
+            .map(|h| h.to_str().unwrap_or_default().to_string())
+            .unwrap_or_default();
         let signature = header.get("Wechatpay-Signature");
-        let signature = signature.map(|h| h.to_str().unwrap_or_default().to_string()).unwrap_or_default();
+        let signature = signature
+            .map(|h| h.to_str().unwrap_or_default().to_string())
+            .unwrap_or_default();
         let serial = header.get("Wechatpay-Serial");
-        let serial = serial.map(|h| h.to_str().unwrap_or_default().to_string()).unwrap_or_default();
+        let serial = serial
+            .map(|h| h.to_str().unwrap_or_default().to_string())
+            .unwrap_or_default();
         WechatSignatureHeader {
             time_stamp,
             nonce,
             signature,
-            serial
+            serial,
         }
     }
 }
-
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WechatPayCommonResponse<T> {
@@ -2266,14 +2329,12 @@ pub struct WechatPayCommonResponse<T> {
     pub data: T,
 }
 
-impl <T> WechatPayCommonResponse<T> {
-
+impl<T> WechatPayCommonResponse<T> {
     /// 检查是否成功
     pub fn is_success(&self) -> bool {
         self.code.is_none()
     }
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WechatPayResponseV3 {
@@ -2285,33 +2346,40 @@ pub struct WechatPayResponseV3 {
 }
 
 impl WechatPayResponseV3 {
-    pub fn get_pay_info(&self, trade_type: TradeType, appid: Option<String>, mchid: String, private_key: Option<String>) -> LabradorResult<Value> {
+    pub fn get_pay_info(
+        &self,
+        trade_type: TradeType,
+        appid: Option<String>,
+        mchid: String,
+        private_key: Option<String>,
+    ) -> LabradorResult<Value> {
         let timpstamp = timestamp_millis() / 1000;
         let nonce_str = random_string(16);
-        let private_key= private_key.unwrap_or_default();
+        let private_key = private_key.unwrap_or_default();
         let appid = appid.unwrap_or_default();
         let encryptor = RsaEncryptor::with_private_key(private_key.as_bytes(), RsaKeyFormat::Pem);
         match trade_type {
-            TradeType::H5 => {
-                Ok(Value::String(self.h5_url.to_owned().unwrap_or_default()))
-            }
+            TradeType::H5 => Ok(Value::String(self.h5_url.to_owned().unwrap_or_default())),
             TradeType::Jsapi => {
                 let mut result = JsapiResult {
                     app_id: appid.to_owned(),
                     time_stamp: timpstamp.to_string(),
                     nonce_str,
                     prepay_id: self.prepay_id.to_owned().unwrap_or_default(),
-                    package: format!("prepay_id={}", self.prepay_id.to_owned().unwrap_or_default()),
+                    package: format!(
+                        "prepay_id={}",
+                        self.prepay_id.to_owned().unwrap_or_default()
+                    ),
                     sign_type: "RSA".to_string(), //签名类型，默认为RSA，仅支持RSA。
-                    pay_sign: String::default()
+                    pay_sign: String::default(),
                 };
-                let signature = encryptor.sign(result.get_sign_str().as_bytes(), HashType::Sha256).map_err(|e| LabraError::Sign(format!("RSA加密错误: {}", e)))?;
+                let signature = encryptor
+                    .sign(result.get_sign_str().as_bytes(), HashType::Sha256)
+                    .map_err(|e| LabraError::Sign(format!("RSA加密错误: {}", e)))?;
                 result.pay_sign = general_purpose::STANDARD.encode(&signature);
                 Ok(serde_json::to_value(result)?)
             }
-            TradeType::Native => {
-                Ok(Value::String(self.code_url.to_owned().unwrap_or_default()))
-            }
+            TradeType::Native => Ok(Value::String(self.code_url.to_owned().unwrap_or_default())),
             TradeType::App => {
                 let mut result = AppResult {
                     partner_id: mchid,
@@ -2320,17 +2388,18 @@ impl WechatPayResponseV3 {
                     nonce_str,
                     package_value: "Sign=WXPay".to_string(),
                     prepay_id: self.prepay_id.to_owned().unwrap_or_default(),
-                    sign: "".to_string()
+                    sign: "".to_string(),
                 };
-                let signature = encryptor.sign(result.get_sign_str().as_bytes(), HashType::Sha256).map_err(|e| LabraError::Sign(format!("RSA加密错误: {}", e)))?;
+                let signature = encryptor
+                    .sign(result.get_sign_str().as_bytes(), HashType::Sha256)
+                    .map_err(|e| LabraError::Sign(format!("RSA加密错误: {}", e)))?;
                 result.sign = general_purpose::STANDARD.encode(&signature);
                 Ok(serde_json::to_value(result)?)
             }
-            _ => Err(LabraError::Validation("不支持的支付类型".to_string()))
+            _ => Err(LabraError::Validation("不支持的支付类型".to_string())),
         }
     }
 }
-
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -2346,11 +2415,12 @@ pub struct JsapiResult {
 
 impl JsapiResult {
     pub fn get_sign_str(&self) -> String {
-        format!("{}\n{}\n{}\n{}\n", self.app_id, self.time_stamp, self.nonce_str, self.package)
+        format!(
+            "{}\n{}\n{}\n{}\n",
+            self.app_id, self.time_stamp, self.nonce_str, self.package
+        )
     }
 }
-
-
 
 #[derive(Serialize, Deserialize)]
 pub struct AppResult {
@@ -2365,10 +2435,12 @@ pub struct AppResult {
 
 impl AppResult {
     pub fn get_sign_str(&self) -> String {
-        format!("{}\n{}\n{}\n{}\n", self.appid, self.time_stamp, self.nonce_str, self.prepay_id)
+        format!(
+            "{}\n{}\n{}\n{}\n",
+            self.appid, self.time_stamp, self.nonce_str, self.prepay_id
+        )
     }
 }
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PromotionDetail {
@@ -2393,7 +2465,7 @@ pub struct PromotionDetail {
     /// 单品列表
     pub goods_detail: Option<GoodsDetail>,
     /// COUPON：代金券，需要走结算资金的充值型代金券 *  DISCOUNT：优惠券，不走结算资金的免充值型优惠券
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     pub r#type: Option<String>,
 }
 
@@ -2404,7 +2476,7 @@ pub struct RefundPromotionDetail {
     /// 优惠范围 GLOBAL：全场代金券 SINGLE：单品优惠
     pub scope: Option<String>,
     /// COUPON：代金券，需要走结算资金的充值型代金券 *  DISCOUNT：优惠券，不走结算资金的免充值型优惠券
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     pub r#type: Option<String>,
     /// 优惠券面额
     pub amount: i64,
@@ -2412,10 +2484,7 @@ pub struct RefundPromotionDetail {
     pub refund_amount: i64,
     /// 单品列表
     pub goods_detail: Option<GoodsDetail>,
-
 }
-
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OrderQueryRequestV3 {
@@ -2428,7 +2497,6 @@ pub struct OrderQueryRequestV3 {
 }
 
 impl OrderQueryRequestV3 {
-
     pub fn req_path(&self) -> String {
         if let Some(otr) = self.out_trade_no.as_ref() {
             format!("/v3/pay/transactions/out-trade-no/{}", otr)
@@ -2459,7 +2527,7 @@ impl OrderQueryRequestV3 {
 pub struct OrderQueryResponseV3 {
     pub appid: String, //1
     /// 商户号
-    #[serde(rename="mchid")]
+    #[serde(rename = "mchid")]
     pub mch_id: String, //2
     /// 商户系统的订单号，与请求一致。
     pub out_trade_no: String, //3
@@ -2514,7 +2582,6 @@ pub struct OrderQueryResponseV3 {
     #[serde(default)]
     pub cash_fee_type: Option<String>,
 }
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefundRequestV3 {
@@ -2592,8 +2659,6 @@ pub struct RefundAmount {
     pub currency: Option<String>,
 }
 
-
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RefundResponseV3 {
     /// 退款编号
@@ -2639,12 +2704,10 @@ pub struct RefundResponseV3 {
     ///  BASIC : 基本账户（含可用余额和不可用余额）
     pub funds_account: Option<String>,
     /// 金额信息
-    pub amount : RefundAmount,
+    pub amount: RefundAmount,
     /// 优惠退款信息
-    pub promotion_detail : Option<Vec<RefundPromotionDetail>>,
+    pub promotion_detail: Option<Vec<RefundPromotionDetail>>,
 }
-
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RefundQueryResponseV3 {
@@ -2701,8 +2764,6 @@ pub struct RefundQueryResponseV3 {
     pub promotion_detail: Option<Vec<RefundPromotionDetail>>,
 }
 
-
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct WechatPayNotifyResponseV3 {
     /// 源数据
@@ -2727,13 +2788,15 @@ impl WechatPayNotifyResponseV3 {
                 bank_type: "".to_string(),
                 attach: None,
                 success_time: "".to_string(),
-                payer: Payer { openid: "".to_string() },
-                amount: None
+                payer: Payer {
+                    openid: "".to_string(),
+                    auth_code: None,
+                },
+                amount: None,
             }
         }
     }
 }
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OriginNotifyResponse {
@@ -2754,7 +2817,6 @@ pub struct OriginNotifyResponse {
     /// 通知资源数据
     pub resource: WechatEncryptResponseV3,
 }
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct WechatRefundNotifyResponseV3 {
@@ -2781,10 +2843,10 @@ impl WechatRefundNotifyResponseV3 {
                     total: 0,
                     payer_total: None,
                     payer_refund: None,
-                    currency: None
+                    currency: None,
                 },
                 refund_status: "".to_string(),
-                user_received_account: "".to_string()
+                user_received_account: "".to_string(),
             }
         }
     }
@@ -2838,7 +2900,6 @@ pub struct DecryptRefundNotifyResult {
     /// 订单金额
     pub amount: RefundAmount,
 }
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DecryptNotifyResult {
@@ -2904,9 +2965,8 @@ pub struct FundFlowBillResponseV3 {
     pub download_url: String,
 }
 
-
 /// 转换短链接结果对象类
-#[derive(Debug, Serialize, Deserialize,Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct WechatPayShortUrlResponse {
     /// <pre>
     /// URL链接
@@ -2925,8 +2985,17 @@ pub struct WechatPayShortUrlResponse {
 impl WechatPayShortUrlResponse {
     pub fn from_xml(xml: &str) -> LabradorResult<WechatPayShortUrlResponse> {
         let mut response: Self = XmlSerializer::deserialize(xml)?;
-        if response.return_code.clone().unwrap_or_default().ne(&"SUCCESS")  && !response.return_code.is_some() {
-            return Err(LabraError::RequestError(format!("微信回调失败: {}", response.return_msg.unwrap_or_default())));
+        if response
+            .return_code
+            .clone()
+            .unwrap_or_default()
+            .ne(&"SUCCESS")
+            && !response.return_code.is_some()
+        {
+            return Err(LabraError::RequestError(format!(
+                "微信回调失败: {}",
+                response.return_msg.unwrap_or_default()
+            )));
         }
         Ok(response)
     }
@@ -2959,7 +3028,10 @@ impl OrderReverseRequestV3 {
     }
 
     pub fn req_path(&self) -> String {
-        format!("/v3/pay/transactions/out-trade-no/{}/reverse", self.out_trade_no)
+        format!(
+            "/v3/pay/transactions/out-trade-no/{}/reverse",
+            self.out_trade_no
+        )
     }
 }
 

@@ -18,7 +18,7 @@
  *  *
  *
  */
-use serde::{Deserialize};
+use serde::Deserialize;
 use serde_json::json;
 
 use crate::errors::LabradorResult;
@@ -52,9 +52,8 @@ impl<'a> WechatCpTag<'a> {
         if let Some(id) = tag_id {
             req["tagid"] = json!(id);
         }
-        let response: WechatApiResponse<CreateTagResponse> = self.client
-            .post("/cgi-bin/tag/create", req)
-            .await?;
+        let response: WechatApiResponse<CreateTagResponse> =
+            self.client.post("/cgi-bin/tag/create", req).await?;
         Ok(response.into_result()?.tagid)
     }
 
@@ -70,9 +69,7 @@ impl<'a> WechatCpTag<'a> {
             "tagid": tag_id,
             "tagname": tag_name,
         });
-        let response: WechatApiResponse = self.client
-            .post("/cgi-bin/tag/update", req)
-            .await?;
+        let response: WechatApiResponse = self.client.post("/cgi-bin/tag/update", req).await?;
         Ok(response)
     }
 
@@ -83,7 +80,8 @@ impl<'a> WechatCpTag<'a> {
     /// # 参数说明
     /// * `tag_id` - 标签ID
     pub async fn delete(&self, tag_id: i32) -> LabradorResult<WechatApiResponse> {
-        let response: WechatApiResponse = self.client
+        let response: WechatApiResponse = self
+            .client
             .get(&format!("/cgi-bin/tag/delete?tagid={}", tag_id))
             .await?;
         Ok(response)
@@ -96,7 +94,8 @@ impl<'a> WechatCpTag<'a> {
     /// # 参数说明
     /// * `tag_id` - 标签ID
     pub async fn get(&self, tag_id: i32) -> LabradorResult<TagMemberResponse> {
-        let response: WechatApiResponse<TagMemberResponse> = self.client
+        let response: WechatApiResponse<TagMemberResponse> = self
+            .client
             .get(&format!("/cgi-bin/tag/get?tagid={}", tag_id))
             .await?;
         response.into_result()
@@ -121,9 +120,8 @@ impl<'a> WechatCpTag<'a> {
             "userlist": user_ids,
             "partylist": party_ids,
         });
-        let response: WechatApiResponse<TagUserOperationResponse> = self.client
-            .post("/cgi-bin/tag/addtagusers", req)
-            .await?;
+        let response: WechatApiResponse<TagUserOperationResponse> =
+            self.client.post("/cgi-bin/tag/addtagusers", req).await?;
         response.into_result()
     }
 
@@ -146,9 +144,8 @@ impl<'a> WechatCpTag<'a> {
             "userlist": user_ids,
             "partylist": party_ids,
         });
-        let response: WechatApiResponse<TagUserOperationResponse> = self.client
-            .post("/cgi-bin/tag/deltagusers", req)
-            .await?;
+        let response: WechatApiResponse<TagUserOperationResponse> =
+            self.client.post("/cgi-bin/tag/deltagusers", req).await?;
         response.into_result()
     }
 
@@ -156,9 +153,8 @@ impl<'a> WechatCpTag<'a> {
     ///
     /// 详情请见：<https://work.weixin.qq.com/api/doc/90216>
     pub async fn list(&self) -> LabradorResult<Vec<TagInfo>> {
-        let response: WechatApiResponse<TagListResponse> = self.client
-            .get("/cgi-bin/tag/list")
-            .await?;
+        let response: WechatApiResponse<TagListResponse> =
+            self.client.get("/cgi-bin/tag/list").await?;
         Ok(response.into_result()?.taglist)
     }
 }

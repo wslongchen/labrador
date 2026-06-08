@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 use serde::{Deserialize, Serialize};
@@ -50,7 +50,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     ///
     /// # 返回
     /// 成功返回包含 `room_id` 的响应。
-    pub async fn create_room(&self, request: &CreateRoomRequest) -> LabradorResult<CreateRoomResponse> {
+    pub async fn create_room(
+        &self,
+        request: &CreateRoomRequest,
+    ) -> LabradorResult<CreateRoomResponse> {
         let response: WechatApiResponse<CreateRoomResponse> = self
             .client
             .wechat_client()
@@ -72,7 +75,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
         let response: WechatApiResponse<LiveInfoResponse> = self
             .client
             .wechat_client()
-            .get(&format!("/wxa/business/getliveinfo?start={}&limit={}", start, limit))
+            .get(&format!(
+                "/wxa/business/getliveinfo?start={}&limit={}",
+                start, limit
+            ))
             .await?;
         response.into_result()
     }
@@ -86,7 +92,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/room/deleteroom", serde_json::json!({ "roomId": room_id }))
+            .post(
+                "/wxaapi/broadcast/room/deleteroom",
+                serde_json::json!({ "roomId": room_id }),
+            )
             .await?;
         Ok(response)
     }
@@ -96,7 +105,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 该接口用于往指定直播间导入商品。
     /// # 参数说明
     /// * `request` - 导入商品参数，包含直播间ID和商品ID列表等。
-    pub async fn add_goods_to_room(&self, request: &AddGoodsToRoomRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn add_goods_to_room(
+        &self,
+        request: &AddGoodsToRoomRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
@@ -131,7 +143,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
         let response: WechatApiResponse<PushUrlResponse> = self
             .client
             .wechat_client()
-            .get(&format!("/wxaapi/broadcast/room/getpushurl?roomId={}", room_id))
+            .get(&format!(
+                "/wxaapi/broadcast/room/getpushurl?roomId={}",
+                room_id
+            ))
             .await?;
         response.into_result()
     }
@@ -148,7 +163,11 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 注意：此接口返回的是图片流，而非JSON，需要特殊处理。
     /// 此处为简化，返回 `WechatApiResponse<Vec<u8>>` 可能不合适，实际使用时可能需要调整。
     /// 建议在 `wechat_client` 层增加一个直接返回 `Bytes` 的方法。
-    pub async fn get_shared_code(&self, room_id: i32, params: Option<&str>) -> LabradorResult<Vec<u8>> {
+    pub async fn get_shared_code(
+        &self,
+        room_id: i32,
+        params: Option<&str>,
+    ) -> LabradorResult<Vec<u8>> {
         // 假设 wechat_client 有一个 get_bytes 方法
         let url = format!("/wxaapi/broadcast/room/getsharedcode?roomId={}", room_id);
         let url = if let Some(p) = params {
@@ -156,7 +175,11 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
         } else {
             url
         };
-        self.client.wechat_client().get_bytes(&url).await.map(|b| b.to_vec())
+        self.client
+            .wechat_client()
+            .get_bytes(&url)
+            .await
+            .map(|b| b.to_vec())
     }
 
     /// 获取主播副号
@@ -168,7 +191,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
         let response: WechatApiResponse<SubAnchorResponse> = self
             .client
             .wechat_client()
-            .get(&format!("/wxaapi/broadcast/room/getsubanchor?roomId={}", room_id))
+            .get(&format!(
+                "/wxaapi/broadcast/room/getsubanchor?roomId={}",
+                room_id
+            ))
             .await?;
         response.into_result()
     }
@@ -179,14 +205,21 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// # 参数说明
     /// * `room_id` - 直播间ID
     /// * `username` - 副号微信号
-    pub async fn modify_sub_anchor(&self, room_id: i32, username: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn modify_sub_anchor(
+        &self,
+        room_id: i32,
+        username: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/room/modifysubanchor", serde_json::json!({
-                "roomId": room_id,
-                "username": username
-            }))
+            .post(
+                "/wxaapi/broadcast/room/modifysubanchor",
+                serde_json::json!({
+                    "roomId": room_id,
+                    "username": username
+                }),
+            )
             .await?;
         Ok(response)
     }
@@ -200,7 +233,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/room/deletesubanchor", serde_json::json!({ "roomId": room_id }))
+            .post(
+                "/wxaapi/broadcast/room/deletesubanchor",
+                serde_json::json!({ "roomId": room_id }),
+            )
             .await?;
         Ok(response)
     }
@@ -211,14 +247,21 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// # 参数说明
     /// * `room_id` - 直播间ID
     /// * `username` - 副号微信号
-    pub async fn add_sub_anchor(&self, room_id: i32, username: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn add_sub_anchor(
+        &self,
+        room_id: i32,
+        username: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/room/addsubanchor", serde_json::json!({
-                "roomId": room_id,
-                "username": username
-            }))
+            .post(
+                "/wxaapi/broadcast/room/addsubanchor",
+                serde_json::json!({
+                    "roomId": room_id,
+                    "username": username
+                }),
+            )
             .await?;
         Ok(response)
     }
@@ -229,14 +272,21 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// # 参数说明
     /// * `room_id` - 直播间ID
     /// * `goods_id` - 商品ID
-    pub async fn delete_goods_from_room(&self, room_id: i32, goods_id: i32) -> LabradorResult<WechatApiResponse> {
+    pub async fn delete_goods_from_room(
+        &self,
+        room_id: i32,
+        goods_id: i32,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/goods/deleteInRoom", serde_json::json!({
-                "roomId": room_id,
-                "goodsId": goods_id
-            }))
+            .post(
+                "/wxaapi/broadcast/goods/deleteInRoom",
+                serde_json::json!({
+                    "roomId": room_id,
+                    "goodsId": goods_id
+                }),
+            )
             .await?;
         Ok(response)
     }
@@ -247,14 +297,21 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// # 参数说明
     /// * `room_id` - 直播间ID
     /// * `goods_id` - 商品ID
-    pub async fn push_goods(&self, room_id: i32, goods_id: i32) -> LabradorResult<WechatApiResponse> {
+    pub async fn push_goods(
+        &self,
+        room_id: i32,
+        goods_id: i32,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/goods/push", serde_json::json!({
-                "roomId": room_id,
-                "goodsId": goods_id
-            }))
+            .post(
+                "/wxaapi/broadcast/goods/push",
+                serde_json::json!({
+                    "roomId": room_id,
+                    "goodsId": goods_id
+                }),
+            )
             .await?;
         Ok(response)
     }
@@ -266,15 +323,23 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// * `room_id` - 直播间ID
     /// * `goods_id` - 商品ID
     /// * `on_sale` - 上架状态：1-上架，0-下架
-    pub async fn set_goods_on_sale(&self, room_id: i32, goods_id: i32, on_sale: i32) -> LabradorResult<WechatApiResponse> {
+    pub async fn set_goods_on_sale(
+        &self,
+        room_id: i32,
+        goods_id: i32,
+        on_sale: i32,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/goods/onsale", serde_json::json!({
-                "roomId": room_id,
-                "goodsId": goods_id,
-                "onSale": on_sale
-            }))
+            .post(
+                "/wxaapi/broadcast/goods/onsale",
+                serde_json::json!({
+                    "roomId": room_id,
+                    "goodsId": goods_id,
+                    "onSale": on_sale
+                }),
+            )
             .await?;
         Ok(response)
     }
@@ -284,7 +349,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 该接口用于调整直播间内商品的展示顺序。
     /// # 参数说明
     /// * `request` - 排序参数，包含直播间ID和排序后的商品ID列表。
-    pub async fn sort_goods(&self, request: &SortGoodsRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn sort_goods(
+        &self,
+        request: &SortGoodsRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
@@ -298,7 +366,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 该接口用于修改直播间小助手信息。
     /// # 参数说明
     /// * `request` - 修改小助手参数。
-    pub async fn modify_assistant(&self, request: &ModifyAssistantRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn modify_assistant(
+        &self,
+        request: &ModifyAssistantRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
@@ -316,7 +387,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
         let response: WechatApiResponse<AssistantListResponse> = self
             .client
             .wechat_client()
-            .get(&format!("/wxaapi/broadcast/room/getassistantlist?roomId={}", room_id))
+            .get(&format!(
+                "/wxaapi/broadcast/room/getassistantlist?roomId={}",
+                room_id
+            ))
             .await?;
         response.into_result()
     }
@@ -327,14 +401,21 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// # 参数说明
     /// * `room_id` - 直播间ID
     /// * `username` - 小助手微信号
-    pub async fn remove_assistant(&self, room_id: i32, username: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn remove_assistant(
+        &self,
+        room_id: i32,
+        username: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/room/removeassistant", serde_json::json!({
-                "roomId": room_id,
-                "username": username
-            }))
+            .post(
+                "/wxaapi/broadcast/room/removeassistant",
+                serde_json::json!({
+                    "roomId": room_id,
+                    "username": username
+                }),
+            )
             .await?;
         Ok(response)
     }
@@ -345,14 +426,21 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// # 参数说明
     /// * `room_id` - 直播间ID
     /// * `username` - 小助手微信号
-    pub async fn add_assistant(&self, room_id: i32, username: &str) -> LabradorResult<WechatApiResponse> {
+    pub async fn add_assistant(
+        &self,
+        room_id: i32,
+        username: &str,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/room/addassistant", serde_json::json!({
-                "roomId": room_id,
-                "username": username
-            }))
+            .post(
+                "/wxaapi/broadcast/room/addassistant",
+                serde_json::json!({
+                    "roomId": room_id,
+                    "username": username
+                }),
+            )
             .await?;
         Ok(response)
     }
@@ -362,14 +450,21 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// # 参数说明
     /// * `room_id` - 直播间ID
     /// * `ban_comment` - 0-开启禁言，1-关闭禁言（或相反，请以官方文档为准）
-    pub async fn update_comment(&self, room_id: i32, ban_comment: i32) -> LabradorResult<WechatApiResponse> {
+    pub async fn update_comment(
+        &self,
+        room_id: i32,
+        ban_comment: i32,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/room/updatecomment", serde_json::json!({
-                "roomId": room_id,
-                "banComment": ban_comment
-            }))
+            .post(
+                "/wxaapi/broadcast/room/updatecomment",
+                serde_json::json!({
+                    "roomId": room_id,
+                    "banComment": ban_comment
+                }),
+            )
             .await?;
         Ok(response)
     }
@@ -379,14 +474,21 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// # 参数说明
     /// * `room_id` - 直播间ID
     /// * `is_feed_public` - 0-关闭，1-开启
-    pub async fn update_feed_public(&self, room_id: i32, is_feed_public: i32) -> LabradorResult<WechatApiResponse> {
+    pub async fn update_feed_public(
+        &self,
+        room_id: i32,
+        is_feed_public: i32,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/room/updatefeedpublic", serde_json::json!({
-                "roomId": room_id,
-                "isFeedPublic": is_feed_public
-            }))
+            .post(
+                "/wxaapi/broadcast/room/updatefeedpublic",
+                serde_json::json!({
+                    "roomId": room_id,
+                    "isFeedPublic": is_feed_public
+                }),
+            )
             .await?;
         Ok(response)
     }
@@ -396,14 +498,21 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// # 参数说明
     /// * `room_id` - 直播间ID
     /// * `close_kf` - 0-关闭，1-开启（或相反，请以官方文档为准）
-    pub async fn update_kf(&self, room_id: i32, close_kf: i32) -> LabradorResult<WechatApiResponse> {
+    pub async fn update_kf(
+        &self,
+        room_id: i32,
+        close_kf: i32,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/room/updatekf", serde_json::json!({
-                "roomId": room_id,
-                "closeKf": close_kf
-            }))
+            .post(
+                "/wxaapi/broadcast/room/updatekf",
+                serde_json::json!({
+                    "roomId": room_id,
+                    "closeKf": close_kf
+                }),
+            )
             .await?;
         Ok(response)
     }
@@ -413,14 +522,21 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// # 参数说明
     /// * `room_id` - 直播间ID
     /// * `close_replay` - 0-关闭，1-开启（或相反，请以官方文档为准）
-    pub async fn update_replay(&self, room_id: i32, close_replay: i32) -> LabradorResult<WechatApiResponse> {
+    pub async fn update_replay(
+        &self,
+        room_id: i32,
+        close_replay: i32,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/room/updatereplay", serde_json::json!({
-                "roomId": room_id,
-                "closeReplay": close_replay
-            }))
+            .post(
+                "/wxaapi/broadcast/room/updatereplay",
+                serde_json::json!({
+                    "roomId": room_id,
+                    "closeReplay": close_replay
+                }),
+            )
             .await?;
         Ok(response)
     }
@@ -433,11 +549,18 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     ///
     /// # 返回
     /// 包含视频下载地址等信息的响应。
-    pub async fn get_goods_video(&self, room_id: i32, goods_id: i32) -> LabradorResult<GoodsVideoResponse> {
+    pub async fn get_goods_video(
+        &self,
+        room_id: i32,
+        goods_id: i32,
+    ) -> LabradorResult<GoodsVideoResponse> {
         let response: WechatApiResponse<GoodsVideoResponse> = self
             .client
             .wechat_client()
-            .get(&format!("/wxaapi/broadcast/goods/getVideo?roomId={}&goodsId={}", room_id, goods_id))
+            .get(&format!(
+                "/wxaapi/broadcast/goods/getVideo?roomId={}&goodsId={}",
+                room_id, goods_id
+            ))
             .await?;
         response.into_result()
     }
@@ -465,7 +588,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/goods/audit", serde_json::json!({ "goodsId": goods_id }))
+            .post(
+                "/wxaapi/broadcast/goods/audit",
+                serde_json::json!({ "goodsId": goods_id }),
+            )
             .await?;
         Ok(response)
     }
@@ -479,7 +605,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
         let response: WechatApiResponse<GoodsWarehouseResponse> = self
             .client
             .wechat_client()
-            .post("/wxa/business/getgoodswarehouse", serde_json::json!({ "goodsIds": goods_ids }))
+            .post(
+                "/wxa/business/getgoodswarehouse",
+                serde_json::json!({ "goodsIds": goods_ids }),
+            )
             .await?;
         response.into_result().map(|r| r.goods)
     }
@@ -493,7 +622,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/goods/resetaudit", serde_json::json!({ "goodsId": goods_id }))
+            .post(
+                "/wxaapi/broadcast/goods/resetaudit",
+                serde_json::json!({ "goodsId": goods_id }),
+            )
             .await?;
         Ok(response)
     }
@@ -504,7 +636,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 审核通过的商品仅允许更新价格类型与价格，审核中的商品不允许更新，未审核的商品允许更新所有字段。
     /// # 注意
     /// 只传入需要更新的字段。
-    pub async fn update_goods(&self, request: &UpdateGoodsRequest) -> LabradorResult<WechatApiResponse> {
+    pub async fn update_goods(
+        &self,
+        request: &UpdateGoodsRequest,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
@@ -520,11 +655,19 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// * `status` - 商品状态，0：未审核，1：审核中，2：审核通过，3：审核驳回
     /// * `offset` - 起始偏移量
     /// * `limit` - 获取数量，最大30
-    pub async fn get_approved_goods(&self, status: i32, offset: i32, limit: i32) -> LabradorResult<ApprovedGoodsResponse> {
+    pub async fn get_approved_goods(
+        &self,
+        status: i32,
+        offset: i32,
+        limit: i32,
+    ) -> LabradorResult<ApprovedGoodsResponse> {
         let response: WechatApiResponse<ApprovedGoodsResponse> = self
             .client
             .wechat_client()
-            .get(&format!("/wxaapi/broadcast/goods/getapproved?status={}&offset={}&limit={}", status, offset, limit))
+            .get(&format!(
+                "/wxaapi/broadcast/goods/getapproved?status={}&offset={}&limit={}",
+                status, offset, limit
+            ))
             .await?;
         response.into_result()
     }
@@ -538,7 +681,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/goods/delete", serde_json::json!({ "goodsId": goods_id }))
+            .post(
+                "/wxaapi/broadcast/goods/delete",
+                serde_json::json!({ "goodsId": goods_id }),
+            )
             .await?;
         Ok(response)
     }
@@ -555,10 +701,13 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/role/addrole", serde_json::json!({
-                "username": username,
-                "role": role
-            }))
+            .post(
+                "/wxaapi/broadcast/role/addrole",
+                serde_json::json!({
+                    "username": username,
+                    "role": role
+                }),
+            )
             .await?;
         Ok(response)
     }
@@ -569,14 +718,21 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// # 参数说明
     /// * `username` - 成员微信号
     /// * `role` - 角色，2-主播，3-运营者，4-管理员
-    pub async fn delete_role(&self, username: &str, role: i32) -> LabradorResult<WechatApiResponse> {
+    pub async fn delete_role(
+        &self,
+        username: &str,
+        role: i32,
+    ) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxaapi/broadcast/role/deleterole", serde_json::json!({
-                "username": username,
-                "role": role
-            }))
+            .post(
+                "/wxaapi/broadcast/role/deleterole",
+                serde_json::json!({
+                    "username": username,
+                    "role": role
+                }),
+            )
             .await?;
         Ok(response)
     }
@@ -588,11 +744,19 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// * `role` - 角色，2-主播，3-运营者，4-管理员
     /// * `offset` - 起始偏移量
     /// * `limit` - 获取数量，最大30
-    pub async fn get_role_list(&self, role: i32, offset: i32, limit: i32) -> LabradorResult<RoleListResponse> {
+    pub async fn get_role_list(
+        &self,
+        role: i32,
+        offset: i32,
+        limit: i32,
+    ) -> LabradorResult<RoleListResponse> {
         let response: WechatApiResponse<RoleListResponse> = self
             .client
             .wechat_client()
-            .get(&format!("/wxaapi/broadcast/role/getrolelist?role={}&offset={}&limit={}", role, offset, limit))
+            .get(&format!(
+                "/wxaapi/broadcast/role/getrolelist?role={}&offset={}&limit={}",
+                role, offset, limit
+            ))
             .await?;
         response.into_result()
     }
@@ -608,7 +772,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
         let response: WechatApiResponse = self
             .client
             .wechat_client()
-            .post("/wxa/business/push_message", serde_json::json!({ "room_id": room_id }))
+            .post(
+                "/wxa/business/push_message",
+                serde_json::json!({ "room_id": room_id }),
+            )
             .await?;
         Ok(response)
     }
@@ -618,7 +785,10 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 该接口用于获取长期订阅用户列表。
     /// # 参数说明
     /// * `request` - 包含分页参数和可选的上次拉取时间戳。
-    pub async fn get_wxa_followers(&self, request: &GetWxaFollowersRequest) -> LabradorResult<WxaFollowersResponse> {
+    pub async fn get_wxa_followers(
+        &self,
+        request: &GetWxaFollowersRequest,
+    ) -> LabradorResult<WxaFollowersResponse> {
         let response: WechatApiResponse<WxaFollowersResponse> = self
             .client
             .wechat_client()

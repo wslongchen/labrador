@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 //! 微信客户端实现
@@ -25,7 +25,12 @@ use super::{constants, WechatErrorCode};
 use crate::client::builder::ClientBuilder;
 use crate::client::ApiClient;
 use crate::request::RequestBody;
-use crate::{errors::{LabraError, LabradorResult}, request::{HttpMethod, Request}, response::Response, CryptoUtils};
+use crate::{
+    errors::{LabraError, LabradorResult},
+    request::{HttpMethod, Request},
+    response::Response,
+    CryptoUtils,
+};
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime};
@@ -122,10 +127,7 @@ impl AccessToken {
 #[derive(Debug, Clone)]
 pub enum WechatApiResponse<T = serde_json::Value> {
     Success(T),
-    Error {
-        errcode: i32,
-        errmsg: String,
-    },
+    Error { errcode: i32, errmsg: String },
 }
 
 impl<T> WechatApiResponse<T> {
@@ -160,12 +162,9 @@ impl<T> WechatApiResponse<T> {
     pub fn into_result(self) -> Result<T, crate::errors::LabraError> {
         match self {
             WechatApiResponse::Success(data) => Ok(data),
-            WechatApiResponse::Error { errcode, errmsg } => {
-                Err(crate::errors::LabraError::business(
-                    errcode.to_string(),
-                    errmsg,
-                ))
-            }
+            WechatApiResponse::Error { errcode, errmsg } => Err(
+                crate::errors::LabraError::business(errcode.to_string(), errmsg),
+            ),
         }
     }
 }
@@ -185,7 +184,8 @@ where
             let errcode = errcode as i32;
 
             // 如果有 errmsg 字段
-            let errmsg = value.get("errmsg")
+            let errmsg = value
+                .get("errmsg")
                 .and_then(|v| v.as_str())
                 .map(String::from)
                 .unwrap_or_else(|| "Unknown error".to_string());
@@ -209,7 +209,8 @@ where
                     // 如果解析业务数据失败，但 errcode=0，这种情况应该怎么处理？
                     // 可以选择返回 Success(()) 或者返回错误
                     Err(serde::de::Error::custom(format!(
-                        "Failed to parse success data: {}", e
+                        "Failed to parse success data: {}",
+                        e
                     )))
                 }
             }
@@ -218,7 +219,8 @@ where
             match T::deserialize(value) {
                 Ok(data) => Ok(WechatApiResponse::Success(data)),
                 Err(e) => Err(serde::de::Error::custom(format!(
-                    "Failed to parse response: {}", e
+                    "Failed to parse response: {}",
+                    e
                 ))),
             }
         }
@@ -284,10 +286,7 @@ impl WechatClient {
             self.config.app_id, self.config.app_secret
         );
 
-        let response = self.http_client
-            .get(&url, vec![])
-            .await?
-            .text()?;
+        let response = self.http_client.get(&url, vec![]).await?.text()?;
         println!("{}", response);
         let response: WechatApiResponse<AccessToken> = serde_json::from_str(&response)?;
         println!("{:?}", response);
@@ -295,16 +294,24 @@ impl WechatClient {
     }
 
     /// 发送API请求（自动添加AccessToken）
-    pub async fn request<T>(&self, method: HttpMethod, path: &str, body: Option<RequestBody>) -> LabradorResult<T>
+    pub async fn request<T>(
+        &self,
+        method: HttpMethod,
+        path: &str,
+        body: Option<RequestBody>,
+    ) -> LabradorResult<T>
     where
         T: for<'de> Deserialize<'de>,
     {
-        let response = self.request_internal(method.clone(), path, body.clone()).await?;
+        let response = self
+            .request_internal(method.clone(), path, body.clone())
+            .await?;
         let mut result: WechatApiResponse<T> = response.json()?;
 
         // 检查是否需要刷新访问令牌
         if let WechatErrorCode::InvalidAccessToken | WechatErrorCode::AccessTokenExpired =
-            WechatErrorCode::from(result.errcode().unwrap_or(-1)) {
+            WechatErrorCode::from(result.errcode().unwrap_or(-1))
+        {
             // 清除缓存的访问令牌并重试
             self.clear_access_token_cache().await;
             let response = self.request_internal(method, path, body).await?;
@@ -312,9 +319,13 @@ impl WechatClient {
         }
         result.into_result()
     }
-    
-    pub async fn request_internal(&self, method: HttpMethod, path: &str, body: Option<RequestBody>) -> LabradorResult<Response>
-    {
+
+    pub async fn request_internal(
+        &self,
+        method: HttpMethod,
+        path: &str,
+        body: Option<RequestBody>,
+    ) -> LabradorResult<Response> {
         let access_token = self.get_access_token().await?;
         // 判断 path 是否已经包含查询参数
         let url = if path.contains('?') {
@@ -333,7 +344,11 @@ impl WechatClient {
                 .path(&url)
                 .body(body_data)
                 .build(),
-            _ => return Err(LabraError::Validation("不支持的HTTP方法或缺少请求体".to_string())),
+            _ => {
+                return Err(LabraError::Validation(
+                    "不支持的HTTP方法或缺少请求体".to_string(),
+                ))
+            }
         };
         let response = self.http_client.request(request).await?;
         Ok(response)
@@ -359,7 +374,8 @@ impl WechatClient {
         T: for<'de> Deserialize<'de>,
         B: Into<RequestBody>,
     {
-        self.request(HttpMethod::Post, path, Some(body.into())).await
+        self.request(HttpMethod::Post, path, Some(body.into()))
+            .await
     }
 
     /// POST请求获取字节数据
@@ -367,7 +383,9 @@ impl WechatClient {
     where
         B: Into<RequestBody>,
     {
-        let response = self.request_internal(HttpMethod::Post, path, Some(body.into())).await?;
+        let response = self
+            .request_internal(HttpMethod::Post, path, Some(body.into()))
+            .await?;
         Ok(response.bytes())
     }
 
@@ -378,8 +396,12 @@ impl WechatClient {
             ip_list: Vec<String>,
         }
 
-        let response: WechatApiResponse<IpListResponse> = self.get("/cgi-bin/get_api_domain_ip").await?;
-        Ok(response.data().ok_or_else(|| LabraError::Other("No data in response".to_string()))?.ip_list)
+        let response: WechatApiResponse<IpListResponse> =
+            self.get("/cgi-bin/get_api_domain_ip").await?;
+        Ok(response
+            .data()
+            .ok_or_else(|| LabraError::Other("No data in response".to_string()))?
+            .ip_list)
     }
 
     /// 清理访问令牌缓存
@@ -529,17 +551,23 @@ impl JsSdkSigner {
 
     /// 获取JS-SDK票据
     pub async fn get_jsapi_ticket(&self, client: &WechatClient) -> LabradorResult<String> {
+        let response: WechatApiResponse<JsapiTicketResponse> =
+            client.get("/cgi-bin/ticket/getticket?type=jsapi").await?;
 
-        let response: WechatApiResponse<JsapiTicketResponse> = client
-            .get("/cgi-bin/ticket/getticket?type=jsapi")
-            .await?;
-
-        let ticket_response = response.data().ok_or_else(|| LabraError::Other("No ticket in response".to_string()))?;
+        let ticket_response = response
+            .data()
+            .ok_or_else(|| LabraError::Other("No ticket in response".to_string()))?;
         Ok(ticket_response.ticket)
     }
 
     /// 生成JS-SDK签名
-    pub fn generate_signature(&self, ticket: &str, nonce_str: &str, timestamp: i64, url: &str) -> LabradorResult<String> {
+    pub fn generate_signature(
+        &self,
+        ticket: &str,
+        nonce_str: &str,
+        timestamp: i64,
+        url: &str,
+    ) -> LabradorResult<String> {
         let sign_string = format!(
             "jsapi_ticket={}&noncestr={}&timestamp={}&url={}",
             ticket, nonce_str, timestamp, url
@@ -589,7 +617,7 @@ impl JsSdkSigner {
     }
 }
 
-#[derive(Debug, Serialize,Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct JsapiTicketResponse {
     pub ticket: String,
     pub expires_in: i64,

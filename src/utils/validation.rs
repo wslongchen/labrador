@@ -16,14 +16,13 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 /// 验证电子邮件
 pub fn is_email(s: &str) -> bool {
-    let email_regex = regex::Regex::new(
-        r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-    ).unwrap();
+    let email_regex =
+        regex::Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap();
     email_regex.is_match(s)
 }
 
@@ -36,28 +35,24 @@ pub fn is_chinese_phone(s: &str) -> bool {
 /// 验证身份证号码（中国）
 pub fn is_chinese_id_card(s: &str) -> bool {
     let id_regex = regex::Regex::new(
-        r"^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2]\d|3[0-1])\d{3}(\d|X|x)$"
-    ).unwrap();
+        r"^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2]\d|3[0-1])\d{3}(\d|X|x)$",
+    )
+    .unwrap();
     id_regex.is_match(s)
 }
 
 /// 验证URL
 pub fn is_url(s: &str) -> bool {
-    let url_regex = regex::Regex::new(
-        r"^https?://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(/.*)?$"
-    ).unwrap();
+    let url_regex = regex::Regex::new(r"^https?://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(/.*)?$").unwrap();
     url_regex.is_match(s)
 }
 
 /// 验证IP地址
 pub fn is_ip_address(s: &str) -> bool {
-    let ipv4_regex = regex::Regex::new(
-        r"^(\d{1,3}\.){3}\d{1,3}$"
-    ).unwrap();
+    let ipv4_regex = regex::Regex::new(r"^(\d{1,3}\.){3}\d{1,3}$").unwrap();
 
     if ipv4_regex.is_match(s) {
-        s.split('.')
-            .all(|part| part.parse::<u8>().is_ok())
+        s.split('.').all(|part| part.parse::<u8>().is_ok())
     } else {
         false
     }

@@ -19,9 +19,8 @@
  *
  */
 
-
-use serde::{Deserialize};
-use serde_json::{json};
+use serde::Deserialize;
+use serde_json::json;
 
 use crate::errors::LabradorResult;
 use crate::wechat::client::WechatApiResponse;
@@ -45,7 +44,9 @@ impl<'a> WechatMpFreePublish<'a> {
     /// 开发者需要先将图文素材以草稿的形式保存（见"草稿箱-新建草稿"），选择要发布的草稿media_id，提交发布任务。
     pub async fn submit(&self, media_id: i64) -> LabradorResult<SubmitPublishResponse> {
         let request = json!({ "media_id": media_id });
-        let response: WechatApiResponse<SubmitPublishResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<SubmitPublishResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/freepublish/submit", request)
             .await?;
         response.into_result()
@@ -56,7 +57,9 @@ impl<'a> WechatMpFreePublish<'a> {
     /// 用于获取发布任务的状态和结果。
     pub async fn get(&self, publish_id: &str) -> LabradorResult<PublishInfo> {
         let request = json!({ "publish_id": publish_id });
-        let response: WechatApiResponse<PublishInfo> = self.client.wechat_client()
+        let response: WechatApiResponse<PublishInfo> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/freepublish/get", request)
             .await?;
         response.into_result()
@@ -65,12 +68,18 @@ impl<'a> WechatMpFreePublish<'a> {
     /// 删除发布
     ///
     /// 发布成功之后，用来删除永久图文素材。
-    pub async fn delete(&self, article_id: &str, index: Option<u32>) -> LabradorResult<WechatApiResponse> {
+    pub async fn delete(
+        &self,
+        article_id: &str,
+        index: Option<u32>,
+    ) -> LabradorResult<WechatApiResponse> {
         let mut request = json!({ "article_id": article_id });
         if let Some(idx) = index {
             request["index"] = json!(idx);
         }
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/freepublish/delete", request)
             .await?;
         Ok(response)
@@ -81,7 +90,9 @@ impl<'a> WechatMpFreePublish<'a> {
     /// 通过 article_id 获取已发布文章，包括已发布时设置的阅读原文等。
     pub async fn get_article(&self, article_id: &str) -> LabradorResult<PublishArticle> {
         let request = json!({ "article_id": article_id });
-        let response: WechatApiResponse<PublishArticle> = self.client.wechat_client()
+        let response: WechatApiResponse<PublishArticle> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/freepublish/getarticle", request)
             .await?;
         response.into_result()
@@ -90,7 +101,12 @@ impl<'a> WechatMpFreePublish<'a> {
     /// 获取成功发布列表
     ///
     /// 获取成功发布列表。
-    pub async fn batch_get(&self, offset: u32, count: u32, no_content: Option<u32>) -> LabradorResult<BatchPublishResponse> {
+    pub async fn batch_get(
+        &self,
+        offset: u32,
+        count: u32,
+        no_content: Option<u32>,
+    ) -> LabradorResult<BatchPublishResponse> {
         let mut request = json!({
             "offset": offset,
             "count": count
@@ -98,7 +114,9 @@ impl<'a> WechatMpFreePublish<'a> {
         if let Some(nc) = no_content {
             request["no_content"] = json!(nc);
         }
-        let response: WechatApiResponse<BatchPublishResponse> = self.client.wechat_client()
+        let response: WechatApiResponse<BatchPublishResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/freepublish/batchget", request)
             .await?;
         response.into_result()

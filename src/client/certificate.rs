@@ -16,7 +16,7 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 use crate::errors::{LabraError, LabradorResult};
@@ -52,8 +52,7 @@ impl Certificate {
             .map_err(|e| LabraError::Certificate(e.to_string()))?;
 
         // 解析证书信息
-        let (serial_number, not_before, not_after, public_key) =
-            Self::parse_x509_info(pem)?;
+        let (serial_number, not_before, not_after, public_key) = Self::parse_x509_info(pem)?;
 
         Ok(Self {
             serial_number,
@@ -64,15 +63,14 @@ impl Certificate {
             parsed: OnceCell::new(),
         })
     }
-    
+
     /// 从DER格式创建证书
     pub fn from_der(der: &[u8]) -> LabradorResult<Self> {
         let _cert = reqwest::Certificate::from_der(der)
             .map_err(|e| LabraError::Certificate(e.to_string()))?;
 
         // 解析证书信息
-        let (serial_number, not_before, not_after, public_key) =
-            Self::parse_x509_info(der)?;
+        let (serial_number, not_before, not_after, public_key) = Self::parse_x509_info(der)?;
         Ok(Self {
             serial_number,
             not_before,
@@ -112,11 +110,11 @@ impl Certificate {
 
     /// 解析X509证书信息
     fn parse_x509_info(pem: &[u8]) -> LabradorResult<(String, u64, u64, Vec<u8>)> {
+        let (_, x509_pem) =
+            parse_x509_pem(pem).map_err(|e| LabraError::Certificate(e.to_string()))?;
 
-        let (_, x509_pem) = parse_x509_pem(pem)
-            .map_err(|e| LabraError::Certificate(e.to_string()))?;
-
-        let x509 = x509_pem.parse_x509()
+        let x509 = x509_pem
+            .parse_x509()
             .map_err(|e| LabraError::Certificate(e.to_string()))?;
 
         let serial_number = x509.serial.to_str_radix(16).to_uppercase();
@@ -132,14 +130,12 @@ impl Certificate {
             // 使用 unchecked 版本，需要我们自己确保证据数据的有效性
             let x509 = x509_parser::parse_x509_certificate(&self.content)
                 .map_err(|e| LabraError::Certificate(e.to_string()))?
-                .1;  // 获取 X509Certificate
+                .1; // 获取 X509Certificate
 
             // 转换为 'static 生命周期
             // 因为 self.content 是 &self 的一部分，而 self 是 'static 的
             // 所以我们可以安全地将生命周期提升为 'static
-            let x509_static: X509Certificate<'static> = unsafe {
-                std::mem::transmute(x509)
-            };
+            let x509_static: X509Certificate<'static> = unsafe { std::mem::transmute(x509) };
 
             Ok(x509_static)
         })
@@ -149,12 +145,12 @@ impl Certificate {
     pub fn get_subject(&self) -> LabradorResult<&X509Name<'_>> {
         Ok(self.get_parsed()?.subject())
     }
-    
+
     /// 获取证书颁发机构（现在使用缓存）
     pub fn get_issuer(&self) -> LabradorResult<&X509Name<'_>> {
         Ok(self.get_parsed()?.issuer())
     }
-    
+
     /// 获取证书的公用密钥（现在使用缓存）
     pub fn public_key(&self) -> LabradorResult<&SubjectPublicKeyInfo<'_>> {
         Ok(self.get_parsed()?.public_key())
@@ -166,10 +162,11 @@ impl Certificate {
 
     /// 获取证书的主题（如果有解析能力）
     pub fn subject(&self) -> LabradorResult<String> {
-        let (_, x509_pem) = parse_x509_pem(&self.content)
-            .map_err(|e| LabraError::Certificate(e.to_string()))?;
+        let (_, x509_pem) =
+            parse_x509_pem(&self.content).map_err(|e| LabraError::Certificate(e.to_string()))?;
 
-        let x509 = x509_pem.parse_x509()
+        let x509 = x509_pem
+            .parse_x509()
             .map_err(|e| LabraError::Certificate(e.to_string()))?;
 
         Ok(x509.subject().to_string())
@@ -177,10 +174,11 @@ impl Certificate {
 
     /// 获取证书的颁发者
     pub fn issuer(&self) -> LabradorResult<String> {
-        let (_, x509_pem) = parse_x509_pem(&self.content)
-            .map_err(|e| LabraError::Certificate(e.to_string()))?;
+        let (_, x509_pem) =
+            parse_x509_pem(&self.content).map_err(|e| LabraError::Certificate(e.to_string()))?;
 
-        let x509 = x509_pem.parse_x509()
+        let x509 = x509_pem
+            .parse_x509()
             .map_err(|e| LabraError::Certificate(e.to_string()))?;
 
         Ok(x509.issuer().to_string())
@@ -188,10 +186,11 @@ impl Certificate {
 
     /// 获取证书的SANs（Subject Alternative Names）
     pub fn subject_alternative_names(&self) -> LabradorResult<Vec<String>> {
-        let (_, x509_pem) = parse_x509_pem(&self.content)
-            .map_err(|e| LabraError::Certificate(e.to_string()))?;
+        let (_, x509_pem) =
+            parse_x509_pem(&self.content).map_err(|e| LabraError::Certificate(e.to_string()))?;
 
-        let x509 = x509_pem.parse_x509()
+        let x509 = x509_pem
+            .parse_x509()
             .map_err(|e| LabraError::Certificate(e.to_string()))?;
 
         let mut sans = Vec::new();
@@ -200,7 +199,9 @@ impl Certificate {
             for general_name in subject_alt_name.value.general_names.iter() {
                 match general_name {
                     GeneralName::DNSName(name) => sans.push(format!("DNS:{}", name)),
-                    GeneralName::IPAddress(ip) => sans.push(format!("IP:{}", String::from_utf8_lossy(ip))),
+                    GeneralName::IPAddress(ip) => {
+                        sans.push(format!("IP:{}", String::from_utf8_lossy(ip)))
+                    }
                     GeneralName::URI(uri) => sans.push(format!("URI:{}", uri)),
                     GeneralName::RFC822Name(email) => sans.push(format!("email:{}", email)),
                     _ => {}

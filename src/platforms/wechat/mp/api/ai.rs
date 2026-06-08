@@ -16,10 +16,10 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
-use serde::{Deserialize};
-use serde_json::{json};
+use serde::Deserialize;
+use serde_json::json;
 
 use crate::errors::LabradorResult;
 use crate::wechat::client::WechatApiResponse;
@@ -45,10 +45,23 @@ impl<'a> WechatMpAI<'a> {
     /// * `content` - 源内容（utf8格式，最大600Byte）
     /// * `lfrom` - 源语言，zh_CN 或 en_US
     /// * `lto` - 目标语言，zh_CN 或 en_US
-    pub async fn translate_content(&self, content: &str, lfrom: &str, lto: &str) -> LabradorResult<TranslateResponse> {
+    pub async fn translate_content(
+        &self,
+        content: &str,
+        lfrom: &str,
+        lto: &str,
+    ) -> LabradorResult<TranslateResponse> {
         let request = json!({ "content": content });
-        let response: WechatApiResponse<TranslateResponse> = self.client.wechat_client()
-            .post(&format!("/cgi-bin/media/voice/translatecontent?lfrom={}&lto={}", lfrom, lto), request)
+        let response: WechatApiResponse<TranslateResponse> = self
+            .client
+            .wechat_client()
+            .post(
+                &format!(
+                    "/cgi-bin/media/voice/translatecontent?lfrom={}&lto={}",
+                    lfrom, lto
+                ),
+                request,
+            )
             .await?;
         response.into_result()
     }
@@ -59,10 +72,19 @@ impl<'a> WechatMpAI<'a> {
     /// # 参数说明
     /// * `voice_id` - 语音唯一标识
     /// * `lang` - 语言，zh_CN 或 en_US，默认中文
-    pub async fn query_reco_result(&self, voice_id: &str, lang: Option<&str>) -> LabradorResult<String> {
+    pub async fn query_reco_result(
+        &self,
+        voice_id: &str,
+        lang: Option<&str>,
+    ) -> LabradorResult<String> {
         let lang = lang.unwrap_or("zh_CN");
-        let response: WechatApiResponse<QueryRecoResultResponse> = self.client.wechat_client()
-            .get(&format!("/cgi-bin/media/voice/queryrecoresultfortext?voice_id={}&lang={}", voice_id, lang))
+        let response: WechatApiResponse<QueryRecoResultResponse> = self
+            .client
+            .wechat_client()
+            .get(&format!(
+                "/cgi-bin/media/voice/queryrecoresultfortext?voice_id={}&lang={}",
+                voice_id, lang
+            ))
             .await?;
         Ok(response.into_result()?.result)
     }

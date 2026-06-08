@@ -21,26 +21,29 @@
 
 //! 企业微信实现
 
-pub mod builder;
-pub mod types;
-pub mod config;
 pub mod api;
+pub mod builder;
+pub mod config;
+pub mod types;
 
-use std::time::Duration;
-use bytes::Bytes;
-use serde::{Deserialize, Serialize};
-use serde_json::json;
-use tokio::sync::RwLock;
-use crate::{ApiClient, ClientBuilder, CryptoUtils};
-use super::client::{WechatApiResponse};
+use super::client::WechatApiResponse;
 use crate::errors::{LabraError, LabradorResult};
 use crate::request::{HttpMethod, Request, RequestBody};
 use crate::response::Response;
-use crate::wechat::{constants, WechatErrorCode};
 use crate::wechat::client::{AccessToken, JsSdkConfig};
-use crate::wechat::cp::api::{WechatCpAgent, WechatCpDepartment, WechatCpExternalContact, WechatCpGroupRobot, WechatCpMedia, WechatCpMenu, WechatCpMessage, WechatCpOauth2, WechatCpTag, WechatCpUser};
+use crate::wechat::cp::api::{
+    WechatCpAgent, WechatCpDepartment, WechatCpExternalContact, WechatCpGroupRobot, WechatCpMedia,
+    WechatCpMenu, WechatCpMessage, WechatCpOauth2, WechatCpTag, WechatCpUser,
+};
 use crate::wechat::cp::config::WechatCpConfig;
 use crate::wechat::cp::types::{WechatCpJsCodeSession, WechatCpProviderToken};
+use crate::wechat::{constants, WechatErrorCode};
+use crate::{ApiClient, ClientBuilder, CryptoUtils};
+use bytes::Bytes;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use std::time::Duration;
+use tokio::sync::RwLock;
 
 /// 企业微信客户端
 pub struct WechatCpClient {
@@ -64,7 +67,6 @@ impl std::fmt::Debug for WechatCpClient {
 impl WechatCpClient {
     /// 创建新的微信小程序客户端
     pub fn new(config: WechatCpConfig) -> LabradorResult<Self> {
-        
         let base_url = constants::CP_API_BASE_URL;
         let http_client = ClientBuilder::new()
             .api_base_url(base_url)
@@ -135,7 +137,6 @@ impl WechatCpClient {
         WechatCpUser::new(self)
     }
 
-
     /// 登录凭证校验，获取openid和session_key
     /// # code换取session
     /// [文档](https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/user-login/code2Session.html)
@@ -156,12 +157,18 @@ impl WechatCpClient {
     /// 请求地址： <a href="https://qyapi.weixin.qq.com/cgi-bin/service/get_provider_token">地址</a>
     /// </pre>
     #[inline]
-    pub async fn get_provider_token(&self, corp_id: &str, provider_secret: &str) -> LabradorResult<WechatCpProviderToken> {
+    pub async fn get_provider_token(
+        &self,
+        corp_id: &str,
+        provider_secret: &str,
+    ) -> LabradorResult<WechatCpProviderToken> {
         let req = json!({
             "corpid": corp_id,
             "provider_secret": provider_secret,
         });
-        let res = self.post("/cgi-bin/service/get_provider_token", req).await?;
+        let res = self
+            .post("/cgi-bin/service/get_provider_token", req)
+            .await?;
         Ok(res)
     }
 
@@ -191,14 +198,16 @@ impl WechatCpClient {
 
         Ok(access_token)
     }
-    
+
     /// 获取全局唯一后台接口调用凭据
     pub async fn fetch_access_token(&self) -> LabradorResult<AccessToken> {
         // 调用微信客户端的获取access_token方法
         let request = Request::builder()
             .method(HttpMethod::Get)
-            .path(&format!("/cgi-bin/gettoken?grant_type=client_credential&corpid={}&corpsecret={}",
-                           self.config.corp_id, self.config.corp_secret))
+            .path(&format!(
+                "/cgi-bin/gettoken?grant_type=client_credential&corpid={}&corpsecret={}",
+                self.config.corp_id, self.config.corp_secret
+            ))
             .build();
         let response = self.http_client.request(request).await?;
         let response: WechatApiResponse<AccessToken> = response.json()?;
@@ -212,7 +221,12 @@ impl WechatCpClient {
     /// </pre>
     pub async fn get_callback_ip(&self) -> LabradorResult<Vec<String>> {
         let res: serde_json::Value = self.get("/cgi-bin/getcallbackip").await?;
-        let ip_list = res["ip_list"].as_array().unwrap_or(&vec![]).iter().map(|v| v.as_str().unwrap_or_default().to_string()).collect::<Vec<String>>();
+        let ip_list = res["ip_list"]
+            .as_array()
+            .unwrap_or(&vec![])
+            .iter()
+            .map(|v| v.as_str().unwrap_or_default().to_string())
+            .collect::<Vec<String>>();
         Ok(ip_list)
     }
 
@@ -223,21 +237,34 @@ impl WechatCpClient {
     /// </pre>
     pub async fn get_api_domain_ip(&self) -> LabradorResult<Vec<String>> {
         let res: serde_json::Value = self.get("/cgi-bin/get_api_domain_ip").await?;
-        let ip_list = res["ip_list"].as_array().unwrap_or(&vec![]).iter().map(|v| v.as_str().unwrap_or_default().to_string()).collect::<Vec<String>>();
+        let ip_list = res["ip_list"]
+            .as_array()
+            .unwrap_or(&vec![])
+            .iter()
+            .map(|v| v.as_str().unwrap_or_default().to_string())
+            .collect::<Vec<String>>();
         Ok(ip_list)
     }
 
     /// 发送API请求（自动添加AccessToken）
-    pub async fn request<T>(&self, method: HttpMethod, path: &str, body: Option<RequestBody>) -> LabradorResult<T>
+    pub async fn request<T>(
+        &self,
+        method: HttpMethod,
+        path: &str,
+        body: Option<RequestBody>,
+    ) -> LabradorResult<T>
     where
         T: for<'de> Deserialize<'de>,
     {
-        let response = self.request_internal(method.clone(), path, body.clone()).await?;
+        let response = self
+            .request_internal(method.clone(), path, body.clone())
+            .await?;
         let mut result: WechatApiResponse<T> = response.json()?;
 
         // 检查是否需要刷新访问令牌
         if let WechatErrorCode::InvalidAccessToken | WechatErrorCode::AccessTokenExpired =
-            WechatErrorCode::from(result.errcode().unwrap_or(-1)) {
+            WechatErrorCode::from(result.errcode().unwrap_or(-1))
+        {
             // 清除缓存的访问令牌并重试
             self.clear_access_token_cache().await;
             let response = self.request_internal(method, path, body).await?;
@@ -246,8 +273,12 @@ impl WechatCpClient {
         result.into_result()
     }
 
-    pub async fn request_internal(&self, method: HttpMethod, path: &str, body: Option<RequestBody>) -> LabradorResult<Response>
-    {
+    pub async fn request_internal(
+        &self,
+        method: HttpMethod,
+        path: &str,
+        body: Option<RequestBody>,
+    ) -> LabradorResult<Response> {
         let access_token = self.get_access_token().await?;
         // 判断 path 是否已经包含查询参数
         let url = if path.contains('?') {
@@ -266,7 +297,11 @@ impl WechatCpClient {
                 .path(&url)
                 .body(body_data)
                 .build(),
-            _ => return Err(LabraError::Validation("不支持的HTTP方法或缺少请求体".to_string())),
+            _ => {
+                return Err(LabraError::Validation(
+                    "不支持的HTTP方法或缺少请求体".to_string(),
+                ))
+            }
         };
         let response = self.http_client.request(request).await?;
         Ok(response)
@@ -292,7 +327,8 @@ impl WechatCpClient {
         T: for<'de> Deserialize<'de>,
         B: Into<RequestBody>,
     {
-        self.request(HttpMethod::Post, path, Some(body.into())).await
+        self.request(HttpMethod::Post, path, Some(body.into()))
+            .await
     }
 
     /// POST请求获取字节数据
@@ -300,7 +336,9 @@ impl WechatCpClient {
     where
         B: Into<RequestBody>,
     {
-        let response = self.request_internal(HttpMethod::Post, path, Some(body.into())).await?;
+        let response = self
+            .request_internal(HttpMethod::Post, path, Some(body.into()))
+            .await?;
         Ok(response.bytes())
     }
 
@@ -314,20 +352,19 @@ impl WechatCpClient {
     pub fn config(&self) -> &WechatCpConfig {
         &self.config
     }
-    
+
     pub fn agent_id(&self) -> Option<i32> {
         self.config.agent_id
     }
-    
+
     pub fn webhook_url(&self) -> Option<&String> {
         self.config.webhook_url.as_ref()
     }
-    
+
     pub fn corp_id(&self) -> &str {
         self.config.corp_id.as_str()
     }
 }
-
 
 /// 微信JS-SDK签名器
 #[allow(unused)]
@@ -348,28 +385,34 @@ impl WechatCpJsSdkSigner {
 
     /// 获取JS-SDK票据
     pub async fn get_jsapi_ticket(&self, client: &WechatCpClient) -> LabradorResult<String> {
+        let response: WechatApiResponse<JsapiTicketResponse> =
+            client.get("/cgi-bin/get_jsapi_ticket").await?;
 
-        let response: WechatApiResponse<JsapiTicketResponse> = client
-            .get("/cgi-bin/get_jsapi_ticket")
-            .await?;
-
-        let ticket_response = response.data().ok_or_else(|| LabraError::Other("No ticket in response".to_string()))?;
+        let ticket_response = response
+            .data()
+            .ok_or_else(|| LabraError::Other("No ticket in response".to_string()))?;
         Ok(ticket_response.ticket)
     }
-    
+
     /// 获取应用 jsapi_ticket
     pub async fn get_agent_jsapi_ticket(&self, client: &WechatCpClient) -> LabradorResult<String> {
+        let response: WechatApiResponse<JsapiTicketResponse> =
+            client.get("/cgi-bin/ticket/get?type=agent_config").await?;
 
-        let response: WechatApiResponse<JsapiTicketResponse> = client
-            .get("/cgi-bin/ticket/get?type=agent_config")
-            .await?;
-
-        let ticket_response = response.data().ok_or_else(|| LabraError::Other("No ticket in response".to_string()))?;
+        let ticket_response = response
+            .data()
+            .ok_or_else(|| LabraError::Other("No ticket in response".to_string()))?;
         Ok(ticket_response.ticket)
     }
 
     /// 生成JS-SDK签名
-    pub fn generate_signature(&self, ticket: &str, nonce_str: &str, timestamp: i64, url: &str) -> LabradorResult<String> {
+    pub fn generate_signature(
+        &self,
+        ticket: &str,
+        nonce_str: &str,
+        timestamp: i64,
+        url: &str,
+    ) -> LabradorResult<String> {
         let sign_string = format!(
             "jsapi_ticket={}&noncestr={}&timestamp={}&url={}",
             ticket, nonce_str, timestamp, url
@@ -419,7 +462,7 @@ impl WechatCpJsSdkSigner {
     }
 }
 
-#[derive(Debug, Serialize,Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct JsapiTicketResponse {
     pub ticket: String,
     pub expires_in: i64,

@@ -16,11 +16,11 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 use serde::{Deserialize, Serialize};
-use serde_json::{json};
+use serde_json::json;
 
 use crate::errors::LabradorResult;
 use crate::wechat::client::WechatApiResponse;
@@ -42,12 +42,18 @@ impl<'a> WechatMpComment<'a> {
     /// 打开已群发文章评论
     ///
     /// 本接口用于打开已群发图文的评论功能，公众号需具备留言功能权限。
-    pub async fn open_comment(&self, msg_data_id: i64, index: Option<u32>) -> LabradorResult<WechatApiResponse> {
+    pub async fn open_comment(
+        &self,
+        msg_data_id: i64,
+        index: Option<u32>,
+    ) -> LabradorResult<WechatApiResponse> {
         let mut request = json!({ "msg_data_id": msg_data_id });
         if let Some(idx) = index {
             request["index"] = json!(idx);
         }
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/comment/open", request)
             .await?;
         Ok(response)
@@ -56,12 +62,18 @@ impl<'a> WechatMpComment<'a> {
     /// 关闭已群发文章评论
     ///
     /// 本接口用于关闭已群发文章评论。
-    pub async fn close_comment(&self, msg_data_id: i64, index: Option<u32>) -> LabradorResult<WechatApiResponse> {
+    pub async fn close_comment(
+        &self,
+        msg_data_id: i64,
+        index: Option<u32>,
+    ) -> LabradorResult<WechatApiResponse> {
         let mut request = json!({ "msg_data_id": msg_data_id });
         if let Some(idx) = index {
             request["index"] = json!(idx);
         }
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/comment/close", request)
             .await?;
         Ok(response)
@@ -71,8 +83,13 @@ impl<'a> WechatMpComment<'a> {
     ///
     /// 本接口用于查看指定文章的评论数据。
     /// type: 0-普通评论&精选评论，1-普通评论，2-精选评论
-    pub async fn list_comment(&self, request: &ListCommentRequest) -> LabradorResult<ListCommentResponse> {
-        let response: WechatApiResponse<ListCommentResponse> = self.client.wechat_client()
+    pub async fn list_comment(
+        &self,
+        request: &ListCommentRequest,
+    ) -> LabradorResult<ListCommentResponse> {
+        let response: WechatApiResponse<ListCommentResponse> = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/comment/list", request)
             .await?;
         response.into_result()
@@ -81,7 +98,12 @@ impl<'a> WechatMpComment<'a> {
     /// 评论标记精选
     ///
     /// 本接口用于将评论标记为精选。
-    pub async fn mark_elect(&self, msg_data_id: i64, user_comment_id: i64, index: Option<u32>) -> LabradorResult<WechatApiResponse> {
+    pub async fn mark_elect(
+        &self,
+        msg_data_id: i64,
+        user_comment_id: i64,
+        index: Option<u32>,
+    ) -> LabradorResult<WechatApiResponse> {
         let mut request = json!({
             "msg_data_id": msg_data_id,
             "user_comment_id": user_comment_id
@@ -89,7 +111,9 @@ impl<'a> WechatMpComment<'a> {
         if let Some(idx) = index {
             request["index"] = json!(idx);
         }
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/comment/markelect", request)
             .await?;
         Ok(response)
@@ -98,7 +122,12 @@ impl<'a> WechatMpComment<'a> {
     /// 取消标记精选
     ///
     /// 本接口用于将评论取消精选标记。
-    pub async fn unmark_elect(&self, msg_data_id: i64, user_comment_id: i64, index: Option<u32>) -> LabradorResult<WechatApiResponse> {
+    pub async fn unmark_elect(
+        &self,
+        msg_data_id: i64,
+        user_comment_id: i64,
+        index: Option<u32>,
+    ) -> LabradorResult<WechatApiResponse> {
         let mut request = json!({
             "msg_data_id": msg_data_id,
             "user_comment_id": user_comment_id
@@ -106,7 +135,9 @@ impl<'a> WechatMpComment<'a> {
         if let Some(idx) = index {
             request["index"] = json!(idx);
         }
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/comment/unmarkelect", request)
             .await?;
         Ok(response)
@@ -115,7 +146,12 @@ impl<'a> WechatMpComment<'a> {
     /// 删除评论
     ///
     /// 本接口用于删除评论。
-    pub async fn delete_comment(&self, msg_data_id: i64, user_comment_id: i64, index: Option<u32>) -> LabradorResult<WechatApiResponse> {
+    pub async fn delete_comment(
+        &self,
+        msg_data_id: i64,
+        user_comment_id: i64,
+        index: Option<u32>,
+    ) -> LabradorResult<WechatApiResponse> {
         let mut request = json!({
             "msg_data_id": msg_data_id,
             "user_comment_id": user_comment_id
@@ -123,7 +159,9 @@ impl<'a> WechatMpComment<'a> {
         if let Some(idx) = index {
             request["index"] = json!(idx);
         }
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/comment/delete", request)
             .await?;
         Ok(response)
@@ -132,7 +170,13 @@ impl<'a> WechatMpComment<'a> {
     /// 回复评论
     ///
     /// 本接口用于回复评论。
-    pub async fn reply_comment(&self, msg_data_id: i64, user_comment_id: i64, content: &str, index: Option<u32>) -> LabradorResult<WechatApiResponse> {
+    pub async fn reply_comment(
+        &self,
+        msg_data_id: i64,
+        user_comment_id: i64,
+        content: &str,
+        index: Option<u32>,
+    ) -> LabradorResult<WechatApiResponse> {
         let mut request = json!({
             "msg_data_id": msg_data_id,
             "user_comment_id": user_comment_id,
@@ -141,7 +185,9 @@ impl<'a> WechatMpComment<'a> {
         if let Some(idx) = index {
             request["index"] = json!(idx);
         }
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/comment/reply/add", request)
             .await?;
         Ok(response)
@@ -150,7 +196,12 @@ impl<'a> WechatMpComment<'a> {
     /// 删除回复
     ///
     /// 本接口用于删除评论回复。
-    pub async fn delete_reply(&self, msg_data_id: i64, user_comment_id: i64, index: Option<u32>) -> LabradorResult<WechatApiResponse> {
+    pub async fn delete_reply(
+        &self,
+        msg_data_id: i64,
+        user_comment_id: i64,
+        index: Option<u32>,
+    ) -> LabradorResult<WechatApiResponse> {
         let mut request = json!({
             "msg_data_id": msg_data_id,
             "user_comment_id": user_comment_id
@@ -158,7 +209,9 @@ impl<'a> WechatMpComment<'a> {
         if let Some(idx) = index {
             request["index"] = json!(idx);
         }
-        let response: WechatApiResponse = self.client.wechat_client()
+        let response: WechatApiResponse = self
+            .client
+            .wechat_client()
             .post("/cgi-bin/comment/reply/delete", request)
             .await?;
         Ok(response)

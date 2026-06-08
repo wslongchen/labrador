@@ -16,26 +16,25 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
-use std::any::Any;
-use std::collections::{BTreeMap, HashMap};
-use hmac::{Hmac, Mac};
-use sha2::Sha256;
 use crate::client::certificate::Certificate;
-use crate::errors::{LabraError, LabradorResult};
-use crate::request::{Request, RequestBody};
-use crate::{CryptoUtils, HashType, RsaEncryptor, RsaKeyFormat};
 use crate::client::RequestSigner;
+use crate::errors::{LabraError, LabradorResult};
+use crate::platforms::signer::SignMethod;
+use crate::request::{Request, RequestBody};
 use crate::response::Response;
-use crate::signer::SignMethod;
 use crate::utils::encryption::base64_decode;
 use crate::utils::string::random_string;
 use crate::utils::time::timestamp_millis;
 use crate::wechat::constants::{ACCEPT, AUTHORIZATION, CONTENT_TYPE_JSON, PAY_SIGN_SCHEMA_V3};
 use crate::wechat::pay::config::{WechatPayApiVersion, WechatPayConfig};
 use crate::wechat::pay::types::WechatSignatureHeader;
-
+use crate::{CryptoUtils, HashType, RsaEncryptor, RsaKeyFormat};
+use hmac::{Hmac, Mac};
+use sha2::Sha256;
+use std::any::Any;
+use std::collections::{BTreeMap, HashMap};
 
 /// 微信支付签名器
 #[derive(Debug, Clone)]
@@ -72,7 +71,16 @@ impl WechatPaySigner {
     }
 
     pub fn from_config(config: &WechatPayConfig) -> Self {
-        let root_certificates = config.root_certificates.clone().map(|certs| certs.into_iter().map(|cert| (cert.serial_number.clone(), cert.clone())).collect()).unwrap_or(HashMap::new());
+        let root_certificates = config
+            .root_certificates
+            .clone()
+            .map(|certs| {
+                certs
+                    .into_iter()
+                    .map(|cert| (cert.serial_number.clone(), cert.clone()))
+                    .collect()
+            })
+            .unwrap_or(HashMap::new());
         Self {
             mch_id: config.mch_id.clone(),
             api_key: config.api_key.clone(),
@@ -110,7 +118,10 @@ impl WechatPaySigner {
     }
 
     pub fn with_root_certificates(mut self, root_certificates: Vec<Certificate>) -> Self {
-        self.root_certificates = root_certificates.into_iter().map(|cert| (cert.serial_number(), cert)).collect();
+        self.root_certificates = root_certificates
+            .into_iter()
+            .map(|cert| (cert.serial_number(), cert))
+            .collect();
         self
     }
 
@@ -136,8 +147,9 @@ impl WechatPaySigner {
     /// 微信支付HMAC签名
     fn wechat_hmac_sign(&self, sign_string: &str) -> LabradorResult<String> {
         type HmacSha256 = Hmac<Sha256>;
-        let mut mac = HmacSha256::new_from_slice(self.api_key.to_owned().unwrap_or_default().as_bytes())
-            .map_err(|e| LabraError::Sign(format!("微信支付HMAC key error: {}", e)))?;
+        let mut mac =
+            HmacSha256::new_from_slice(self.api_key.to_owned().unwrap_or_default().as_bytes())
+                .map_err(|e| LabraError::Sign(format!("微信支付HMAC key error: {}", e)))?;
         mac.update(sign_string.as_bytes());
         let result = mac.finalize();
         let bytes = result.into_bytes();
@@ -150,9 +162,8 @@ impl WechatPaySigner {
         // 获取请求中的参数
         let url = req.path();
         let method = req.method().to_string();
-        let body = req.body().as_text().map(ToString::to_string).unwrap_or_default();
+        let body = req.body().to_sign_string();
         let mut format_url = url.to_string();
-
 
         for (index, (key, value)) in req.query_params().iter().enumerate() {
             if index == 0 {
@@ -170,31 +181,64 @@ impl WechatPaySigner {
         let private_key = self.private_key.to_owned().unwrap_or_default();
         let serial_no = self.serial_no.to_owned().unwrap_or_default();
 
-        if mch_id.is_empty() || serial_no.is_empty()  || private_key.is_empty() {
-            return Err(LabraError::Sign("缺少必要参数".to_string()))
+        if mch_id.is_empty() || serial_no.is_empty() || private_key.is_empty() {
+            return Err(LabraError::Sign("缺少必要参数".to_string()));
         }
         let nonce_str = random_string(32).to_uppercase();
 
         let timestamp = timestamp_millis() / 1000;
-        let signatures = [method, format_url.to_string(), timestamp.to_string(), nonce_str.to_string(), body];
-        let signature_str = signatures.iter().map(|item| item.to_string()).collect::<Vec<_>>().join("\n") + "\n";
+        let signatures = [
+            method,
+            format_url.to_string(),
+            timestamp.to_string(),
+            nonce_str.to_string(),
+            body,
+        ];
+        let signature_str = signatures
+            .iter()
+            .map(|item| item.to_string())
+            .collect::<Vec<_>>()
+            .join("\n")
+            + "\n";
         let encryptor = RsaEncryptor::with_private_key(private_key.as_bytes(), RsaKeyFormat::Pem);
-        let signature = encryptor.sign(signature_str.as_bytes(), HashType::Sha256).map_err(|e| LabraError::Sign(format!("RSA加密错误: {}", e)))?;
-        let authorization = format!("{} mchid=\"{}\",nonce_str=\"{}\",signature=\"{}\",timestamp=\"{}\",serial_no=\"{}\"",
-                                    PAY_SIGN_SCHEMA_V3 , mch_id, nonce_str, CryptoUtils::base64_encode(&signature), timestamp, serial_no);
+        let signature = encryptor
+            .sign(signature_str.as_bytes(), HashType::Sha256)
+            .map_err(|e| LabraError::Sign(format!("RSA加密错误: {}", e)))?;
+        let authorization = format!(
+            "{} mchid=\"{}\",nonce_str=\"{}\",signature=\"{}\",timestamp=\"{}\",serial_no=\"{}\"",
+            PAY_SIGN_SCHEMA_V3,
+            mch_id,
+            nonce_str,
+            CryptoUtils::base64_encode(&signature),
+            timestamp,
+            serial_no
+        );
         tracing::debug!("wechat pay authorization built successfully");
         Ok(authorization)
     }
 
     /// V3  验证签名
-    pub fn verify_sign_v3(&self, serial_number: &str, timestamp: &str, nonce: &str, message: &str, signature: &str) -> LabradorResult<bool> {
+    pub fn verify_sign_v3(
+        &self,
+        serial_number: &str,
+        timestamp: &str,
+        nonce: &str,
+        message: &str,
+        signature: &str,
+    ) -> LabradorResult<bool> {
         let signatures = vec![timestamp, nonce, message];
-        let signature_str = signatures.iter().map(|item| item.to_string()).collect::<Vec<_>>().join("\n") + "\n";
+        let signature_str = signatures
+            .iter()
+            .map(|item| item.to_string())
+            .collect::<Vec<_>>()
+            .join("\n")
+            + "\n";
         // let signature_str = "1722850421\nd824f2e086d3c1df967785d13fcd22ef\n{\"code_url\":\"weixin://wxpay/bizpayurl?pr=JyC91EIz1\"}\n";
         if let Some(cert) = self.root_certificates.get(serial_number) {
             let signature = base64_decode(signature)?;
             let encryptor = RsaEncryptor::with_public_key(&cert.public_key, RsaKeyFormat::Pkcs8);
-            let verify = encryptor.verify(signature_str.as_bytes(), &signature, HashType::Sha256)?;
+            let verify =
+                encryptor.verify(signature_str.as_bytes(), &signature, HashType::Sha256)?;
             tracing::debug!("wechat pay v3 signature verify result: {}", verify);
             Ok(verify)
         } else {
@@ -203,17 +247,27 @@ impl WechatPaySigner {
     }
 
     /// 验证签名
-    pub fn verify_header_sign_v3(&self, message: &str, signature_header: &WechatSignatureHeader) -> LabradorResult<bool> {
+    pub fn verify_header_sign_v3(
+        &self,
+        message: &str,
+        signature_header: &WechatSignatureHeader,
+    ) -> LabradorResult<bool> {
         let signature = signature_header.signature.to_string();
         let serial_number = signature_header.serial.to_string();
         let timestamp = signature_header.time_stamp.to_string();
         let nonce = signature_header.nonce.to_string();
         let signatures = vec![timestamp, nonce, message.to_string()];
-        let signature_str = signatures.iter().map(|item| item.to_string()).collect::<Vec<_>>().join("\n") + "\n";
+        let signature_str = signatures
+            .iter()
+            .map(|item| item.to_string())
+            .collect::<Vec<_>>()
+            .join("\n")
+            + "\n";
         if let Some(cert) = self.root_certificates.get(&serial_number) {
             let signature = base64_decode(&signature)?;
             let encryptor = RsaEncryptor::with_public_key(&cert.public_key, RsaKeyFormat::Pkcs8);
-            let verify = encryptor.verify(signature_str.as_bytes(), &signature, HashType::Sha256)?;
+            let verify =
+                encryptor.verify(signature_str.as_bytes(), &signature, HashType::Sha256)?;
             Ok(verify)
         } else {
             Ok(false)
@@ -221,7 +275,12 @@ impl WechatPaySigner {
     }
 
     /// 从XML中提取参数
-    fn extract_xml_params(&self, value: &serde_json::Value, prefix: &str, params: &mut BTreeMap<String, String>) {
+    fn extract_xml_params(
+        &self,
+        value: &serde_json::Value,
+        prefix: &str,
+        params: &mut BTreeMap<String, String>,
+    ) {
         match value {
             serde_json::Value::Object(obj) => {
                 for (key, val) in obj {
@@ -311,27 +370,25 @@ impl RequestSigner for WechatPaySigner {
             } else {
                 Ok(true)
             }
-
         } else {
             // TODO: 收集参数（排除签名字段）
             // let mut params = BTreeMap::new();
-            // 
+            //
             // for (key, value) in &response.query_params {
             //     if key != "sign" {
             //         params.insert(key.clone(), value.clone());
             //     }
             // }
-            // 
+            //
             // // 生成签名字符串
             // let sign_string = self.format_wechat_params(&params);
-            // 
+            //
             // // 计算签名
             // let calculated_signature = self.wechat_hmac_sign(&sign_string)?;
-            // 
+            //
             // Ok(calculated_signature == signature)
             Ok(true)
         }
-
     }
 
     fn secret_key(&self) -> &str {

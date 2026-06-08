@@ -16,32 +16,31 @@
  *  *   this software without specific prior written permission.
  *  *   Author: SnackCloud
  *  *
- *  
+ *
  */
 
 //! 支付宝支付模块
 //!
 //! 提供支付宝各种支付方式的接口实现
 
-use crate::errors::{LabradorResult};
+use super::client::AlipayClient;
+use crate::alipay::method::AlipayMethod;
+use crate::alipay::{constants, AlipayBizRequest};
+use crate::errors::LabradorResult;
+use crate::platforms::alipay::AlipayResponse;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use crate::alipay::{constants, AlipayBizRequest};
-use crate::alipay::method::AlipayMethod;
-use crate::platforms::alipay::AlipayResponse;
-use super::client::{AlipayClient};
 
 /// 支付服务
 pub struct AlipayPayService<'a> {
     client: &'a AlipayClient,
 }
 
-impl <'a> AlipayPayService<'a> {
+impl<'a> AlipayPayService<'a> {
     /// 创建新的支付服务
     pub fn new(client: &'a AlipayClient) -> Self {
         Self { client }
     }
-
 
     /// 电脑网站支付
     pub async fn page_pay(
@@ -50,21 +49,20 @@ impl <'a> AlipayPayService<'a> {
     ) -> LabradorResult<String> {
         request.prod_code = Some(constants::pay::PRODUCT_CODE_PAGE_PAY.to_string());
         request.method = AlipayMethod::TradePagePay;
-        self.client.execute_page_request(
-            request,
-            None,
-        )
+        self.client.execute_page_request(request, None)
     }
 
     /// JSAPI支付（小程序/生活号支付）
     /// 使用 alipay.trade.create 接口创建订单并获取 trade_no，
     /// 然后通过 alipay.trade.pay 发起支付。
-    pub async fn jsapi_pay(&self, mut request: AlipayBizRequest<AlipayTradeJsapiPayModel>) -> LabradorResult<JsapiPayResponse> {
+    pub async fn jsapi_pay(
+        &self,
+        mut request: AlipayBizRequest<AlipayTradeJsapiPayModel>,
+    ) -> LabradorResult<JsapiPayResponse> {
         request.prod_code = Some(constants::pay::PRODUCT_CODE_JSAPI_PAY.to_string());
         request.method = AlipayMethod::TradePay;
-        let response: AlipayResponse<JsapiPayResponse> = self.client
-            .request(request, None, None, None)
-            .await?;
+        let response: AlipayResponse<JsapiPayResponse> =
+            self.client.request(request, None, None, None).await?;
         response.into_result()
     }
 
@@ -76,9 +74,8 @@ impl <'a> AlipayPayService<'a> {
         mut request: AlipayBizRequest<AlipayTradeCreateModel>,
     ) -> LabradorResult<TradeCreateResponse> {
         request.method = AlipayMethod::TradeCreate;
-        let response: AlipayResponse<TradeCreateResponse> = self.client
-            .request(request, None, None, None)
-            .await?;
+        let response: AlipayResponse<TradeCreateResponse> =
+            self.client.request(request, None, None, None).await?;
         response.into_result()
     }
 
@@ -94,9 +91,8 @@ impl <'a> AlipayPayService<'a> {
         biz_content.insert("bill_date".to_string(), bill_date.to_string());
         request.biz_model = Some(biz_content);
         request.method = AlipayMethod::BillDownloadUrlQuery;
-        let response: AlipayResponse<BillDownloadResponse> = self.client
-            .request(request, None, None, None)
-            .await?;
+        let response: AlipayResponse<BillDownloadResponse> =
+            self.client.request(request, None, None, None).await?;
         response.into_result()
     }
 
@@ -110,10 +106,7 @@ impl <'a> AlipayPayService<'a> {
         request.prod_code = Some(constants::pay::PRODUCT_CODE_WAP_PAY.to_string());
         request.method = AlipayMethod::TradeWapPay;
 
-        self.client.execute_page_request(
-            request,
-            None,
-        )
+        self.client.execute_page_request(request, None)
     }
 
     /// App支付
@@ -124,10 +117,7 @@ impl <'a> AlipayPayService<'a> {
         request.prod_code = Some(constants::pay::PRODUCT_CODE_APP_PAY.to_string());
         request.method = AlipayMethod::TradeAppPay;
 
-        self.client.execute_page_request(
-            request,
-            None,
-        )
+        self.client.execute_page_request(request, None)
     }
 
     /// 当面付（条码支付）
@@ -137,45 +127,46 @@ impl <'a> AlipayPayService<'a> {
     ) -> LabradorResult<FaceToFacePayResponse> {
         request.prod_code = Some(constants::pay::PRODUCT_CODE_FACE_TO_FACE.to_string());
         request.method = AlipayMethod::TradePay;
-        let response: AlipayResponse<FaceToFacePayResponse> = self.client
-            .request(request, None, None, None)
-            .await?;
+        let response: AlipayResponse<FaceToFacePayResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }
 
-
     /// 周期扣款
-    pub async fn cycle_pay(&self, mut request: AlipayBizRequest<AlipayCycleOrderPayModel>) -> LabradorResult<CycleOrderPayResponse> {
+    pub async fn cycle_pay(
+        &self,
+        mut request: AlipayBizRequest<AlipayCycleOrderPayModel>,
+    ) -> LabradorResult<CycleOrderPayResponse> {
         request.prod_code = Some(constants::pay::PRODUCT_CODE_CYCLE_PAY.to_string());
         request.method = AlipayMethod::TradePay;
-        let response: AlipayResponse<CycleOrderPayResponse> = self.client
-            .request(request, None, None, None)
-            .await?;
+        let response: AlipayResponse<CycleOrderPayResponse> =
+            self.client.request(request, None, None, None).await?;
         response.into_result()
     }
 
     /// 商家扣款
-    pub async fn deduct_pay(&self, mut request: AlipayBizRequest<AlipayCycleOrderPayModel>) -> LabradorResult<DeductPayResponse> {
+    pub async fn deduct_pay(
+        &self,
+        mut request: AlipayBizRequest<AlipayCycleOrderPayModel>,
+    ) -> LabradorResult<DeductPayResponse> {
         request.prod_code = Some(constants::pay::PRODUCT_CODE_CYCLE_PAY.to_string());
         request.method = AlipayMethod::TradePay;
-        let response: AlipayResponse<DeductPayResponse> = self.client
-            .request(request, None, None, None)
-            .await?;
+        let response: AlipayResponse<DeductPayResponse> =
+            self.client.request(request, None, None, None).await?;
         response.into_result()
     }
 
     /// 预下单（生成二维码）
     pub async fn precreate(
         &self,
-        mut request: AlipayBizRequest<AlipayTradePreCreateModel>
+        mut request: AlipayBizRequest<AlipayTradePreCreateModel>,
     ) -> LabradorResult<PrecreateResponse> {
         request.prod_code = Some(constants::pay::PRODUCT_CODE_QR_CODE_OFFLINE.to_string());
         request.method = AlipayMethod::TradePrecreate;
 
-        let response: AlipayResponse<PrecreateResponse> = self.client
-            .request(request, None, None, None)
-            .await?;
+        let response: AlipayResponse<PrecreateResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }
@@ -186,9 +177,8 @@ impl <'a> AlipayPayService<'a> {
         mut request: AlipayBizRequest<AlipayTradeQueryModel>,
     ) -> LabradorResult<OrderQueryResponse> {
         request.method = AlipayMethod::TradeQuery;
-        let response: AlipayResponse<OrderQueryResponse> = self.client
-            .request(request, None, None, None)
-            .await?;
+        let response: AlipayResponse<OrderQueryResponse> =
+            self.client.request(request, None, None, None).await?;
         response.into_result()
     }
 
@@ -198,9 +188,8 @@ impl <'a> AlipayPayService<'a> {
         mut request: AlipayBizRequest<AlipayTradeCloseModel>,
     ) -> LabradorResult<OrderCloseResponse> {
         request.method = AlipayMethod::TradeClose;
-        let response: AlipayResponse<OrderCloseResponse> = self.client
-            .request(request, None, None, None)
-            .await?;
+        let response: AlipayResponse<OrderCloseResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }
@@ -211,9 +200,8 @@ impl <'a> AlipayPayService<'a> {
         mut request: AlipayBizRequest<AlipayTradeRefundModel>,
     ) -> LabradorResult<RefundResponse> {
         request.method = AlipayMethod::TradeRefund;
-        let response: AlipayResponse<RefundResponse> = self.client
-            .request(request, None, None, None)
-            .await?;
+        let response: AlipayResponse<RefundResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }
@@ -238,9 +226,8 @@ impl <'a> AlipayPayService<'a> {
         }
         request.biz_model = Some(biz_content);
         request.method = AlipayMethod::TradeFastpayRefundQuery;
-        let response: AlipayResponse<RefundQueryResponse> = self.client
-            .request(request, None, None, None)
-            .await?;
+        let response: AlipayResponse<RefundQueryResponse> =
+            self.client.request(request, None, None, None).await?;
 
         response.into_result()
     }
@@ -251,9 +238,8 @@ impl <'a> AlipayPayService<'a> {
         mut request: AlipayBizRequest<AlipayTradeCancelModel>,
     ) -> LabradorResult<OrderCancelResponse> {
         request.method = AlipayMethod::TradeCancel;
-        let response: AlipayResponse<OrderCancelResponse> = self.client
-            .request(request, None, None, None)
-            .await?;
+        let response: AlipayResponse<OrderCancelResponse> =
+            self.client.request(request, None, None, None).await?;
         response.into_result()
     }
 
@@ -266,12 +252,10 @@ impl <'a> AlipayPayService<'a> {
         mut request: AlipayBizRequest<AlipayTradeOrderSettleModel>,
     ) -> LabradorResult<TradeOrderSettleResponse> {
         request.method = AlipayMethod::TradeOrderSettle;
-        let response: AlipayResponse<TradeOrderSettleResponse> = self.client
-            .request(request, None, None, None)
-            .await?;
+        let response: AlipayResponse<TradeOrderSettleResponse> =
+            self.client.request(request, None, None, None).await?;
         response.into_result()
     }
-
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -405,7 +389,6 @@ pub struct AlipayTradeCancelModel {
     pub trade_no: Option<String>,
 }
 
-
 #[derive(Debug, Serialize, Default, Deserialize)]
 pub struct AlipayTradeCloseModel {
     /// 订单支付时传入的商户订单号,和支付宝交易号不能同时为空。 trade_no,out_trade_no如果同时存在优先取trade_no
@@ -415,7 +398,6 @@ pub struct AlipayTradeCloseModel {
     /// 商家操作员编号 id，由商家自定义。
     pub operator_id: Option<String>,
 }
-
 
 /// 当面付响应
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -455,11 +437,6 @@ pub struct FaceToFacePayResponse {
     pub discount_goods_detail: Option<String>,
     /// 本交易支付时使用的所有优惠券信息。
     pub voucher_detail_list: Option<Vec<VoucherDetail>>,
-
-
-
-
-
 }
 
 /// 预下单响应
@@ -518,10 +495,6 @@ pub struct OrderQueryResponse {
     /// 积分支付的金额，单位为元，两位小数。
     /// 该金额代表该笔交易中用户使用积分支付的金额，比如集分宝或者支付宝实时优惠等
     pub point_amount: Option<String>,
-
-
-
-
 }
 
 /// 订单关闭响应
@@ -567,7 +540,6 @@ pub struct RefundResponse {
     pub refund_voucher_detail_list: Option<Vec<VoucherDetail>>,
 }
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefundChargeInfo {
     /// 实退费用。单位：元。
@@ -586,7 +558,6 @@ pub struct RefundSubFee {
     pub refund_charge_fee: Option<String>,
     /// 签约费率
     pub switch_fee_rate: Option<String>,
-
 }
 
 /// 退款查询响应
@@ -629,8 +600,7 @@ pub struct RefundQueryResponse {
     pub deposit_back_info_list: Option<Vec<DepositBackInfo>>,
 }
 
-
-#[derive(Debug, Clone, Deserialize,Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DepositBackInfo {
     /// 是否存在银行卡冲退信息。
     pub has_deposit_back: Option<String>,
@@ -646,7 +616,7 @@ pub struct DepositBackInfo {
     pub is_use_enterprise_pay: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize,Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RefundRoyaltyResult {
     /// 退分账金额
     pub refund_amount: Option<String>,
@@ -696,7 +666,6 @@ pub struct FundBill {
     /// 实际金额
     pub real_amount: Option<String>,
 }
-
 
 #[derive(Debug, Serialize, Default, Deserialize)]
 pub struct AlipayTradePagePayModel {
@@ -764,7 +733,6 @@ pub struct AlipayTradePagePayModel {
     /// 商户原始订单号，最大长度限制32位
     pub merchant_order_no: Option<String>,
 }
-
 
 /// 开票信息
 #[derive(Debug, Serialize, Deserialize)]
@@ -839,8 +807,6 @@ pub struct ExtendParams {
     pub card_type: Option<String>,
 }
 
-
-
 /// 周期扣款
 /// 用户与商户签署周期扣款协议后，商户可通过本接口做后续免密代扣操作
 #[derive(Debug, Serialize, Default, Deserialize)]
@@ -885,7 +851,6 @@ pub struct CyclePayRequest {
     pub notify_url: Option<String>,
 }
 
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AgreementParams {
     /// 支付宝系统中用以唯一标识用户签约记录的编号（用户签约成功后的协议号 ）
@@ -898,14 +863,12 @@ pub struct AgreementParams {
     pub deduct_permission: Option<String>,
 }
 
-
 /// 外部指定买家
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PromoParam {
     /// 存在延迟扣款这一类的场景，用这个时间表明用户发生交易的时间，比如说，在公交地铁场景，用户刷码出站的时间，和商户上送交易的时间是不一样的。
     pub actual_order_time: Option<String>,
 }
-
 
 /// 支付相关参数
 #[derive(Debug, Serialize, Deserialize)]
@@ -942,10 +905,8 @@ pub struct PayParams {
     pub undiscountable_amount: Option<f64>,
 }
 
-
-
 /// 周期付响应
-#[derive(Debug, Deserialize,Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct CyclePayResponse {
     /// 商家订单号
     pub out_trade_no: String,
@@ -1005,8 +966,7 @@ pub struct CyclePayResponse {
     pub discount_amount: Option<String>,
 }
 
-
-#[derive(Debug, Clone, Deserialize,Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct VoucherDetail {
     /// 券id
     pub id: String,
@@ -1040,7 +1000,6 @@ pub struct VoucherDetail {
     /// 如果使用的这张券是用户购买的，则该字段代表用户在购买这张券时平台优惠的金额
     pub purchase_ant_contribute: Option<f64>,
 }
-
 
 #[derive(Debug, Serialize, Default, Deserialize)]
 pub struct AlipayTradeWapPayModel {
@@ -1084,8 +1043,6 @@ pub struct AlipayTradeWapPayModel {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub merchant_order_no: Option<String>,
 }
-
-
 
 #[derive(Debug, Serialize, Default, Deserialize)]
 pub struct AlipayTradeJsapiPayModel {
@@ -1170,16 +1127,13 @@ pub struct AlipayTradeJsapiPayModel {
     pub agreement_sign_params: Option<SignParams>,
 }
 
-
-
-#[derive(Debug, Deserialize,Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct JsapiPayResponse {
     /// 商家订单号
     pub out_trade_no: String,
     /// 支付宝交易号
     pub trade_no: String,
 }
-
 
 #[derive(Debug, Serialize, Default, Deserialize)]
 pub struct SignParams {
@@ -1203,7 +1157,6 @@ pub struct SignParams {
     pub period_rule_params: Option<PeriodRuleParams>,
     /// 签约成功后商户用于接收异步通知的地址。如果不传入，签约与支付的异步通知都会发到外层notify_url参数传入的地址；如果外层也未传入，签约与支付的异步通知都会发到商户appid配置的网关地址。
     pub sign_notify_url: Option<String>,
-
 }
 
 #[derive(Debug, Serialize, Default, Deserialize)]
@@ -1250,7 +1203,6 @@ pub struct AccessParams {
     pub channel: String,
 }
 
-
 #[derive(Debug, Serialize, Default, Deserialize)]
 pub struct AlipayTradeAppPayModel {
     /// 商户网站唯一订单号
@@ -1282,7 +1234,6 @@ pub struct AlipayTradeAppPayModel {
     /// 返回参数选项。 商户通过传递该参数来定制同步需要额外返回的信息字段，数组格式。包括但不限于：["fund_bill_list","voucher_detail_list","discount_goods_detail","discount_amount","mdiscount_amount"]
     pub query_options: Option<Vec<String>>,
 }
-
 
 /// 外部指定买家
 #[derive(Debug, Serialize, Deserialize)]
@@ -1324,7 +1275,6 @@ pub struct ExtUserInfo {
     /// </pre>
     pub need_check_info: Option<String>,
 }
-
 
 /// 当面付
 #[derive(Debug, Serialize, Default, Deserialize)]
@@ -1385,8 +1335,6 @@ pub struct AlipayFaceOrderPayModel {
     pub query_options: Option<Vec<String>>,
 }
 
-
-
 /// 周期扣款
 /// 用户与商户签署周期扣款协议后，商户可通过本接口做后续免密代扣操作
 #[derive(Debug, Serialize, Default, Deserialize)]
@@ -1429,10 +1377,8 @@ pub struct AlipayCycleOrderPayModel {
     pub query_options: Option<Vec<String>>,
 }
 
-
-
 /// 周期付响应
-#[derive(Debug, Deserialize,Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct CycleOrderPayResponse {
     /// 商家订单号
     pub out_trade_no: Option<String>,
@@ -1494,7 +1440,6 @@ pub struct CycleOrderPayResponse {
     pub discount_amount: Option<String>,
 }
 
-
 /// 商家扣款
 /// 用户与商户签署商家扣款协议后，商户可通过本接口做后续免密代扣操作
 #[derive(Debug, Serialize, Default, Deserialize)]
@@ -1537,10 +1482,8 @@ pub struct AlipayDeductPayModel {
     pub query_options: Option<Vec<String>>,
 }
 
-
-
 /// 商家扣款响应
-#[derive(Debug, Deserialize,Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct DeductPayResponse {
     /// 商家订单号
     pub out_trade_no: Option<String>,
@@ -1601,9 +1544,6 @@ pub struct DeductPayResponse {
     /// 平台优惠金额
     pub discount_amount: Option<String>,
 }
-
-
-
 
 /// 统一收单线下交易预创建
 /// 收银员通过收银台或商户后台调用支付宝接口，生成二维码后，展示给用户，由用户扫描二维码完成订单支付。
@@ -1673,8 +1613,6 @@ pub struct BusinessParams {
     pub mc_create_trade_ip: Option<String>,
 }
 
-
-
 #[derive(Debug, Serialize, Default, Deserialize)]
 pub struct AlipayTradeQueryModel {
     /// 订单支付时传入的商户订单号,和支付宝交易号不能同时为空。
@@ -1694,7 +1632,6 @@ pub struct AlipayTradeQueryModel {
     /// </pre>
     pub query_options: Option<Vec<String>>,
 }
-
 
 #[derive(Debug, Serialize, Default, Deserialize)]
 pub struct AlipayTradeRefundModel {
@@ -1732,7 +1669,6 @@ pub struct AlipayTradeRefundModel {
     pub query_options: Option<Vec<String>>,
 }
 
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OpenApiRoyaltyDetailInfoPojo {
     /// 分账类型.
@@ -1760,12 +1696,10 @@ pub struct OpenApiRoyaltyDetailInfoPojo {
     pub trans_in_name: Option<String>,
 }
 
-
-
 #[cfg(test)]
 mod test {
-    use crate::alipay::builder::AlipayClientBuilder;
     use super::*;
+    use crate::alipay::builder::AlipayClientBuilder;
     fn create_client() -> AlipayClient {
         AlipayClientBuilder::new()
             .app_id("2021003142611544")
@@ -1786,7 +1720,7 @@ mod test {
             product_code: "".to_string(),
             seller_id: None,
             body: Some("测试".to_string()),
-            goods_detail: Some(vec![GoodsDetail{
+            goods_detail: Some(vec![GoodsDetail {
                 goods_id: "1".to_string(),
                 alipay_goods_id: None,
                 goods_name: "测试商品".to_string(),
