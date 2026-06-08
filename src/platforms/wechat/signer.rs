@@ -184,6 +184,10 @@ impl WechatPaySigner {
         if mch_id.is_empty() || serial_no.is_empty() || private_key.is_empty() {
             return Err(LabraError::Sign("缺少必要参数".to_string()));
         }
+        tracing::info!(
+            "微信支付 V3 签名: mch_id={}, serial_no={}, private_key_len={}, url={}, method={}",
+            mch_id, serial_no, private_key.len(), format_url, method,
+        );
         let nonce_str = random_string(32).to_uppercase();
 
         let timestamp = timestamp_millis() / 1000;
