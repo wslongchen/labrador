@@ -99,7 +99,7 @@ impl Identity {
     /// 从PEM格式创建Identity
     pub fn from_pem(pem_data: &[u8]) -> LabradorResult<Self> {
         // 验证PEM是否有效
-        let _reqwest_identity = ReqwestIdentity::from_pem(pem_data)
+        let _reqwest_identity = ReqwestIdentity::from_pkcs8_pem(pem_data, pem_data)
             .map_err(|e| LabraError::Identity(format!("Invalid PEM: {}", e)))?;
 
         // 解析证书信息和私钥
@@ -141,7 +141,7 @@ impl Identity {
                     "Password required for P12".to_string(),
                 ))
             }
-            RawIdentityData::Pem { data } => ReqwestIdentity::from_pem(data)
+            RawIdentityData::Pem { data } => ReqwestIdentity::from_pkcs8_pem(data, data)
                 .map_err(|e| LabraError::Identity(format!("Failed to create from PEM: {}", e))),
         }
     }
