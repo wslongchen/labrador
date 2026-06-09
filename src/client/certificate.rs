@@ -64,6 +64,28 @@ impl Certificate {
         })
     }
 
+    /// 从纯公钥 PEM 构建证书条目（用于微信支付公钥模式）。
+    ///
+    /// 微信支付公钥模式不使用 X.509 证书，而是由微信提供一个纯公钥 PEM 和公钥 ID。
+    /// 此方法解析公钥 PEM 提取 SPKI DER 字节，用 `key_id` 作为序列号，
+    /// 使 `WechatPaySigner::verify_sign_v3` 可以通过 `root_certificates.get(key_id)` 查找到该公钥并验签。
+    pub fn from_public_key_pem(pem: &[u8], key_id: &str) -> LabradorResult<Self> {
+        use openssl::pkey::PKey;
+        let pkey = PKey::public_key_from_pem(pem)
+            .map_err(|e| LabraError::Certificate(format!("公钥 PEM 解析失败: {}", e)))?;
+        let public_key = pkey
+            .public_key_to_der()
+            .map_err(|e| LabraError::Certificate(format!("公钥 DER 导出失败: {}", e)))?;
+        Ok(Self {
+            serial_number: key_id.to_uppercase(),
+            not_before: 0,
+            not_after: 4102444800, // 2100-01-01 00:00:00 UTC
+            public_key,
+            content: pem.to_vec(),
+            parsed: OnceCell::new(),
+        })
+    }
+
     /// 从DER格式创建证书
     pub fn from_der(der: &[u8]) -> LabradorResult<Self> {
         let _cert = reqwest::Certificate::from_der(der)
@@ -106,6 +128,14 @@ impl Certificate {
     pub fn to_reqwest_certificate(&self) -> LabradorResult<reqwest::Certificate> {
         reqwest::Certificate::from_pem(&self.content)
             .map_err(|e| LabraError::Certificate(e.to_string()))
+    }
+
+    /// 是否是 X.509 证书（vs 纯公钥 PEM）
+    ///
+    /// 纯公钥 PEM（`-----BEGIN PUBLIC KEY-----`）不能作为 TLS 根证书，
+    /// 仅用于响应签名的验签。此方法用于在传给 reqwest 前过滤。
+    pub fn is_x509(&self) -> bool {
+        self.content.starts_with(b"-----BEGIN CERTIFICATE-----")
     }
 
     /// 解析X509证书信息

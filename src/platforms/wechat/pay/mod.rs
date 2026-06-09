@@ -105,7 +105,10 @@ impl WechatPayClient {
 
         if let Some(root_certs) = config.root_certificates.clone() {
             for root_cert in root_certs.into_iter() {
-                client_builder = client_builder.add_root_certificate(root_cert);
+                // 纯公钥 PEM（微信支付公钥模式）不能作为 TLS 根证书，仅 signer 验签使用
+                if root_cert.is_x509() {
+                    client_builder = client_builder.add_root_certificate(root_cert);
+                }
             }
         }
 

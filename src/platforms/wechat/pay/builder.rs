@@ -18,6 +18,7 @@
  *  *
  *
  */
+use crate::client::certificate::Certificate;
 use crate::errors::LabradorResult;
 use crate::platforms::wechat::pay::config::WechatPayApiVersion;
 use crate::platforms::wechat::pay::{WechatPayClient, WechatPayConfig};
@@ -97,14 +98,42 @@ impl WechatPayBuilder {
         self
     }
 
+    /// 设置微信支付公钥（微信支付公钥模式）。
+    ///
+    /// 传入微信支付后台提供的公钥 PEM 和公钥 ID。
+    /// 启用后不再通过 `/v3/certificates` 下载平台证书，
+    /// 响应验签将使用此公钥。
+    pub fn platform_public_key<S: Into<String>>(
+        mut self,
+        public_key_pem: S,
+        key_id: S,
+    ) -> Self {
+        self.config.platform_public_key = Some(public_key_pem.into());
+        self.config.platform_public_key_id = Some(key_id.into());
+        self
+    }
+
     /// 构建微信支付客户端
     pub async fn build(mut self) -> LabradorResult<WechatPayClient> {
-        // 判断是否v3版本，没有设置证书则需要自动获取
         if self.config.api_version == WechatPayApiVersion::V3 {
             let root_certs = self.config.root_certificates.clone().unwrap_or_default();
             if root_certs.is_empty() {
-                let certs = WechatPayClient::get_certificates(&self.config).await?;
-                self.config.root_certificates = Some(certs);
+                // 优先使用手动配置的微信支付公钥（微信支付公钥模式）
+                if let (Some(pk), Some(kid)) = (
+                    self.config.platform_public_key.as_ref(),
+                    self.config.platform_public_key_id.as_ref(),
+                ) {
+                    let cert = Certificate::from_public_key_pem(pk.as_bytes(), kid)?;
+                    tracing::info!(
+                        "微信支付公钥模式: 已从 PEM 构建公钥条目, key_id={}, 跳过 /v3/certificates",
+                        kid,
+                    );
+                    self.config.root_certificates = Some(vec![cert]);
+                } else {
+                    // 无公钥 → 自动下载微信支付平台证书
+                    let certs = WechatPayClient::get_certificates(&self.config).await?;
+                    self.config.root_certificates = Some(certs);
+                }
             }
         }
         WechatPayClient::new(self.config)

@@ -24,7 +24,7 @@ moka = { version = "0.12", features = ["future", "sync"] }
 r2d2 = {version = "0.8.9"}
 chrono = { version = "0.4", features = ["serde"]}
 rand = "0.8"
-uuid = { version = "0.7.4", features = ["serde", "v4"] }
+uuid = { version = "1", features = ["serde", "v4"] }
 sxd-document = {version = "0.2", optional= true}
 sxd-xpath = {version = "0.2", optional= true}
 serde-xml-rs = "0.6.0"
@@ -35,7 +35,6 @@ dashmap = "5.3.4"
 json = {version = "0.12.4", optional= true }
 once_cell = "1.8"
 
-redisson = {version = "0.1.0", features = ["caching"]}
 
 # about crypt
 ring = "0.17"

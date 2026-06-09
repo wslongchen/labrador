@@ -59,6 +59,10 @@ pub struct WechatPayConfig {
     pub(crate) notify_url: String,
     /// 退款结果通知URL
     pub(crate) refund_notify_url: Option<String>,
+    /// 微信支付公钥 PEM（微信支付公钥模式，优先级高于自动下载平台证书）
+    pub(crate) platform_public_key: Option<String>,
+    /// 微信支付公钥 ID（与 platform_public_key 配对，用于匹配 Wechatpay-Serial 响应头）
+    pub(crate) platform_public_key_id: Option<String>,
 }
 
 impl Default for WechatPayConfig {
@@ -79,6 +83,8 @@ impl Default for WechatPayConfig {
             sandbox: false,
             notify_url: "".to_string(),
             refund_notify_url: None,
+            platform_public_key: None,
+            platform_public_key_id: None,
         }
     }
 }
@@ -102,6 +108,8 @@ impl WechatPayConfig {
             sandbox: false,
             notify_url: notify_url.to_string(),
             refund_notify_url: None,
+            platform_public_key: None,
+            platform_public_key_id: None,
         }
     }
 
@@ -206,6 +214,17 @@ impl WechatPayConfig {
     /// 设置退款通知URL
     pub fn with_refund_notify_url(mut self, refund_notify_url: &str) -> Self {
         self.refund_notify_url = Some(refund_notify_url.to_string());
+        self
+    }
+
+    /// 设置微信支付公钥（微信支付公钥模式）。
+    ///
+    /// 当商户在微信支付后台启用「微信支付公钥」而非「平台证书」时，
+    /// 不再需要通过 `/v3/certificates` 下载平台证书，
+    /// 而是使用微信提供的单一公钥 + 公钥 ID 进行响应验签。
+    pub fn with_platform_public_key(mut self, public_key_pem: &str, key_id: &str) -> Self {
+        self.platform_public_key = Some(public_key_pem.to_string());
+        self.platform_public_key_id = Some(key_id.to_string());
         self
     }
 }
