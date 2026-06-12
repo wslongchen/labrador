@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -41,7 +41,20 @@ impl<'a> AlipayOpenService<'a> {
         Self { client }
     }
 
-    /// 换取授权访问令牌
+    /// 换取授权访问令牌 (alipay.system.oauth.token)
+    ///
+    /// 通过授权码或刷新令牌换取用户的访问令牌（access_token）。
+    ///
+    /// # 参数
+    /// * `grant_type` - 授权类型：authorization_code（用授权码换令牌）或 refresh_token（用刷新令牌换新令牌）
+    /// * `code` - 授权码，grant_type 为 authorization_code 时必传
+    /// * `refresh_token` - 刷新令牌，grant_type 为 refresh_token 时必传
+    ///
+    /// # 返回
+    /// 返回 `SystemOauthTokenResponse`，包含 user_id、access_token、refresh_token、expires_in 等
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_9/alipay.system.oauth.token>
     pub async fn system_oauth_token(
         &self,
         grant_type: String,
@@ -67,7 +80,21 @@ impl<'a> AlipayOpenService<'a> {
         response.into_result()
     }
 
-    /// 换取应用授权令牌
+    /// 换取应用授权令牌 (alipay.open.auth.token.app)
+    ///
+    /// 第三方应用通过授权码或刷新令牌换取商户的应用授权令牌（app_auth_token）。
+    ///
+    /// # 参数
+    /// * `grant_type` - 授权类型：authorization_code 或 refresh_token
+    /// * `code` - 授权码，grant_type 为 authorization_code 时必传
+    /// * `refresh_token` - 刷新令牌，grant_type 为 refresh_token 时必传
+    ///
+    /// # 返回
+    /// 返回 `OpenAuthTokenAppResponse`，包含 app_auth_token、app_refresh_token、
+    ///   auth_app_id（授权商户的AppId）、user_id 等
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_9/alipay.open.auth.token.app>
     pub async fn open_auth_token_app(
         &self,
         grant_type: String,
@@ -93,7 +120,18 @@ impl<'a> AlipayOpenService<'a> {
         response.into_result()
     }
 
-    /// 获取用户信息
+    /// 获取用户信息 (alipay.user.info.share)
+    ///
+    /// 通过用户授权令牌获取支付宝用户的公开信息。
+    ///
+    /// # 参数
+    /// * `auth_token` - 用户授权令牌（通过 alipay.system.oauth.token 获取的 access_token）
+    ///
+    /// # 返回
+    /// 返回 `UserInfoShareResponse`，包含 user_id、昵称、头像、性别、省份城市、实名状态等
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_2/alipay.user.info.share>
     pub async fn user_info_share(
         &self,
         auth_token: String,
@@ -112,7 +150,18 @@ impl<'a> AlipayOpenService<'a> {
         response.into_result()
     }
 
-    /// 查询应用授权关系
+    /// 查询应用授权关系 (alipay.open.auth.token.app.query)
+    ///
+    /// 查询某个应用授权令牌（app_auth_token）对应的授权信息。
+    ///
+    /// # 参数
+    /// * `app_auth_token` - 应用授权令牌
+    ///
+    /// # 返回
+    /// 返回 `OpenAuthTokenAppQueryResponse`，包含授权商户 AppId、授权时间范围、状态等
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_9/alipay.open.auth.token.app.query>
     pub async fn open_auth_token_app_query(
         &self,
         app_auth_token: String,
@@ -130,7 +179,19 @@ impl<'a> AlipayOpenService<'a> {
         response.into_result()
     }
 
-    /// 查询授权权限列表
+    /// 查询授权权限列表 (alipay.open.auth.appauth.query)
+    ///
+    /// 查询某个第三方应用对商户的授权权限范围。
+    ///
+    /// # 参数
+    /// * `auth_app_id` - 授权应用的 AppId
+    /// * `scopes` - 需要查询的权限列表
+    ///
+    /// # 返回
+    /// 返回 `OpenAuthAppAuthQueryResponse`，包含授权范围和状态
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_9/alipay.open.auth.appauth.query>
     pub async fn open_auth_app_auth_query(
         &self,
         auth_app_id: String,
@@ -152,7 +213,18 @@ impl<'a> AlipayOpenService<'a> {
         response.into_result()
     }
 
-    /// 取消授权
+    /// 取消授权 (alipay.open.auth.appauth.cancel)
+    ///
+    /// 取消第三方应用对商户的授权。
+    ///
+    /// # 参数
+    /// * `app_auth_token` - 应用授权令牌
+    ///
+    /// # 返回
+    /// 返回 `OpenAuthAppAuthCancelResponse`，包含取消结果
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_9/alipay.open.auth.appauth.cancel>
     pub async fn open_auth_app_auth_cancel(
         &self,
         app_auth_token: String,
@@ -170,7 +242,17 @@ impl<'a> AlipayOpenService<'a> {
         response.into_result()
     }
 
-    /// 生成授权URL
+    /// 生成授权 URL
+    ///
+    /// 生成支付宝网页授权的 URL，引导用户跳转到支付宝进行授权。
+    ///
+    /// # 参数
+    /// * `redirect_uri` - 授权回调地址
+    /// * `scopes` - 授权范围列表，如 auth_base（静默授权）、auth_user（用户信息授权）
+    /// * `state` - 状态参数，用于防止 CSRF，可选
+    ///
+    /// # 返回
+    /// 返回支付宝授权页面的完整 URL 字符串
     pub fn generate_auth_url(
         &self,
         redirect_uri: &str,
@@ -188,7 +270,17 @@ impl<'a> AlipayOpenService<'a> {
         )
     }
 
-    /// 生成小程序授权URL
+    /// 生成小程序授权 URL
+    ///
+    /// 生成支付宝小程序内授权的 URL（带 mode=miniapp 参数）。
+    ///
+    /// # 参数
+    /// * `redirect_uri` - 授权回调地址
+    /// * `scopes` - 授权范围列表
+    /// * `state` - 状态参数，用于防止 CSRF，可选
+    ///
+    /// # 返回
+    /// 返回支付宝小程序授权页面的完整 URL 字符串
     pub fn generate_miniapp_auth_url(
         &self,
         redirect_uri: &str,

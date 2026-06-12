@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -39,6 +39,19 @@ impl<'a> WechatMxaMessage<'a> {
     }
 
     /// 发送订阅消息
+    ///
+    /// 本接口用于向指定用户发送订阅消息。用户需要先在客户端完成订阅授权，
+    /// 服务端方可调用此接口向该用户推送模板消息。
+    ///
+    /// # 参数
+    /// * `request` - 发送订阅消息请求参数，包含接收用户 openid（touser）、
+    ///   模板ID（template_id）、模板数据（data）、跳转页面（page）等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，成功时返回空响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-message-management/subscribe-message/sendMessage.html>
     pub async fn send(
         &self,
         request: &SubscribeMessageRequest,
@@ -52,7 +65,17 @@ impl<'a> WechatMxaMessage<'a> {
     }
 
     /// 获取类目下的公共模板
-    /// 该接口用于获取帐号所属类目下的公共模板，可从中选用模板使用
+    ///
+    /// 本接口用于获取帐号所属类目下的公共模板标题列表，开发者可从中选用模板使用。
+    ///
+    /// # 参数
+    /// * `request` - 请求参数，包含类目ID（ids）、起始位置（start）和获取数量（limit）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<PubTemplateTitlesResponse>`，包含公共模板标题列表。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-message-management/subscribe-message/getPubTemplateTitles.html>
     pub async fn get_pub_template_titles(
         &self,
         request: &PubTemplateTitlesRequest,
@@ -69,7 +92,17 @@ impl<'a> WechatMxaMessage<'a> {
     }
 
     /// 获取模板中的关键词
-    /// 该接口用于获取模板标题下的关键词列表
+    ///
+    /// 本接口用于获取指定模板标题下的关键词列表，用于了解模板中可填充的关键词字段。
+    ///
+    /// # 参数
+    /// * `tid` - 公共模板ID，通过获取类目下的公共模板接口获得
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<Vec<PubTemplateKeyword>>`，包含模板关键词列表。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-message-management/subscribe-message/getPubTemplateKeyWordsById.html>
     pub async fn get_pub_template_keywords(
         &self,
         tid: &str,
@@ -86,7 +119,18 @@ impl<'a> WechatMxaMessage<'a> {
     }
 
     /// 选用模板
-    /// 从公共模板库中选用模板到私有模板库
+    ///
+    /// 本接口用于从公共模板库中选用模板到私有模板库，选用后可用于发送订阅消息。
+    ///
+    /// # 参数
+    /// * `request` - 请求参数，包含公共模板ID（tid）、关键词ID列表（kid_list）
+    ///   和场景描述（scene_desc）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<String>`，即选用成功后的私有模板ID（priTmplId）。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-message-management/subscribe-message/addMessageTemplate.html>
     pub async fn add_template(&self, request: &AddTemplateRequest) -> LabradorResult<String> {
         let response: WechatApiResponse<AddTemplateResponse> = self
             .client
@@ -97,7 +141,14 @@ impl<'a> WechatMxaMessage<'a> {
     }
 
     /// 获取已有模板列表
-    /// 该接口用于获取当前帐号下的已有的模板列表
+    ///
+    /// 本接口用于获取当前帐号下已有的私有模板列表，包含模板ID、标题、内容等信息。
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<Vec<PrivateTemplate>>`，包含私有模板信息列表。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-message-management/subscribe-message/getMessageTemplateList.html>
     pub async fn get_template_list(&self) -> LabradorResult<Vec<PrivateTemplate>> {
         let response: WechatApiResponse<GetTemplateListResponse> = self
             .client
@@ -108,7 +159,17 @@ impl<'a> WechatMxaMessage<'a> {
     }
 
     /// 删除模板
-    /// 删除私有模板库中的模板
+    ///
+    /// 本接口用于删除私有模板库中的指定模板。
+    ///
+    /// # 参数
+    /// * `pri_tmpl_id` - 私有模板ID，通过选用模板接口获得
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，成功时返回空响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-message-management/subscribe-message/deleteMessageTemplate.html>
     pub async fn delete_template(&self, pri_tmpl_id: &str) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -122,7 +183,14 @@ impl<'a> WechatMxaMessage<'a> {
     }
 
     /// 获取类目
-    /// 本接口用于获取小程序、公众号所属类目用于查询公共模板
+    ///
+    /// 本接口用于获取小程序/公众号所属的类目列表，用于查询公共模板时按类目筛选。
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<Vec<Category>>`，包含类目ID和名称的列表。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-message-management/subscribe-message/getCategory.html>
     pub async fn get_category(&self) -> LabradorResult<Vec<Category>> {
         let response: WechatApiResponse<GetCategoryResponse> = self
             .client
@@ -133,6 +201,18 @@ impl<'a> WechatMxaMessage<'a> {
     }
 
     /// 激活与更新服务卡片
+    ///
+    /// 本接口用于激活或更新用户的微信服务卡片通知。服务卡片是微信小程序
+    /// 的一种消息触达方式，用于在微信聊天列表中展示服务信息。
+    ///
+    /// # 参数
+    /// * `request` - 请求参数，包含用户 openid 和服务卡片数据（data）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，成功时返回空响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-message-management/updatable-message/activateMessage.html>
     pub async fn set_user_notify(
         &self,
         request: &SetUserNotifyRequest,
@@ -146,6 +226,17 @@ impl<'a> WechatMxaMessage<'a> {
     }
 
     /// 更新服务卡片扩展信息
+    ///
+    /// 本接口用于更新已激活的服务卡片的扩展信息。
+    ///
+    /// # 参数
+    /// * `request` - 请求参数，包含用户 openid 和扩展数据（data）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，成功时返回空响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-message-management/updatable-message/updateMessage.html>
     pub async fn set_user_notifyext(
         &self,
         request: &SetUserNotifyExtRequest,
@@ -159,6 +250,17 @@ impl<'a> WechatMxaMessage<'a> {
     }
 
     /// 查询服务卡片状态
+    ///
+    /// 本接口用于查询指定用户的服务卡片当前状态。
+    ///
+    /// # 参数
+    /// * `request` - 请求参数，包含用户 openid
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<UserNotifyStatus>`，包含用户的 openid 和通知信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-message-management/updatable-message/queryMessageStatus.html>
     pub async fn get_user_notify(
         &self,
         request: &GetUserNotifyRequest,
@@ -261,6 +363,7 @@ pub struct PubTemplateTitle {
     pub title: String,
     #[serde(rename = "type")]
     pub type_: i32,
+    #[serde(default)]
     pub category_id: String,
 }
 

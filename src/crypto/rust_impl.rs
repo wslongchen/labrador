@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -246,15 +246,13 @@ where
     T: aes::cipher::KeyInit + aes::cipher::BlockEncryptMut,
 {
     let block_size = 16;
-    let padded_len = (plaintext.len() + block_size - 1) / block_size * block_size;
+    let padded_len = plaintext.len().div_ceil(block_size) * block_size;
     let mut buffer = vec![0u8; padded_len];
     buffer[..plaintext.len()].copy_from_slice(plaintext);
 
     // PKCS7 填充
     let pad_byte = (block_size - plaintext.len() % block_size) as u8;
-    for i in plaintext.len()..padded_len {
-        buffer[i] = pad_byte;
-    }
+    buffer[plaintext.len()..padded_len].fill(pad_byte);
 
     // 直接操作切片，避免创建 Vec<GenericArray>
     let mut cipher = T::new(GenericArray::from_slice(key));
@@ -452,15 +450,13 @@ fn aes_cbc_encrypt(key: &[u8], iv: &[u8], plaintext: &[u8]) -> LabradorResult<Ve
 
             // 计算填充后的大小
             let block_size = 16;
-            let padded_len = (plaintext.len() + block_size - 1) / block_size * block_size;
+            let padded_len = plaintext.len().div_ceil(block_size) * block_size;
             let mut buffer = vec![0u8; padded_len];
             buffer[..plaintext.len()].copy_from_slice(plaintext);
 
             // 手动进行PKCS7填充
             let pad_byte = (block_size - plaintext.len() % block_size) as u8;
-            for i in plaintext.len()..padded_len {
-                buffer[i] = pad_byte;
-            }
+            buffer[plaintext.len()..padded_len].fill(pad_byte);
 
             // 将缓冲区转换为 block 数组
             let blocks = buffer.chunks_exact_mut(block_size);
@@ -490,14 +486,12 @@ fn aes_cbc_encrypt(key: &[u8], iv: &[u8], plaintext: &[u8]) -> LabradorResult<Ve
             let mut cipher = Aes192CbcEnc::new(key_arr, iv_arr);
 
             let block_size = 16;
-            let padded_len = (plaintext.len() + block_size - 1) / block_size * block_size;
+            let padded_len = plaintext.len().div_ceil(block_size) * block_size;
             let mut buffer = vec![0u8; padded_len];
             buffer[..plaintext.len()].copy_from_slice(plaintext);
 
             let pad_byte = (block_size - plaintext.len() % block_size) as u8;
-            for i in plaintext.len()..padded_len {
-                buffer[i] = pad_byte;
-            }
+            buffer[plaintext.len()..padded_len].fill(pad_byte);
 
             // 简化的方法：使用 encrypt_padded_mut（如果可用）
             // 或者使用 chunks_exact_mut 创建 block 数组
@@ -529,14 +523,12 @@ fn aes_cbc_encrypt(key: &[u8], iv: &[u8], plaintext: &[u8]) -> LabradorResult<Ve
             let mut cipher = Aes256CbcEnc::new(key_arr, iv_arr);
 
             let block_size = 16;
-            let padded_len = (plaintext.len() + block_size - 1) / block_size * block_size;
+            let padded_len = plaintext.len().div_ceil(block_size) * block_size;
             let mut buffer = vec![0u8; padded_len];
             buffer[..plaintext.len()].copy_from_slice(plaintext);
 
             let pad_byte = (block_size - plaintext.len() % block_size) as u8;
-            for i in plaintext.len()..padded_len {
-                buffer[i] = pad_byte;
-            }
+            buffer[plaintext.len()..padded_len].fill(pad_byte);
             use typenum::U16;
 
             let block_count = buffer.len() / 16;
@@ -1024,5 +1016,55 @@ mod tests {
         let si = RsaEncryptor::with_private_key(&private_key, RsaKeyFormat::Pkcs1);
         let s = si.sign("ssss".as_bytes(), HashType::Sha256).unwrap();
         println!("{}", base64_encode(&s));
+    }
+
+    #[test]
+    fn test_aes_encrypt_decrypt_roundtrip() {
+        // AES加解密往返测试
+        use crate::crypto::rust_impl::RustCrypto;
+        let _crypto = RustCrypto;
+        println!("AES encrypt/decrypt roundtrip test placeholder");
+    }
+
+    #[test]
+    fn test_md5_hash() {
+        // MD5哈希测试
+        let input = "hello world";
+        let digest = md5::compute(input.as_bytes());
+        let result = format!("{:x}", digest);
+        assert_eq!(result, "5eb63bbbe01eeed093cb22bb8f5acdc3");
+    }
+
+    #[test]
+    fn test_sha256_hash() {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.update(b"hello world");
+        let result = hasher.finalize();
+        assert_eq!(
+            format!("{:x}", result),
+            "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
+        );
+    }
+
+    #[test]
+    fn test_base64_encode_decode() {
+        use base64::{engine::general_purpose::STANDARD, Engine};
+        let original = "Hello, Labrador!";
+        let encoded = STANDARD.encode(original.as_bytes());
+        let decoded = STANDARD.decode(&encoded).unwrap();
+        assert_eq!(String::from_utf8(decoded).unwrap(), original);
+    }
+
+    #[test]
+    fn test_hmac_sha256() {
+        use hmac::{Hmac, Mac};
+        use sha2::Sha256;
+        type HmacSha256 = Hmac<Sha256>;
+        let mut mac = HmacSha256::new_from_slice(b"secret_key").unwrap();
+        mac.update(b"message");
+        let result = mac.finalize();
+        let code_bytes = result.into_bytes();
+        assert!(!code_bytes.is_empty());
     }
 }

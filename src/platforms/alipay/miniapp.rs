@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -42,7 +42,17 @@ impl<'a> AlipayMiniappService<'a> {
         Self { client }
     }
 
-    /// 获取小程序模板列表
+    /// 获取小程序模板消息模板列表 (alipay.open.mini.templatelist.query)
+    ///
+    /// 获取支付宝小程序可用的模板消息模板列表。
+    ///
+    /// # 参数
+    /// * `template_type` - 模板类型，可选
+    /// * `page_num` - 页码，从1开始，可选
+    /// * `page_size` - 每页条数，可选
+    ///
+    /// # 返回
+    /// 返回 `TemplateListResponse`，包含模板列表和分页信息
     pub async fn template_list(
         &self,
         template_type: Option<String>,
@@ -73,7 +83,20 @@ impl<'a> AlipayMiniappService<'a> {
         response.into_result()
     }
 
-    /// 发送模板消息
+    /// 发送模板消息 (alipay.open.app.mini.templatemessage.send)
+    ///
+    /// 向支付宝小程序用户发送模板消息通知。
+    ///
+    /// # 参数
+    /// * `to_user_id` - 接收消息的支付宝用户ID
+    /// * `form_id` - 表单提交场景下，为 submit 事件带上的 formId；支付场景下，为本次支付的 prepay_id
+    /// * `user_template_id` - 用户选择的模板ID
+    /// * `page` - 点击模板消息后跳转的小程序页面，可选
+    /// * `data` - 模板消息数据，key-value 格式
+    /// * `emphasis_keyword` - 需要放大的关键词，可选
+    ///
+    /// # 返回
+    /// 返回 `SendTemplateMessageResponse`，包含 msg_id 和 send_status
     pub async fn send_template_message(
         &self,
         to_user_id: String,
@@ -109,7 +132,15 @@ impl<'a> AlipayMiniappService<'a> {
         response.into_result()
     }
 
-    /// 查询模板消息发送状态
+    /// 查询模板消息发送状态 (alipay.open.app.mini.templatemessage.query)
+    ///
+    /// 查询已发送的模板消息的送达状态。
+    ///
+    /// # 参数
+    /// * `msg_id` - 发送模板消息接口返回的 msg_id
+    ///
+    /// # 返回
+    /// 返回 `QueryTemplateMessageStatusResponse`，包含 send_status 和可能的 fail_reason
     pub async fn query_template_message_status(
         &self,
         msg_id: String,
@@ -127,7 +158,19 @@ impl<'a> AlipayMiniappService<'a> {
         response.into_result()
     }
 
-    /// 创建二维码
+    /// 创建小程序二维码 (alipay.open.app.qrcode.create)
+    ///
+    /// 生成支付宝小程序的二维码图片。
+    ///
+    /// # 参数
+    /// * `url_param` - 小程序页面路径
+    /// * `query_param` - 页面参数，可选
+    /// * `describe` - 二维码描述，可选
+    /// * `color` - 二维码颜色，可选
+    /// * `size` - 二维码尺寸，可选
+    ///
+    /// # 返回
+    /// 返回 `CreateQrcodeResponse`，包含 qr_code_url（二维码图片地址）和 qr_code_content
     pub async fn create_qrcode(
         &self,
         url_param: String,
@@ -165,7 +208,15 @@ impl<'a> AlipayMiniappService<'a> {
         response.into_result()
     }
 
-    /// 获取小程序摘要
+    /// 获取小程序摘要信息 (alipay.open.mini.summary.query)
+    ///
+    /// 查询支付宝小程序的基本信息摘要。
+    ///
+    /// # 参数
+    /// * `mini_app_id` - 小程序 APPID
+    ///
+    /// # 返回
+    /// 返回 `GetSummaryResponse`，包含小程序名称、图标、分类、状态等信息
     pub async fn get_summary(&self, mini_app_id: String) -> LabradorResult<GetSummaryResponse> {
         let mut request = AlipayBizRequest::new();
         let mut biz_content = BTreeMap::new();
@@ -180,7 +231,16 @@ impl<'a> AlipayMiniappService<'a> {
         response.into_result()
     }
 
-    /// 检查文本安全
+    /// 检查文本安全 (alipay.security.risk.content.analyze)
+    ///
+    /// 对文本内容进行安全风险识别，检测违规内容。
+    ///
+    /// # 参数
+    /// * `content` - 待检测的文本内容
+    /// * `scene_codes` - 场景码列表，用于标识检测场景
+    ///
+    /// # 返回
+    /// 返回 `CheckTextSecurityResponse`，包含 action（处理建议）和 risk_labels（风险标签）
     pub async fn check_text_security(
         &self,
         content: String,
@@ -202,7 +262,16 @@ impl<'a> AlipayMiniappService<'a> {
         response.into_result()
     }
 
-    /// 检查图片安全
+    /// 检查图片安全 (alipay.security.risk.content.analyze.image)
+    ///
+    /// 对图片内容进行安全风险识别，检测违规图片。
+    ///
+    /// # 参数
+    /// * `image_urls` - 待检测的图片URL列表
+    /// * `scene_codes` - 场景码列表，用于标识检测场景
+    ///
+    /// # 返回
+    /// 返回 `CheckImageSecurityResponse`，包含每张图片的检测结果
     pub async fn check_image_security(
         &self,
         image_urls: Vec<String>,
@@ -226,7 +295,17 @@ impl<'a> AlipayMiniappService<'a> {
         response.into_result()
     }
 
-    /// 生成小程序scheme链接
+    /// 生成小程序 scheme 链接
+    ///
+    /// 生成 alipays:// 协议的 scheme 链接，可在其他 App 或网页中打开小程序。
+    ///
+    /// # 参数
+    /// * `page_path` - 小程序页面路径
+    /// * `query` - 页面参数，可选
+    /// * `app_id` - 小程序 APPID，可选（默认使用当前配置的 APPID）
+    ///
+    /// # 返回
+    /// 返回 alipays:// 格式的 scheme URL 字符串
     pub fn generate_scheme_url(
         &self,
         page_path: &str,
@@ -243,6 +322,16 @@ impl<'a> AlipayMiniappService<'a> {
     }
 
     /// 生成小程序二维码链接
+    ///
+    /// 生成可在浏览器中展示的小程序二维码链接（基于 render.alipay.com）。
+    ///
+    /// # 参数
+    /// * `page_path` - 小程序页面路径
+    /// * `query` - 页面参数，可选
+    /// * `app_id` - 小程序 APPID，可选（默认使用当前配置的 APPID）
+    ///
+    /// # 返回
+    /// 返回 <https://render.alipay.com> 格式的二维码 URL 字符串
     pub fn generate_qrcode_url(
         &self,
         page_path: &str,

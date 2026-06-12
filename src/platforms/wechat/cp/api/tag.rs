@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -151,7 +151,13 @@ impl<'a> WechatCpTag<'a> {
 
     /// 获取标签列表
     ///
-    /// 详情请见：<https://work.weixin.qq.com/api/doc/90216>
+    /// 获取企业的所有标签列表。
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<Vec<TagInfo>>`，包含标签 id 和名称列表
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90216>
     pub async fn list(&self) -> LabradorResult<Vec<TagInfo>> {
         let response: WechatApiResponse<TagListResponse> =
             self.client.get("/cgi-bin/tag/list").await?;

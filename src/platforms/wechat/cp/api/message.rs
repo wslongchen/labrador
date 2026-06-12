@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -42,7 +42,16 @@ impl<'a> WechatCpMessage<'a> {
 
     /// 发送应用消息
     ///
-    /// 详情请见：<https://work.weixin.qq.com/api/doc/90236>
+    /// 企业可通过此接口发送应用消息给成员、部门或标签。支持文本、图片、语音、视频、文件、文本卡片、图文、模板卡片等多种消息类型。
+    ///
+    /// # 参数
+    /// * `req` - 消息请求，包含接收人（touser/toparty/totag）、消息类型（msgtype）、消息体等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<MessageResponse>`，包含消息 id 及无效的接收者列表
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90236>
     pub async fn send(&self, mut req: MessageRequest) -> LabradorResult<MessageResponse> {
         if req.agentid.is_none() {
             req.agentid = self.client.agent_id();
@@ -55,7 +64,15 @@ impl<'a> WechatCpMessage<'a> {
     /// 发送互联企业消息
     ///
     /// 互联企业的应用支持推送文本、图片、视频、文件、图文等类型。
-    /// 详情请见：<https://work.weixin.qq.com/api/doc/90250>
+    ///
+    /// # 参数
+    /// * `req` - 互联企业消息请求，包含接收人、消息类型、消息体等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<LinkedCorpMessageResponse>`，包含无效的接收者列表
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90250>
     pub async fn send_linked_corp(
         &self,
         mut req: LinkedCorpMessageRequest,
@@ -73,7 +90,15 @@ impl<'a> WechatCpMessage<'a> {
     /// 发送学校通知
     ///
     /// 学校可以通过此接口来给家长发送不同类型的学校通知。
-    /// 详情请见：<https://developer.work.weixin.qq.com/document/path/92321>
+    ///
+    /// # 参数
+    /// * `req` - 学校通知消息请求，包含接收范围、家长/学生 userid、消息类型等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<SchoolContactMessageResponse>`，包含无效的接收者列表
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92321>
     pub async fn send_school_contact(
         &self,
         mut req: SchoolContactMessageRequest,
@@ -90,7 +115,16 @@ impl<'a> WechatCpMessage<'a> {
 
     /// 查询应用消息发送统计
     ///
-    /// 详情请见：<https://work.weixin.qq.com/api/doc/92369>
+    /// 查询指定时间范围内应用消息的发送统计数据。
+    ///
+    /// # 参数
+    /// * `req` - 统计请求，包含应用 id 列表、开始时间和结束时间
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<Vec<MessageStatistic>>`，包含各应用的消息发送成功人次
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92369>
     pub async fn get_statistics(
         &self,
         req: StatisticsRequest,

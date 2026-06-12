@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -127,7 +127,7 @@ impl<T: Serialize> AlipayBizRequest<T> {
             need_encrypt: false,
             udf_params: BTreeMap::new(),
             biz_model: None,
-            method: Default::default(),
+            method: AlipayMethod::default(),
         }
     }
 
@@ -268,8 +268,8 @@ pub trait AlipayRequest<T: Serialize> {
     ///
     /// 获取所有的Key-Value形式的文本请求参数集合。其中：
     /// <ul>
-    /// <li>Key: 请求参数名</li>
-    /// <li>Value: 请求参数值</li>
+    ///     <li>Key: 请求参数名</li>
+    ///     <li>Value: 请求参数值</li>
     /// </ul>
     ///
     /// @return 文本请求参数集合

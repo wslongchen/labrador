@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -42,7 +42,19 @@ impl<'a> AlipayPayService<'a> {
         Self { client }
     }
 
-    /// 电脑网站支付
+    /// 电脑网站支付 (alipay.trade.page.pay)
+    ///
+    /// 用于在 PC 网页上发起支付，调用后返回完整的 HTML 表单页面，自动 POST 跳转到支付宝收银台。
+    ///
+    /// # 参数
+    /// * `request` - 支付请求，包含 out_trade_no（商户订单号）、total_amount（金额，单位元）、
+    ///   subject（订单标题）等必要字段
+    ///
+    /// # 返回
+    /// 返回完整的 HTML 表单字符串，可直接输出到浏览器页面，自动跳转支付宝收银台
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_1/alipay.trade.page.pay>
     pub async fn page_pay(
         &self,
         mut request: AlipayBizRequest<AlipayTradePagePayModel>,
@@ -52,9 +64,19 @@ impl<'a> AlipayPayService<'a> {
         self.client.execute_page_request(request, None)
     }
 
-    /// JSAPI支付（小程序/生活号支付）
-    /// 使用 alipay.trade.create 接口创建订单并获取 trade_no，
-    /// 然后通过 alipay.trade.pay 发起支付。
+    /// JSAPI支付（小程序/生活号支付，alipay.trade.pay）
+    ///
+    /// 在支付宝小程序或生活号内发起支付。需要传入买家用户标识（buyer_id 或 buyer_open_id）。
+    ///
+    /// # 参数
+    /// * `request` - 支付请求，包含 out_trade_no（商户订单号）、total_amount（金额，单位元）、
+    ///   subject（订单标题）、op_app_id（小程序应用ID）、buyer_id/buyer_open_id（买家用户标识）等字段
+    ///
+    /// # 返回
+    /// 返回 `JsapiPayResponse`，包含 out_trade_no 和 trade_no（支付宝交易号）
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_1/alipay.trade.pay>
     pub async fn jsapi_pay(
         &self,
         mut request: AlipayBizRequest<AlipayTradeJsapiPayModel>,
@@ -67,8 +89,19 @@ impl<'a> AlipayPayService<'a> {
     }
 
     /// 统一收单交易创建 (alipay.trade.create)
+    ///
     /// 商户通过该接口创建订单，获取支付宝交易号 trade_no。
     /// 适用于小程序支付等需要先创建订单再发起支付的场景。
+    ///
+    /// # 参数
+    /// * `request` - 创建请求，包含 out_trade_no（商户订单号）、total_amount（金额）、
+    ///   subject（标题）、buyer_id/buyer_open_id（买家用户标识）等字段
+    ///
+    /// # 返回
+    /// 返回 `TradeCreateResponse`，包含 out_trade_no 和 trade_no
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_1/alipay.trade.create>
     pub async fn trade_create(
         &self,
         mut request: AlipayBizRequest<AlipayTradeCreateModel>,
@@ -80,6 +113,18 @@ impl<'a> AlipayPayService<'a> {
     }
 
     /// 查询账单下载地址 (alipay.data.dataservice.bill.downloadurl.query)
+    ///
+    /// 为方便商户快速查账，支持商户通过本接口获取商户离线账单的下载地址。
+    ///
+    /// # 参数
+    /// * `bill_type` - 账单类型，如 trade（交易账单）、signcustomer（签约账单）
+    /// * `bill_date` - 账单日期，格式 yyyy-MM-dd，仅支持日账
+    ///
+    /// # 返回
+    /// 返回 `BillDownloadResponse`，包含账单下载地址（30秒有效）和文件大小
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_15/alipay.data.dataservice.bill.downloadurl.query>
     pub async fn bill_download(
         &self,
         bill_type: &str,
@@ -96,9 +141,18 @@ impl<'a> AlipayPayService<'a> {
         response.into_result()
     }
 
-    /// 移动网页支付
-
-    /// 手机网站支付
+    /// 手机网站支付 (alipay.trade.wap.pay)
+    ///
+    /// 用于在移动端网页上发起支付，调用后返回完整的 HTML 表单页面，自动 POST 跳转到支付宝收银台。
+    ///
+    /// # 参数
+    /// * `request` - 支付请求，包含 out_trade_no、total_amount、subject 等字段
+    ///
+    /// # 返回
+    /// 返回完整的 HTML 表单字符串，可直接输出到手机浏览器页面
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_1/alipay.trade.wap.pay>
     pub async fn wap_pay(
         &self,
         mut request: AlipayBizRequest<AlipayTradeWapPayModel>,
@@ -109,7 +163,18 @@ impl<'a> AlipayPayService<'a> {
         self.client.execute_page_request(request, None)
     }
 
-    /// App支付
+    /// App支付 (alipay.trade.app.pay)
+    ///
+    /// 用于在商户 App 中发起支付宝支付，返回签名字符串，由商户客户端调起支付宝支付。
+    ///
+    /// # 参数
+    /// * `request` - 支付请求，包含 out_trade_no、total_amount、subject 等字段
+    ///
+    /// # 返回
+    /// 返回签名的 orderString，由 App 客户端使用该字符串调起支付宝
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_1/alipay.trade.app.pay>
     pub async fn app_pay(
         &self,
         mut request: AlipayBizRequest<AlipayTradeAppPayModel>,
@@ -120,7 +185,19 @@ impl<'a> AlipayPayService<'a> {
         self.client.execute_page_request(request, None)
     }
 
-    /// 当面付（条码支付）
+    /// 当面付-条码支付 (alipay.trade.pay)
+    ///
+    /// 收银员使用扫码设备读取用户手机上的付款码后，将条码信息和订单信息发送给支付宝进行支付。
+    ///
+    /// # 参数
+    /// * `request` - 支付请求，包含 out_trade_no、total_amount、subject、scene（场景，bar_code）、
+    ///   auth_code（付款码数字，25~30开头）等字段
+    ///
+    /// # 返回
+    /// 返回 `FaceToFacePayResponse`，包含支付结果、支付宝交易号等信息
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_1/alipay.trade.pay>
     pub async fn face_to_face_pay(
         &self,
         mut request: AlipayBizRequest<AlipayFaceOrderPayModel>,
@@ -133,7 +210,19 @@ impl<'a> AlipayPayService<'a> {
         response.into_result()
     }
 
-    /// 周期扣款
+    /// 周期扣款 (alipay.trade.pay)
+    ///
+    /// 用户与商户签署周期扣款协议后，商户可通过本接口做后续免密代扣操作。
+    ///
+    /// # 参数
+    /// * `request` - 扣款请求，包含 out_trade_no、total_amount、subject、
+    ///   agreement_params（协议号）、product_code（CYCLE_PAY_AUTH）等字段
+    ///
+    /// # 返回
+    /// 返回 `CycleOrderPayResponse`，包含支付结果和交易详情
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_1/alipay.trade.pay>
     pub async fn cycle_pay(
         &self,
         mut request: AlipayBizRequest<AlipayCycleOrderPayModel>,
@@ -145,7 +234,19 @@ impl<'a> AlipayPayService<'a> {
         response.into_result()
     }
 
-    /// 商家扣款
+    /// 商家扣款 (alipay.trade.pay)
+    ///
+    /// 用户与商户签署商家扣款协议后，商户可通过本接口做后续免密代扣操作。
+    ///
+    /// # 参数
+    /// * `request` - 扣款请求，包含 out_trade_no、total_amount、subject、
+    ///   agreement_params（协议号）、product_code（GENERAL_WITHHOLDING）等字段
+    ///
+    /// # 返回
+    /// 返回 `DeductPayResponse`，包含扣款结果和交易详情
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_1/alipay.trade.pay>
     pub async fn deduct_pay(
         &self,
         mut request: AlipayBizRequest<AlipayCycleOrderPayModel>,
@@ -157,7 +258,18 @@ impl<'a> AlipayPayService<'a> {
         response.into_result()
     }
 
-    /// 预下单（生成二维码）
+    /// 预下单-生成二维码 (alipay.trade.precreate)
+    ///
+    /// 收银员通过收银台或商户后台调用支付宝接口，生成二维码后展示给用户扫描支付。
+    ///
+    /// # 参数
+    /// * `request` - 预下单请求，包含 out_trade_no、total_amount、subject 等字段
+    ///
+    /// # 返回
+    /// 返回 `PrecreateResponse`，包含 qr_code（二维码链接），商户将其转换为二维码展示
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_1/alipay.trade.precreate>
     pub async fn precreate(
         &self,
         mut request: AlipayBizRequest<AlipayTradePreCreateModel>,
@@ -171,7 +283,18 @@ impl<'a> AlipayPayService<'a> {
         response.into_result()
     }
 
-    /// 查询订单
+    /// 统一收单线下交易查询 (alipay.trade.query)
+    ///
+    /// 通过商户订单号或支付宝交易号查询交易状态。
+    ///
+    /// # 参数
+    /// * `request` - 查询请求，out_trade_no 和 trade_no 二选一
+    ///
+    /// # 返回
+    /// 返回 `OrderQueryResponse`，包含交易状态、支付金额、买家信息等
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_1/alipay.trade.query>
     pub async fn query(
         &self,
         mut request: AlipayBizRequest<AlipayTradeQueryModel>,
@@ -182,7 +305,18 @@ impl<'a> AlipayPayService<'a> {
         response.into_result()
     }
 
-    /// 关闭订单
+    /// 统一收单交易关闭 (alipay.trade.close)
+    ///
+    /// 用于交易创建后，用户在一定时间内未进行支付，可调用该接口关闭订单。
+    ///
+    /// # 参数
+    /// * `request` - 关闭请求，out_trade_no 和 trade_no 二选一
+    ///
+    /// # 返回
+    /// 返回 `OrderCloseResponse`，包含关闭的订单信息
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_1/alipay.trade.close>
     pub async fn close(
         &self,
         mut request: AlipayBizRequest<AlipayTradeCloseModel>,
@@ -194,7 +328,19 @@ impl<'a> AlipayPayService<'a> {
         response.into_result()
     }
 
-    /// 申请退款
+    /// 统一收单交易退款 (alipay.trade.refund)
+    ///
+    /// 当交易发生之后一段时间内，由于买家或者卖家的原因需要退款时，卖家可以通过退款接口将支付款退还给买家。
+    ///
+    /// # 参数
+    /// * `request` - 退款请求，包含 out_trade_no/trade_no（原交易号）、refund_amount（退款金额）、
+    ///   out_request_no（退款请求号，部分退款必传）等字段
+    ///
+    /// # 返回
+    /// 返回 `RefundResponse`，包含退款金额、退款渠道等
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_1/alipay.trade.refund>
     pub async fn refund(
         &self,
         mut request: AlipayBizRequest<AlipayTradeRefundModel>,
@@ -206,7 +352,20 @@ impl<'a> AlipayPayService<'a> {
         response.into_result()
     }
 
-    /// 查询退款
+    /// 统一收单交易退款查询 (alipay.trade.fastpay.refund.query)
+    ///
+    /// 商户可使用该接口查询退款请求是否执行成功。
+    ///
+    /// # 参数
+    /// * `out_trade_no` - 原交易商户订单号（与 trade_no 二选一）
+    /// * `trade_no` - 原交易支付宝交易号（与 out_trade_no 二选一）
+    /// * `out_request_no` - 退款请求号，标识一次退款请求
+    ///
+    /// # 返回
+    /// 返回 `RefundQueryResponse`，包含退款金额、退款状态、退款时间等
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_1/alipay.trade.fastpay.refund.query>
     pub async fn query_refund(
         &self,
         out_trade_no: Option<String>,
@@ -232,7 +391,19 @@ impl<'a> AlipayPayService<'a> {
         response.into_result()
     }
 
-    /// 撤销订单
+    /// 统一收单交易撤销 (alipay.trade.cancel)
+    ///
+    /// 支付交易返回失败或支付系统超时，调用该接口撤销交易。
+    /// 只有支付中的交易才能撤销。
+    ///
+    /// # 参数
+    /// * `request` - 撤销请求，out_trade_no 和 trade_no 二选一
+    ///
+    /// # 返回
+    /// 返回 `OrderCancelResponse`，包含重试标志和执行动作
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_1/alipay.trade.cancel>
     pub async fn cancel(
         &self,
         mut request: AlipayBizRequest<AlipayTradeCancelModel>,
@@ -243,10 +414,19 @@ impl<'a> AlipayPayService<'a> {
         response.into_result()
     }
 
-    /// # 统一收单交易结算 (alipay.trade.order.settle)
-    /// 详见 [文档](https://opendocs.alipay.com/apis/api_1/alipay.trade.order.settle)
+    /// 统一收单交易结算 (alipay.trade.order.settle)
     ///
-    /// 用于在线下场景，交易完成后进行资金结算。
+    /// 用于在线下场景，交易完成后进行资金结算（分账）。
+    ///
+    /// # 参数
+    /// * `request` - 结算请求，包含 out_request_no（结算流水号）、trade_no（交易号）、
+    ///   royalty_parameters（分账明细列表）等字段
+    ///
+    /// # 返回
+    /// 返回 `TradeOrderSettleResponse`，包含 trade_no 和 settle_no
+    ///
+    /// # 官方文档
+    /// <https://opendocs.alipay.com/apis/api_1/alipay.trade.order.settle>
     pub async fn settle(
         &self,
         mut request: AlipayBizRequest<AlipayTradeOrderSettleModel>,

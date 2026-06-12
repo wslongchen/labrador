@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -40,7 +40,15 @@ impl<'a> WechatCpAgent<'a> {
     /// 获取应用信息
     ///
     /// 该API用于获取企业号某个应用的基本信息，包括头像、昵称、帐号类型、认证类型、可见范围等信息。
-    /// 详情请见：<https://work.weixin.qq.com/api/doc/10087>
+    ///
+    /// # 参数
+    /// * `agent_id` - 应用 id
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<AgentInfo>`，包含应用的详细信息
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90227>
     pub async fn get(&self, agent_id: i32) -> LabradorResult<AgentInfo> {
         let response: WechatApiResponse<AgentInfo> = self
             .client
@@ -52,7 +60,15 @@ impl<'a> WechatCpAgent<'a> {
     /// 设置应用
     ///
     /// 仅企业可调用，可设置当前凭证对应的应用；第三方不可调用。
-    /// 详情请见：<https://work.weixin.qq.com/api/doc/10088>
+    ///
+    /// # 参数
+    /// * `agent_info` - 应用配置信息，包含应用名称、头像、可信域名等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90228>
     pub async fn set(&self, agent_info: &SetAgentRequest) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse =
             self.client.post("/cgi-bin/agent/set", agent_info).await?;
@@ -62,7 +78,12 @@ impl<'a> WechatCpAgent<'a> {
     /// 获取应用列表
     ///
     /// 企业仅可获取当前凭证对应的应用；第三方仅可获取被授权的应用。
-    /// 详情请见：<https://work.weixin.qq.com/api/doc/11214>
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<Vec<AgentInfo>>`，包含 access_token 对应应用的可视化应用列表
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90227>
     pub async fn list(&self) -> LabradorResult<Vec<AgentInfo>> {
         let response: WechatApiResponse<AgentListResponse> =
             self.client.get("/cgi-bin/agent/list").await?;

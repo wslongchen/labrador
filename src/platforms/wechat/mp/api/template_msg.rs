@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -42,6 +42,16 @@ impl<'a> WechatMpTemplateMessage<'a> {
     /// 设置所属行业
     ///
     /// 设置行业可在微信公众平台后台完成，每月可修改行业1次。帐号仅可使用所属行业中相关的模板。
+    ///
+    /// # 参数
+    /// * `industry_id1` - 主营行业编号，如"1"（IT科技-互联网/电子商务）
+    /// * `industry_id2` - 副营行业编号，如"4"（IT科技-电子技术）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，包含微信API的通用响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html#0>
     pub async fn set_industry(
         &self,
         industry_id1: &str,
@@ -60,6 +70,14 @@ impl<'a> WechatMpTemplateMessage<'a> {
     }
 
     /// 获取设置的行业信息
+    ///
+    /// 本接口用于获取帐号当前设置的行业信息。
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<IndustryResponse>`，包含主营行业和副营行业信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html#1>
     pub async fn get_industry(&self) -> LabradorResult<IndustryResponse> {
         let response: WechatApiResponse<IndustryResponse> = self
             .client
@@ -72,7 +90,15 @@ impl<'a> WechatMpTemplateMessage<'a> {
     /// 获得模板ID
     ///
     /// 从行业模板库选择模板到帐号后台，获得模板ID。
-    /// `template_id_short` 模板库中模板的编号，有“TM**”和“OPENTMTM**”等形式。
+    ///
+    /// # 参数
+    /// * `template_id_short` - 模板库中模板的编号，有"TM**"和"OPENTMTM**"等形式
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<String>`，包含获取到的模板ID。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html#2>
     pub async fn get_template_id(&self, template_id_short: &str) -> LabradorResult<String> {
         let req = json!({ "template_id_short": template_id_short });
         let response: WechatApiResponse<GetTemplateIdResponse> = self
@@ -86,6 +112,12 @@ impl<'a> WechatMpTemplateMessage<'a> {
     /// 获取模板列表
     ///
     /// 获取已添加至帐号下的所有模板列表。
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<Vec<TemplateMessageInfo>>`，包含模板ID、标题、内容等信息的列表。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html#3>
     pub async fn get_template_list(&self) -> LabradorResult<Vec<TemplateMessageInfo>> {
         let response: WechatApiResponse<GetTemplateListResponse> = self
             .client
@@ -98,6 +130,15 @@ impl<'a> WechatMpTemplateMessage<'a> {
     /// 删除模板
     ///
     /// 删除帐号下的某个模板。
+    ///
+    /// # 参数
+    /// * `template_id` - 要删除的模板ID
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，包含微信API的通用响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html#4>
     pub async fn delete_template(&self, template_id: &str) -> LabradorResult<WechatApiResponse> {
         let req = json!({ "template_id": template_id });
         let response: WechatApiResponse = self
@@ -110,7 +151,16 @@ impl<'a> WechatMpTemplateMessage<'a> {
 
     /// 发送模板消息
     ///
-    /// 该接口用于发送模板消息。
+    /// 该接口用于向指定用户发送模板消息。发送前需要先在后台添加模板并获得模板ID。
+    ///
+    /// # 参数
+    /// * `request` - 模板消息请求，包含接收者openid、模板ID、模板数据、跳转链接等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<TemplateMessageResponse>`，包含消息ID(msgid)和发送结果。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html#5>
     pub async fn send_template_message(
         &self,
         request: &TemplateMessageRequest,
@@ -125,7 +175,16 @@ impl<'a> WechatMpTemplateMessage<'a> {
 
     /// 查询模板消息发送状态
     ///
-    /// 该接口用于查询模板消息的发送状态。
+    /// 该接口用于查询模板消息的发送状态，包括是否被用户屏蔽接收等。
+    ///
+    /// # 参数
+    /// * `msg_id` - 发送模板消息时返回的消息ID
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<TemplateMessageStatus>`，包含消息状态和可能的错误原因。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html#6>
     pub async fn get_template_message_status(
         &self,
         msg_id: i64,

@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -67,7 +67,16 @@ impl<'a> WechatMpMassMessage<'a> {
 
     /// 根据标签进行群发
     ///
-    /// 该接口用于向指定标签下的用户群发消息。
+    /// 该接口用于向指定标签下的用户群发消息。支持图文、文本、语音、视频、图片、卡券等消息类型。
+    ///
+    /// # 参数
+    /// * `request` - 群发请求，包含过滤器（标签/全部用户）、消息类型和内容
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<MassMessageResponse>`，包含消息ID和发送结果。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Batch_Sends_and_Originality_Checks.html>
     pub async fn send_mass_by_tag(
         &self,
         request: &MassByTagRequest,
@@ -82,7 +91,16 @@ impl<'a> WechatMpMassMessage<'a> {
 
     /// 根据OpenID列表进行群发
     ///
-    /// 该接口用于向指定的OpenID列表用户群发消息。
+    /// 该接口用于向指定的OpenID列表用户群发消息。至少两个openid，最多10000个。
+    ///
+    /// # 参数
+    /// * `request` - 群发请求，包含接收者OpenID列表、消息类型和内容
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<MassMessageResponse>`，包含消息ID和发送结果。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Batch_Sends_and_Originality_Checks.html>
     pub async fn send_mass_by_openid(
         &self,
         request: &MassByOpenIdRequest,
@@ -121,7 +139,16 @@ impl<'a> WechatMpMassMessage<'a> {
 
     /// 预览群发消息
     ///
-    /// 该接口用于预览群发消息，可通过指定OpenID或微信号进行预览。
+    /// 该接口用于预览群发消息，可通过指定OpenID或微信号进行预览。预览不会实际发送给全部用户。
+    ///
+    /// # 参数
+    /// * `request` - 预览请求，包含接收者（touser或towxname）、消息类型和内容
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<MassMessageResponse>`，包含消息ID。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Batch_Sends_and_Originality_Checks.html>
     pub async fn preview_mass_message(
         &self,
         request: &MassPreviewRequest,
@@ -137,6 +164,15 @@ impl<'a> WechatMpMassMessage<'a> {
     /// 查询群发消息发送状态
     ///
     /// 该接口用于查询群发消息的发送状态。
+    ///
+    /// # 参数
+    /// * `msg_id` - 群发消息的消息ID
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<MassMessageStatus>`，包含消息发送状态（SEND_SUCCESS/SENDING/SEND_FAIL/DELETE）。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Batch_Sends_and_Originality_Checks.html>
     pub async fn get_mass_message_status(&self, msg_id: &str) -> LabradorResult<MassMessageStatus> {
         let response: WechatApiResponse<MassMessageStatus> = self
             .client
@@ -149,7 +185,15 @@ impl<'a> WechatMpMassMessage<'a> {
     /// 设置群发速度
     ///
     /// 该接口用于设置消息的群发速度。
-    /// speed 级别：0-4，分别对应 80w/分钟、60w/分钟、45w/分钟、30w/分钟、10w/分钟。
+    ///
+    /// # 参数
+    /// * `speed` - 群发速度级别：0-4，分别对应 80w/分钟、60w/分钟、45w/分钟、30w/分钟、10w/分钟
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，包含微信API的通用响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Batch_Sends_and_Originality_Checks.html>
     pub async fn set_mass_speed(&self, speed: i32) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -162,6 +206,12 @@ impl<'a> WechatMpMassMessage<'a> {
     /// 获取群发速度
     ///
     /// 该接口用于获取当前消息的群发速度。
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<MassSpeedResponse>`，包含当前速度级别和真实速度值。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Batch_Sends_and_Originality_Checks.html>
     pub async fn get_mass_speed(&self) -> LabradorResult<MassSpeedResponse> {
         let response: WechatApiResponse<MassSpeedResponse> = self
             .client

@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -45,7 +45,16 @@ impl<'a> WechatCpUser<'a> {
 
     /// 创建成员
     ///
-    /// 详情请见：<https://work.weixin.qq.com/api/doc/90195>
+    /// 企业可通过此接口创建成员。
+    ///
+    /// # 参数
+    /// * `user` - 成员信息，包含 userid、name、department、mobile、email 等字段
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90195>
     pub async fn create(&self, user: UserInfo) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self.client.post("/cgi-bin/user/create", user).await?;
         Ok(response)
@@ -53,7 +62,16 @@ impl<'a> WechatCpUser<'a> {
 
     /// 读取成员
     ///
-    /// 详情请见：<https://work.weixin.qq.com/api/doc/90196>
+    /// 通过 userid 获取成员的详细信息。
+    ///
+    /// # 参数
+    /// * `userid` - 成员 UserID
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<UserInfo>`，包含成员的完整信息
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90196>
     pub async fn get(&self, userid: &str) -> LabradorResult<UserInfo> {
         let response: WechatApiResponse<UserInfo> = self
             .client
@@ -64,7 +82,16 @@ impl<'a> WechatCpUser<'a> {
 
     /// 更新成员
     ///
-    /// 详情请见：<https://work.weixin.qq.com/api/doc/90197>
+    /// 更新成员的属性信息。
+    ///
+    /// # 参数
+    /// * `user` - 成员信息，userid 必填，其余字段按需更新
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90197>
     pub async fn update(&self, user: UserInfo) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self.client.post("/cgi-bin/user/update", user).await?;
         Ok(response)
@@ -72,8 +99,17 @@ impl<'a> WechatCpUser<'a> {
 
     /// 删除成员
     ///
-    /// 支持单个删除或批量删除。
-    /// 详情请见：<https://work.weixin.qq.com/api/doc/90198>、<https://work.weixin.qq.com/api/doc/90199>
+    /// 支持单个删除或批量删除。当 userids 长度为 1 时使用单个删除接口，否则使用批量删除接口。
+    ///
+    /// # 参数
+    /// * `userids` - 成员 UserID 列表，单个元素时走单个删除，多个元素时走批量删除
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90198>
+    /// <https://developer.work.weixin.qq.com/document/path/90199>
     pub async fn delete(&self, userids: Vec<&str>) -> LabradorResult<WechatApiResponse> {
         if userids.len() == 1 {
             // 单个删除
@@ -98,7 +134,7 @@ impl<'a> WechatCpUser<'a> {
     /// 获取部门成员详情
     ///
     /// 请求方式：GET（HTTPS）
-    /// 请求地址：https://qyapi.weixin.qq.com/cgi-bin/user/list?access_token=ACCESS_TOKEN&department_id=DEPARTMENT_ID&fetch_child=FETCH_CHILD
+    /// 请求地址：<https://qyapi.weixin.qq.com/cgi-bin/user/list?access_token=ACCESS_TOKEN&department_id=DEPARTMENT_ID&fetch_child=FETCH_CHILD>
     /// 文档地址：<https://work.weixin.qq.com/api/doc/90201>
     ///
     /// # 参数说明
@@ -151,7 +187,15 @@ impl<'a> WechatCpUser<'a> {
     /// 二次验证
     ///
     /// 企业在员工验证成功后，调用本方法告诉企业号平台该员工关注成功。
-    /// 文档地址：<https://work.weixin.qq.com/api/doc/90202>
+    ///
+    /// # 参数
+    /// * `userid` - 成员 UserID
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90202>
     pub async fn authenticate(&self, userid: &str) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client

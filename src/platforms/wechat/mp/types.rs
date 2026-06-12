@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -56,12 +56,12 @@ pub enum TicketType {
     WxCard,
 }
 
-impl ToString for TicketType {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for TicketType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TicketType::JSAPI => TICKET_TYPE_JSAPI.to_string(),
-            TicketType::SDK => TICKET_TYPE_SDK.to_string(),
-            TicketType::WxCard => TICKET_TYPE_WXCARD.to_string(),
+            TicketType::JSAPI => write!(f, "{}", TICKET_TYPE_JSAPI),
+            TicketType::SDK => write!(f, "{}", TICKET_TYPE_SDK),
+            TicketType::WxCard => write!(f, "{}", TICKET_TYPE_WXCARD),
         }
     }
 }

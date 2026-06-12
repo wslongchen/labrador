@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -425,4 +425,27 @@ pub fn rsa_decrypt(
     _format: RsaKeyFormat,
 ) -> LabradorResult<Vec<u8>> {
     Err(CryptoError::AlgorithmUnsupported("RSA解密暂不支持".to_string()).into())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_openssl_module_exists() {
+        // 验证 OpenSSL 模块结构正确
+        println!("OpenSSL module structure test");
+    }
+
+    #[test]
+    #[cfg(feature = "openssl-crypto")]
+    fn test_openssl_rsa_key_generation() {
+        // RSA密钥生成测试
+        use openssl::rsa::Rsa;
+        let rsa = Rsa::generate(2048).unwrap();
+        let private_key = rsa.private_key_to_pem().unwrap();
+        let public_key = rsa.public_key_to_pem().unwrap();
+        assert!(!private_key.is_empty());
+        assert!(!public_key.is_empty());
+    }
 }

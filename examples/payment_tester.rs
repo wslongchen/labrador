@@ -59,11 +59,11 @@ use labrador::platforms::wechat::pay::WechatPayClient;
 use labrador::platforms::alipay::builder::AlipayClientBuilder;
 use labrador::platforms::alipay::client::AlipayClient;
 use labrador::platforms::alipay::pay::{
-    AlipayBizRequest, AlipayFaceOrderPayModel, AlipayTradeAppPayModel, AlipayTradeCancelModel,
-    AlipayTradeCloseModel, AlipayTradeOrderSettleModel, AlipayTradePagePayModel,
-    AlipayTradePreCreateModel, AlipayTradeQueryModel, AlipayTradeRefundModel,
-    GoodsDetail as AliGoodsDetail,
+    AlipayFaceOrderPayModel, AlipayTradeAppPayModel, AlipayTradeCancelModel, AlipayTradeCloseModel,
+    AlipayTradeOrderSettleModel, AlipayTradePagePayModel, AlipayTradePreCreateModel,
+    AlipayTradeQueryModel, AlipayTradeRefundModel, GoodsDetail as AliGoodsDetail,
 };
+use labrador::platforms::alipay::AlipayBizRequest;
 
 // ==================== 辅助函数 ====================
 
@@ -138,7 +138,7 @@ async fn create_wechat_client() -> WechatPayClient {
     let p12_password = env::var("WECHAT_P12_PASSWORD").ok();
 
     WechatPayBuilder::new(&app_id, &mch_id, &api_v3_key, &notify_url)
-        .p12_path(&p12_path, p12_password.as_deref())
+        .p12_path(&p12_path, p12_password.as_ref())
         .api_key_v3(&api_v3_key)
         .api_version(WechatPayApiVersion::V3)
         .build()
@@ -184,7 +184,7 @@ async fn test_wechat_unified_order(client: &WechatPayClient) {
             &notify_url,
         );
         if let Some(p) = payer {
-            request = request.payer(p.clone());
+            request.payer(p.clone());
         }
         match client.unified_order_v3(request).await {
             Ok(resp) => println!("✅ {:?}", resp),
@@ -250,7 +250,9 @@ async fn test_wechat_codepay(client: &WechatPayClient) {
         labrador::platforms::wechat::pay::types::SceneInfo {
             payer_client_ip: "127.0.0.1".to_string(),
             device_id: None,
+            device_ip: None,
             store_info: None,
+            h5_info: None,
         },
     );
     print_result("付款码支付", &client.codepay_v3(request).await);
@@ -358,8 +360,13 @@ async fn test_wechat_combine_order(client: &WechatPayClient) {
         "商品A",
         Amount::new(1),
     )];
-    let combine_request =
-        CombineOrderRequestV3::new(TradeType::Native, &out_trade_no, sub_orders, &notify_url);
+    let combine_request = CombineOrderRequestV3::new(
+        &get_env("WECHAT_MCH_ID"),
+        &out_trade_no,
+        sub_orders,
+        &notify_url,
+        TradeType::Native,
+    );
     print_result("合单下单", &client.combine_order_v3(combine_request).await);
 
     // 合单查询
@@ -367,7 +374,7 @@ async fn test_wechat_combine_order(client: &WechatPayClient) {
     let query_request = CombineOrderQueryRequestV3::new(&out_trade_no);
     print_result(
         "合单查询",
-        &client.combine_order_query_v3(query_request).await,
+        &client.combine_order_query_v3(&query_request).await,
     );
 
     // 合单关单
@@ -376,7 +383,7 @@ async fn test_wechat_combine_order(client: &WechatPayClient) {
         CombineCloseOrderRequestV3::new(&out_trade_no, &get_env("WECHAT_MCH_ID"), vec![]);
     print_result(
         "合单关单",
-        &client.combine_close_order_v3(close_request).await,
+        &client.combine_close_order_v3(&close_request).await,
     );
 }
 
@@ -490,7 +497,6 @@ async fn test_alipay_page_app_pay(client: &AlipayClient) {
         goods_detail: None,
         extend_params: None,
         time_expire: None,
-        timeout_express: None,
         passback_params: None,
         merchant_order_no: None,
         ext_user_info: None,
@@ -529,17 +535,13 @@ async fn test_alipay_face_to_face(client: &AlipayClient) {
         auth_code: auth_code.to_string(),
         product_code: Some("FACE_TO_FACE_PAYMENT".to_string()),
         seller_id: None,
-        body: None,
         goods_detail: None,
         operator_id: None,
         store_id: None,
         terminal_id: None,
         extend_params: None,
-        timeout_express: Some("5m".to_string()),
-        business_params: None,
-        discountable_amount: None,
-        undiscountable_amount: None,
-        merchant_order_no: None,
+        promo_params: None,
+        query_options: None,
     };
 
     let mut request = AlipayBizRequest::new();

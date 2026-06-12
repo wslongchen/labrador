@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -28,16 +28,9 @@ use reqwest::Proxy;
 use std::time::Duration;
 
 /// 客户端构建器
+#[derive(Default)]
 pub struct ClientBuilder {
     pub(crate) config: ClientConfig,
-}
-
-impl Default for ClientBuilder {
-    fn default() -> Self {
-        Self {
-            config: ClientConfig::default(),
-        }
-    }
 }
 
 impl ClientBuilder {
@@ -289,9 +282,11 @@ impl ClientBuilder {
     pub fn disable_ssl_verification(mut self) -> LabradorResult<Self> {
         use reqwest::tls::Version;
 
-        let mut tls_config = TlsConfig::default();
-        tls_config.min_protocol_version = Some(Version::TLS_1_0);
-        tls_config.max_protocol_version = Some(Version::TLS_1_3);
+        let tls_config = TlsConfig {
+            min_protocol_version: Some(Version::TLS_1_0),
+            max_protocol_version: Some(Version::TLS_1_3),
+            ..Default::default()
+        };
 
         self.config.tls_config = Some(tls_config);
         Ok(self)

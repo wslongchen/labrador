@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -47,10 +47,16 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// 通过本接口可以触发云函数。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `env` - 云环境ID
     /// * `name` - 云函数名称
-    /// * `data` - 传递给云函数的参数
+    /// * `data` - 传递给云函数的参数（可选）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<InvokeFunctionResponse>`，包含云函数返回的数据。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/cloud-function/invokeCloudFunction.html>
     pub async fn invoke_cloud_function(
         &self,
         env: &str,
@@ -72,13 +78,19 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 延时调用云函数
     ///
-    /// 该接口用于延时调用云函数。
+    /// 该接口用于延时调用云函数，可设定延迟时间后触发云函数执行。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `env` - 云环境ID
     /// * `function_name` - 云函数名称
     /// * `delay` - 延迟时间，单位秒
-    /// * `data` - 传递给云函数的参数
+    /// * `data` - 传递给云函数的参数（可选）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<DelayedTaskResponse>`，包含任务ID。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/cloud-function/addDelayedFunctionTask.html>
     pub async fn add_delayed_function_task(
         &self,
         env: &str,
@@ -104,10 +116,16 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 数据库插入记录
     ///
-    /// 通过本接口可以数据库插入记录。
+    /// 通过本接口可以向云开发数据库的集合中插入记录。
     ///
-    /// # 参数说明
-    /// * `request` - 插入记录请求参数
+    /// # 参数
+    /// * `request` - 插入记录请求参数，包含云环境ID（env）、集合名称（collection_name）和数据（data）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<DatabaseAddResponse>`，包含插入成功的记录ID列表。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/database/databaseAdd.html>
     pub async fn database_add(
         &self,
         request: &DatabaseAddRequest,
@@ -122,10 +140,16 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 数据库聚合
     ///
-    /// 通过本接口可以数据库聚合查询。
+    /// 通过本接口可以进行数据库聚合查询（类似 MongoDB 的聚合管道）。
     ///
-    /// # 参数说明
-    /// * `request` - 聚合查询请求参数
+    /// # 参数
+    /// * `request` - 聚合查询请求参数，包含云环境ID（env）、集合名称（collection_name）和聚合管道（pipeline）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<DatabaseAggregateResponse>`，包含查询结果列表。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/database/databaseAggregate.html>
     pub async fn database_aggregate(
         &self,
         request: &DatabaseAggregateRequest,
@@ -142,9 +166,12 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// 通过本接口可以新增数据库集合。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `env` - 云环境ID
     /// * `collection_name` - 集合名称
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/database/databaseCollectionAdd.html>
     pub async fn database_collection_add(
         &self,
         env: &str,
@@ -166,9 +193,12 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// 通过本接口可以删除数据库集合。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `env` - 云环境ID
     /// * `collection_name` - 集合名称
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/database/databaseCollectionDelete.html>
     pub async fn database_collection_delete(
         &self,
         env: &str,
@@ -188,12 +218,18 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 获取集合信息
     ///
-    /// 通过本接口可以获取特定云环境下集合信息。
+    /// 通过本接口可以获取特定云环境下的集合信息列表。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `env` - 云环境ID
     /// * `limit` - 返回集合数量，最大100
     /// * `offset` - 偏移量
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<CollectionInfoResponse>`，包含集合列表信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/database/databaseCollectionGet.html>
     pub async fn database_collection_get(
         &self,
         env: &str,
@@ -217,8 +253,14 @@ impl<'a> WechatMxaCloudBase<'a> {
     ///
     /// 通过本接口可以统计集合记录数或统计查询语句对应的结果记录数。
     ///
-    /// # 参数说明
-    /// * `request` - 统计请求参数
+    /// # 参数
+    /// * `request` - 统计请求参数，包含云环境ID（env）、集合名称（collection_name）和查询条件（query）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<DatabaseCountResponse>`，包含记录总数。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/database/databaseCount.html>
     pub async fn database_count(
         &self,
         request: &DatabaseCountRequest,
@@ -233,10 +275,16 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 数据库删除记录
     ///
-    /// 通过本接口可以数据库删除记录。
+    /// 通过本接口可以删除数据库集合中满足条件的记录。
     ///
-    /// # 参数说明
-    /// * `request` - 删除记录请求参数
+    /// # 参数
+    /// * `request` - 删除记录请求参数，包含云环境ID（env）、集合名称（collection_name）和删除条件（query）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<DatabaseDeleteResponse>`，包含删除的记录数。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/database/databaseDelete.html>
     pub async fn database_delete(
         &self,
         request: &DatabaseDeleteRequest,
@@ -251,10 +299,17 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 数据库导出
     ///
-    /// 通过本接口可以进行数据库导出。
+    /// 通过本接口可以进行数据库数据导出。
     ///
-    /// # 参数说明
-    /// * `request` - 导出请求参数
+    /// # 参数
+    /// * `request` - 导出请求参数，包含云环境ID（env）、集合名称（collection_name）、
+    ///   导出文件路径（file_path）等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<MigrateExportResponse>`，包含任务ID。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/database/databaseMigrateExport.html>
     pub async fn database_migrate_export(
         &self,
         request: &MigrateExportRequest,
@@ -269,10 +324,17 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 数据库导入
     ///
-    /// 通过本接口可以进行数据库导入。
+    /// 通过本接口可以进行数据库数据导入。
     ///
-    /// # 参数说明
-    /// * `request` - 导入请求参数
+    /// # 参数
+    /// * `request` - 导入请求参数，包含云环境ID（env）、集合名称（collection_name）、
+    ///   导入文件路径（file_path）、冲突处理模式（conflict_mode）等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<MigrateImportResponse>`，包含任务ID。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/database/databaseMigrateImport.html>
     pub async fn database_migrate_import(
         &self,
         request: &MigrateImportRequest,
@@ -287,11 +349,17 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 数据库迁移状态查询
     ///
-    /// 通过本接口可以数据库迁移状态查询。
+    /// 通过本接口可以查询数据库导入/导出迁移任务的状态。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `env` - 云环境ID
     /// * `job_id` - 迁移任务ID
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<MigrateQueryInfoResponse>`，包含任务状态和文件下载链接等信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/database/databaseMigrateQueryInfo.html>
     pub async fn database_migrate_query_info(
         &self,
         env: &str,
@@ -311,10 +379,17 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 数据库查询记录
     ///
-    /// 通过本接口可以数据库查询记录。
+    /// 通过本接口可以查询数据库集合中的记录。
     ///
-    /// # 参数说明
-    /// * `request` - 查询请求参数
+    /// # 参数
+    /// * `request` - 查询请求参数，包含云环境ID（env）、集合名称（collection_name）、
+    ///   查询条件（query）、排序（order_by）、分页（limit、offset）等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<DatabaseQueryResponse>`，包含查询结果列表。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/database/databaseQuery.html>
     pub async fn database_query(
         &self,
         request: &DatabaseQueryRequest,
@@ -329,10 +404,17 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 数据库更新记录
     ///
-    /// 通过本接口可以数据库更新记录。
+    /// 通过本接口可以更新数据库集合中满足条件的记录。
     ///
-    /// # 参数说明
-    /// * `request` - 更新请求参数
+    /// # 参数
+    /// * `request` - 更新请求参数，包含云环境ID（env）、集合名称（collection_name）、
+    ///   查询条件（query）、更新操作（update）、multi/merge/upsert 选项等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<DatabaseUpdateResponse>`，包含更新的记录数。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/database/databaseUpdate.html>
     pub async fn database_update(
         &self,
         request: &DatabaseUpdateRequest,
@@ -347,10 +429,14 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 更新数据库索引
     ///
-    /// 通过本接口可以变更数据库索引。
+    /// 通过本接口可以创建或删除数据库集合的索引。
     ///
-    /// # 参数说明
-    /// * `request` - 更新索引请求参数
+    /// # 参数
+    /// * `request` - 更新索引请求参数，包含云环境ID（env）、集合名称（collection_name）、
+    ///   操作类型（action：create/drop）、索引名称和索引配置
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/database/updateIndex.html>
     pub async fn update_index(
         &self,
         request: &UpdateIndexRequest,
@@ -367,10 +453,16 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 获取文件上传链接
     ///
-    /// 通过本接口可以获取文件上传链接。
+    /// 通过本接口可以获取云存储文件的上传链接，用于将文件上传到云开发存储。
     ///
-    /// # 参数说明
-    /// * `request` - 获取上传链接请求参数
+    /// # 参数
+    /// * `request` - 获取上传链接请求参数，包含云环境ID（env）和上传文件路径（path）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<UploadFileResponse>`，包含文件ID、上传链接和授权信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/storage/uploadFile.html>
     pub async fn upload_file(
         &self,
         request: &UploadFileRequest,
@@ -385,10 +477,17 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 获取文件下载链接
     ///
-    /// 通过本接口可以获取文件下载链接。
+    /// 通过本接口可以批量获取云存储文件的下载链接。
     ///
-    /// # 参数说明
-    /// * `request` - 获取下载链接请求参数
+    /// # 参数
+    /// * `request` - 获取下载链接请求参数，包含云环境ID（env）、文件ID列表（file_id_list，最多50个）
+    ///   和下载链接有效期（max_age，默认7200秒）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<BatchDownloadFileResponse>`，包含文件下载信息列表。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/storage/batchDownloadFile.html>
     pub async fn batch_download_file(
         &self,
         request: &BatchDownloadFileRequest,
@@ -403,10 +502,16 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 删除文件
     ///
-    /// 通过本接口可以删除云存储中的文件。
+    /// 通过本接口可以批量删除云存储中的文件。
     ///
-    /// # 参数说明
-    /// * `request` - 删除文件请求参数
+    /// # 参数
+    /// * `request` - 删除文件请求参数，包含云环境ID（env）和文件ID列表（file_id_list，最多50个）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<BatchDeleteFileResponse>`，包含删除结果列表。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/storage/batchDeleteFile.html>
     pub async fn batch_delete_file(
         &self,
         request: &BatchDeleteFileRequest,
@@ -423,10 +528,17 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 发送短信v2
     ///
-    /// 发送携带 URL Link 的短信。
+    /// 发送携带 URL Link 的短信，短信中包含可打开小程序的链接。
     ///
-    /// # 参数说明
-    /// * `request` - 发送短信请求参数
+    /// # 参数
+    /// * `request` - 发送短信请求参数，包含云环境ID（env）、模板ID（template_id）、
+    ///   模板参数列表、手机号列表、资源类型和资源ID等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<SendSmsResponse>`，包含任务ID。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/sms/sendSmsV2.html>
     pub async fn send_sms_v2(&self, request: &SendSmsV2Request) -> LabradorResult<SendSmsResponse> {
         let response: WechatApiResponse<SendSmsResponse> = self
             .client
@@ -438,10 +550,17 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 发送短信
     ///
-    /// 发送支持打开云开发静态网站的短信，该 H5 可以打开小程序。
+    /// 发送支持打开云开发静态网站的短信，该 H5 页面可以打开小程序。
     ///
-    /// # 参数说明
-    /// * `request` - 发送短信请求参数
+    /// # 参数
+    /// * `request` - 发送短信请求参数，包含云环境ID（env）、模板ID（template_id）、
+    ///   模板参数列表、手机号列表、资源类型和资源ID等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<SendSmsResponse>`，包含任务ID。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/sms/sendSms.html>
     pub async fn send_sms(&self, request: &SendSmsRequest) -> LabradorResult<SendSmsResponse> {
         let response: WechatApiResponse<SendSmsResponse> = self
             .client
@@ -453,10 +572,17 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 创建发短信任务
     ///
-    /// 该接口用于创建发短信任务。
+    /// 该接口用于创建发短信任务，可指定定时发送时间。
     ///
-    /// # 参数说明
-    /// * `request` - 创建任务请求参数
+    /// # 参数
+    /// * `request` - 创建任务请求参数，包含云环境ID（env）、任务名称（task_name）、
+    ///   模板ID、模板参数列表、手机号列表和执行时间（execute_time）等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<CreateSendSmsTaskResponse>`，包含任务ID。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/sms/createSendSmsTask.html>
     pub async fn create_send_sms_task(
         &self,
         request: &CreateSendSmsTaskRequest,
@@ -471,10 +597,13 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 云开发上报接口
     ///
-    /// 该接口为云开发通用上报接口。
+    /// 该接口为云开发通用上报接口，用于上报云开发相关数据。
     ///
-    /// # 参数说明
-    /// * `request` - 上报数据
+    /// # 参数
+    /// * `request` - 上报数据（JSON格式）
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/cloudbase-report/cloudbaseReport.html>
     pub async fn cloud_base_report(&self, request: Value) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -486,10 +615,17 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 查询短信记录
     ///
-    /// 该接口用于查询 2 个月内的短信记录。
+    /// 该接口用于查询 2 个月内的短信发送记录。
     ///
-    /// # 参数说明
-    /// * `request` - 查询请求参数
+    /// # 参数
+    /// * `request` - 查询请求参数，包含云环境ID（env）、起止时间（start_time、end_time）、
+    ///   分页参数（offset、limit）和可选的任务ID、手机号、模板ID等过滤条件
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<DescribeSmsRecordsResponse>`，包含短信记录列表。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/sms/describeSmsRecords.html>
     pub async fn describe_sms_records(
         &self,
         request: &DescribeSmsRecordsRequest,
@@ -504,10 +640,16 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 描述扩展上传文件信息
     ///
-    /// 该接口用于描述扩展上传文件信息。
+    /// 该接口用于获取扩展上传文件的上传信息。
     ///
-    /// # 参数说明
-    /// * `request` - 描述请求参数
+    /// # 参数
+    /// * `request` - 描述请求参数，包含云环境ID（env）和扩展模块名称（extension）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<DescribeExtensionUploadInfoResponse>`，包含上传信息列表。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/storage/describeExtensionUploadInfo.html>
     pub async fn describe_extension_upload_info(
         &self,
         request: &DescribeExtensionUploadInfoRequest,
@@ -520,12 +662,19 @@ impl<'a> WechatMxaCloudBase<'a> {
         response.into_result()
     }
 
-    /// 获取云开发数据
+    /// 获取云开发统计数据
     ///
-    /// 该接口用于获取云开发数据。
+    /// 该接口用于获取云开发的统计数据（如存储容量、调用次数等）。
     ///
-    /// # 参数说明
-    /// * `request` - 获取数据请求参数
+    /// # 参数
+    /// * `request` - 获取数据请求参数，包含云环境ID（env）、统计类型（statistics_type）
+    ///   和起止时间（start_time、end_time）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<GetStatisticsResponse>`，包含统计数据。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/statistics/getStatistics.html>
     pub async fn get_statistics(
         &self,
         request: &GetStatisticsRequest,
@@ -538,12 +687,19 @@ impl<'a> WechatMxaCloudBase<'a> {
         response.into_result()
     }
 
-    /// 获取cloudID对应的数据
+    /// 获取 cloudID 对应的数据
     ///
-    /// 该接口用于换取 cloudID 对应的开放数据。
+    /// 该接口用于换取 cloudID 对应的开放数据。cloudID 是用户在小程序端
+    /// 通过云开发获取的加密数据标识。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `cloudid_list` - cloudID列表，最多20个
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<Vec<OpenDataItem>>`，包含 cloudID 和对应的开放数据。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/open-data/getOpenData.html>
     pub async fn get_open_data(
         &self,
         cloudid_list: Vec<String>,
@@ -561,10 +717,17 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 获取实时语音签名
     ///
-    /// 该接口用于获取实时语音签名。
+    /// 该接口用于获取实时语音通话的签名，用于小程序端发起实时语音通话。
     ///
-    /// # 参数说明
-    /// * `request` - 获取签名请求参数
+    /// # 参数
+    /// * `request` - 获取签名请求参数，包含云环境ID（env）、用户 openid 列表
+    ///   和签名有效期（expire_time）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<GetVoipSignResponse>`，包含签名信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/voip/getVoIPSign.html>
     pub async fn get_voip_sign(
         &self,
         request: &GetVoipSignRequest,
@@ -579,10 +742,16 @@ impl<'a> WechatMxaCloudBase<'a> {
 
     /// 获取腾讯云API调用凭证
     ///
-    /// 通过本接口可以获取腾讯云API调用凭证，用于调用腾讯云可用 API。
+    /// 通过本接口可以获取腾讯云 API 调用凭证（临时密钥），用于调用腾讯云可用 API。
     ///
-    /// # 参数说明
-    /// * `request` - 获取凭证请求参数
+    /// # 参数
+    /// * `request` - 获取凭证请求参数，包含云环境ID（env）和有效期（lifespan）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<GetQcloudTokenResponse>`，包含临时 SecretId、SecretKey、Token 和过期时间。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/cloud-base/qcloud-token/getQcloudToken.html>
     pub async fn get_qcloud_token(
         &self,
         request: &GetQcloudTokenRequest,

@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -151,7 +151,7 @@ impl MessageCrypto {
             return Err(LabraError::Crypto("app_id验证失败".to_string()));
         }
 
-        String::from_utf8(message.to_vec()).map_err(|e| LabraError::Utf8(e))
+        String::from_utf8(message.to_vec()).map_err(LabraError::Utf8)
     }
 
     /// 生成消息签名
@@ -162,7 +162,7 @@ impl MessageCrypto {
         ciphertext: &str,
     ) -> LabradorResult<String> {
         // 构造签名字符串：token + timestamp + nonce + ciphertext
-        let mut items = vec![&self.token, timestamp, nonce, ciphertext];
+        let mut items = [&self.token, timestamp, nonce, ciphertext];
         items.sort();
 
         let sign_string = items.join("");

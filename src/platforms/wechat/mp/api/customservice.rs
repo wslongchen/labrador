@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -40,11 +40,19 @@ impl<'a> WechatMpCustomService<'a> {
         WechatMpCustomService { client }
     }
 
-    /// <pre>
     /// 发送客服消息
-    /// 详情请见: <a href="https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Service_Center_messages.html">发送客服消息</a>
-    /// 接口url格式：https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token=ACCESS_TOKEN
-    /// </pre>
+    ///
+    /// 本接口用于向指定用户发送客服消息。支持文本、图片、语音、视频、音乐、图文、菜单、卡券、小程序卡片等多种消息类型。
+    /// 当用户与公众号产生特定动作交互后的48小时内，公众号可向用户发送客服消息。
+    ///
+    /// # 参数
+    /// * `request` - 客服消息请求，使用 `CustomMessageRequest` 枚举选择消息类型
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，包含微信API的通用响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Service_Center_messages.html>
     pub async fn send_custom_message(
         &self,
         request: &CustomMessageRequest,
@@ -61,6 +69,18 @@ impl<'a> WechatMpCustomService<'a> {
     }
 
     /// 客服接口 - 发送文字消息
+    ///
+    /// 本接口用于向指定用户发送文字客服消息。便捷方法，内部构造文本消息后调用 `send_custom_message`。
+    ///
+    /// # 参数
+    /// * `openid` - 接收消息的用户openid
+    /// * `content` - 文本消息内容
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，包含微信API的通用响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Service_Center_messages.html>
     pub async fn send_text(
         &self,
         openid: &str,
@@ -73,6 +93,18 @@ impl<'a> WechatMpCustomService<'a> {
     }
 
     /// 客服接口 - 发送图片消息
+    ///
+    /// 本接口用于向指定用户发送图片客服消息。
+    ///
+    /// # 参数
+    /// * `openid` - 接收消息的用户openid
+    /// * `media_id` - 图片的媒体ID（通过素材管理接口上传获得）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，包含微信API的通用响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Service_Center_messages.html>
     pub async fn send_image(
         &self,
         openid: &str,
@@ -86,6 +118,18 @@ impl<'a> WechatMpCustomService<'a> {
     }
 
     /// 客服接口 - 发送声音消息
+    ///
+    /// 本接口用于向指定用户发送语音客服消息。
+    ///
+    /// # 参数
+    /// * `openid` - 接收消息的用户openid
+    /// * `media_id` - 语音的媒体ID（通过素材管理接口上传获得）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，包含微信API的通用响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Service_Center_messages.html>
     pub async fn send_voice(
         &self,
         openid: &str,
@@ -100,11 +144,20 @@ impl<'a> WechatMpCustomService<'a> {
 
     //*******************客服管理接口***********************//
 
-    /// <pre>
     /// 添加客服账号
-    /// 详情请见：<a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1458044813&token=&lang=zh_CN">客服管理</a>
-    /// 接口url格式：https://api.weixin.qq.com/customservice/kfaccount/add?access_token=ACCESS_TOKEN
-    /// </pre>
+    ///
+    /// 本接口用于添加一个客服账号。密码需使用MD5加密后传输。
+    ///
+    /// # 参数
+    /// * `account` - 客服账号，格式为：前缀@微信号，如 kf1@yourwechat
+    /// * `nickname` - 客服昵称
+    /// * `password` - 客服密码（明文，内部会进行MD5加密）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，包含微信API的通用响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Customer_Service/Customer_Service_Management.html>
     pub async fn add_account(
         &self,
         account: &str,
@@ -125,11 +178,20 @@ impl<'a> WechatMpCustomService<'a> {
         Ok(response)
     }
 
-    /// <pre>
     /// 设置客服信息（即更新客服信息）
-    /// 详情请见：<a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1458044813&token=&lang=zh_CN">客服管理</a>
-    /// 接口url格式：https://api.weixin.qq.com/customservice/kfaccount/update?access_token=ACCESS_TOKEN
-    /// </pre>
+    ///
+    /// 本接口用于修改已有客服账号的昵称和密码。
+    ///
+    /// # 参数
+    /// * `account` - 要修改的客服账号
+    /// * `nickname` - 新的客服昵称
+    /// * `password` - 新的客服密码（明文，内部会进行MD5加密）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，包含微信API的通用响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Customer_Service/Customer_Service_Management.html>
     pub async fn update_account(
         &self,
         account: &str,
@@ -150,11 +212,18 @@ impl<'a> WechatMpCustomService<'a> {
         Ok(response)
     }
 
-    /// <pre>
     /// 删除客服账号
-    /// 详情请见：<a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1458044813&token=&lang=zh_CN">客服管理</a>
-    /// 接口url格式：https://api.weixin.qq.com/customservice/kfaccount/del?access_token=ACCESS_TOKEN&kf_account=KFACCOUNT
-    /// </pre>
+    ///
+    /// 本接口用于删除指定的客服账号。
+    ///
+    /// # 参数
+    /// * `account` - 要删除的客服账号
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，包含微信API的通用响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Customer_Service/Customer_Service_Management.html>
     pub async fn delete_account(&self, account: &str) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -167,12 +236,15 @@ impl<'a> WechatMpCustomService<'a> {
         Ok(response)
     }
 
-    /// 获取账号列表
-    /// <pre>
-    /// 获取客服基本信息
-    /// 详情请见：<a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1458044813&token=&lang=zh_CN">客服管理</a>
-    /// 接口url格式：https://api.weixin.qq.com/cgi-bin/customservice/getkflist?access_token=ACCESS_TOKEN
-    /// </pre>
+    /// 获取客服账号列表
+    ///
+    /// 本接口用于获取所有客服账号的基本信息。
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<Vec<KFAccount>>`，包含客服账号ID、昵称、头像等信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Customer_Service/Customer_Service_Management.html>
     pub async fn get_accounts(&self) -> LabradorResult<Vec<KFAccount>> {
         let response: WechatApiResponse<GetKFListResponse> = self
             .client
@@ -183,11 +255,15 @@ impl<'a> WechatMpCustomService<'a> {
         Ok(data.kf_list)
     }
 
-    /// <pre>
     /// 获取在线客服接待信息
-    /// 详情请见：<a href="http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1458044813&token=&lang=zh_CN">客服管理</a>
-    /// 接口url格式：https://api.weixin.qq.com/cgi-bin/customservice/getonlinekflist?access_token=ACCESS_TOKEN
-    /// </pre>
+    ///
+    /// 本接口用于获取当前在线的客服账号列表及其接待状态。
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<Vec<OnlineKFAccount>>`，包含在线客服的状态、自动接入设置、当前接待数等信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Customer_Service/Customer_Service_Management.html>
     pub async fn get_online_accounts(&self) -> LabradorResult<Vec<OnlineKFAccount>> {
         let response: WechatApiResponse<GetKFOnlineListResponse> = self
             .client

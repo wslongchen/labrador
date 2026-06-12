@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -37,11 +37,20 @@ impl<'a> WechatMpOauth2<'a> {
         WechatMpOauth2 { client }
     }
 
-    /// # 通过 code 换取网页授权access_token
+    /// 通过 code 换取网页授权access_token
     ///
-    /// 首先请注意，这里通过 code 换取的是一个特殊的网页授权access_token,与基础支持中的access_token（该access_token用于调用其他接口）不同。公众号可通过下述接口来获取网页授权access_token。如果网页授权的作用域为snsapi_base，则本步骤中获取到网页授权access_token的同时，也获取到了openid，snsapi_base式的网页授权流程即到此为止。
+    /// 首先请注意，这里通过 code 换取的是一个特殊的网页授权access_token，与基础支持中的access_token不同。
+    /// 如果网页授权的作用域为snsapi_base，则本步骤中获取到access_token的同时也获取到了openid，授权流程到此为止。
+    /// 尤其注意：由于公众号的 secret 和获取到的access_token安全级别都非常高，必须只保存在服务器，不允许传给客户端。
     ///
-    /// 尤其注意：由于公众号的 secret 和获取到的access_token安全级别都非常高，必须只保存在服务器，不允许传给客户端。后续刷新access_token、通过access_token获取用户信息等步骤，也必须从服务器发起。
+    /// # 参数
+    /// * `code` - 用户授权后微信回调返回的code参数
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatMpOauth2AccessTokenResponse>`，包含access_token、refresh_token、openid和scope等信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/Wechat_webpage_authorization.html#0>
     pub async fn oauth2_token(
         &self,
         code: &str,
@@ -58,9 +67,19 @@ impl<'a> WechatMpOauth2<'a> {
         response.into_result()
     }
 
-    /// # 刷新access_token
+    /// 刷新access_token
     ///
-    /// 由于access_token拥有较短的有效期，当access_token超时后，可以使用refresh_token进行刷新，refresh_token有效期为30天，当refresh_token失效之后，需要用户重新授权。
+    /// 由于access_token拥有较短的有效期（2小时），当access_token超时后，可以使用refresh_token进行刷新。
+    /// refresh_token有效期为30天，当refresh_token失效之后，需要用户重新授权。
+    ///
+    /// # 参数
+    /// * `refresh_token` - 通过 `oauth2_token` 获取的refresh_token
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatMpOauth2AccessTokenResponse>`，包含新的access_token和refresh_token。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/Wechat_webpage_authorization.html#1>
     pub async fn refresh_token(
         &self,
         refresh_token: &str,
@@ -77,9 +96,20 @@ impl<'a> WechatMpOauth2<'a> {
         response.into_result()
     }
 
-    /// # 拉取用户信息(需 scope 为 snsapi_userinfo)
+    /// 拉取用户信息(需 scope 为 snsapi_userinfo)
     ///
-    /// 如果网页授权作用域为snsapi_userinfo，则此时开发者可以通过access_token和 openid 拉取用户信息了。
+    /// 如果网页授权作用域为snsapi_userinfo，则开发者可以通过access_token和openid拉取用户详细信息。
+    /// 包括昵称、性别、头像、城市、省份、国家、unionid等。
+    ///
+    /// # 参数
+    /// * `access_token` - 网页授权access_token（非基础access_token）
+    /// * `openid` - 用户唯一标识
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatMpOauth2UserInfo>`，包含用户昵称、性别、头像等信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/Wechat_webpage_authorization.html#2>
     pub async fn oauth2_userinfo(
         &self,
         access_token: &str,

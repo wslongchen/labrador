@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -114,10 +114,15 @@ impl<'a> WechatCpOauth2<'a> {
     /// 获取访问用户身份（新版）
     ///
     /// 该接口用于根据code获取成员信息，适用于自建应用与代开发应用。
-    /// 详情请见：<https://work.weixin.qq.com/api/doc/90000/90135/91023>
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `code` - 通过成员授权获取到的code，每次成员授权带上的code将不一样，code只能使用一次，5分钟未被使用自动过期
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<UserInfoResponse>`，包含 userid、user_ticket 等信息
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/91023>
     pub async fn get_user_info(&self, code: &str) -> LabradorResult<UserInfoResponse> {
         let response: WechatApiResponse<UserInfoResponse> = self
             .client
@@ -129,7 +134,15 @@ impl<'a> WechatCpOauth2<'a> {
     /// 获取访问用户身份（旧版）
     ///
     /// 根据code获取成员信息，适用于自建应用与代开发应用。
-    /// 注意：需要指定agent_id，该方法可能已过时，建议使用 `get_user_info`。
+    ///
+    /// 注意：需要指定 agent_id，该方法可能已过时，建议使用 `get_user_info`。
+    ///
+    /// # 参数
+    /// * `code` - 通过成员授权获取到的 code
+    /// * `agent_id` - 应用 id
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<UserInfoResponse>`，包含 userid、user_ticket 等信息
     pub async fn get_user_info_with_agent(
         &self,
         code: &str,
@@ -147,10 +160,16 @@ impl<'a> WechatCpOauth2<'a> {
 
     /// 使用user_ticket获取成员详情
     ///
-    /// 详情请见：<https://work.weixin.qq.com/api/doc/90000/90135/91023#获取成员详情>
+    /// 通过 user_ticket 获取成员的详细信息，包括姓名、手机号、邮箱、头像等。
     ///
-    /// # 参数说明
-    /// * `user_ticket` - 成员票据，通过get_user_info获取
+    /// # 参数
+    /// * `user_ticket` - 成员票据，通过 get_user_info 获取
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<UserDetail>`，包含成员的详细信息
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/91023>
     pub async fn get_user_detail(&self, user_ticket: &str) -> LabradorResult<UserDetail> {
         let response: WechatApiResponse<UserDetail> = self
             .client
@@ -164,11 +183,16 @@ impl<'a> WechatCpOauth2<'a> {
 
     /// 获取访问用户敏感信息
     ///
-    /// 自建应用与代开发应用可通过该接口获取成员授权的敏感字段。
-    /// 详情请见：<https://developer.work.weixin.qq.com/document/path/95833>
+    /// 自建应用与代开发应用可通过该接口获取成员授权的敏感字段，包括手机号、邮箱、企业邮箱等。
     ///
-    /// # 参数说明
-    /// * `user_ticket` - 成员票据，通过get_user_info获取
+    /// # 参数
+    /// * `user_ticket` - 成员票据，通过 get_user_info 获取
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<UserSensitiveInfo>`，包含成员的敏感信息
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/95833>
     pub async fn get_user_sensitive_info(
         &self,
         user_ticket: &str,

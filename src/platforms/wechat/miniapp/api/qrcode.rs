@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -38,6 +38,19 @@ impl<'a> WechatMxaQrcode<'a> {
     }
 
     /// 获取小程序码（数量有限，请勿滥用）
+    ///
+    /// 本接口用于获取小程序码，适用于需要的码数量较少的业务场景。
+    /// 通过该接口生成的小程序码，永久有效，数量限制为100,000个。
+    ///
+    /// # 参数
+    /// * `request` - 请求参数，包含小程序页面路径（path）、宽度（width）、
+    ///   颜色配置（auto_color、line_color）和透明底色（is_hyaline）等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<Bytes>`，即小程序码图片的二进制数据。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/qrcode-link/qr-code/getQRCode.html>
     pub async fn get_wxacode(&self, request: &WxacodeRequest) -> LabradorResult<Bytes> {
         let response = self
             .client
@@ -67,18 +80,27 @@ impl<'a> WechatMxaQrcode<'a> {
         Ok(response.bytes())
     }
 
-    /// 获取不限制的小程序码
-    /// 该接口用于获取小程序码，适用于需要的码数量极多的业务场景。通过该接口生成的小程序码，永久有效，数量暂无限制。 更多用法详见 获取小程序码。
-    /// <pre>
-    /// 注意事项
-    /// 如果调用成功，会直接返回图片二进制内容，如果请求失败，会返回 JSON 格式的数据。
-    /// POST 参数需要转成 JSON 字符串，不支持 form 表单提交。
-    /// 接口只能生成已发布的小程序码
-    /// 调用分钟频率受限（5000次/分钟），如需大量小程序码，建议预生成
-    /// 获取 scene 值
-    /// scene 字段的值会作为 query 参数传递给小程序/小游戏。用户扫描该码进入小程序/小游戏后，开发者可以获取到二维码中的 scene 值，再做处理逻辑。
-    /// 调试阶段可以使用开发工具的条件编译自定义参数 scene=xxxx 进行模拟，开发工具模拟时的 scene 的参数值需要进行 encodeURIComponent
-    /// </pre>
+    /// 获取不限制数量的小程序码
+    ///
+    /// 本接口用于获取小程序码，适用于需要的码数量极多的业务场景。
+    /// 通过该接口生成的小程序码，永久有效，数量暂无限制。
+    ///
+    /// # 注意事项
+    /// * 如果调用成功，会直接返回图片二进制内容；如果请求失败，会返回 JSON 格式的数据。
+    /// * POST 参数需要转成 JSON 字符串，不支持 form 表单提交。
+    /// * 接口只能生成已发布的小程序码。
+    /// * 调用分钟频率受限（5000次/分钟），如需大量小程序码，建议预生成。
+    /// * scene 字段的值会作为 query 参数传递给小程序/小游戏。
+    ///
+    /// # 参数
+    /// * `request` - 请求参数，包含 scene（场景值，最大32个字符）、page（页面路径）、
+    ///   width（宽度）、颜色配置、环境版本等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<Bytes>`，即小程序码图片的二进制数据。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/qrcode-link/qr-code/getUnlimitedQRCode.html>
     pub async fn get_wxacode_unlimited(
         &self,
         request: &WxacodeUnlimitedRequest,
@@ -112,14 +134,19 @@ impl<'a> WechatMxaQrcode<'a> {
     }
 
     /// 获取小程序二维码（数量有限，请勿滥用）
-    /// <pre>
-    /// 适用于需要的码数量较少的业务场景
-    /// 通过该接口，仅能生成已发布的小程序的二维码。
-    /// 可以在开发者工具预览时生成开发版的带参二维码。
-    /// 带参二维码只有 100000 个，请谨慎调用。
-    /// </pre>
-    /// [`path`] 扫码进入的小程序页面路径，最大长度 128 字节，不能为空；对于小游戏，可以只传入 query 部分，来实现传参效果，如：传入 "?foo=bar"，即可在 wx.getLaunchOptionsSync 接口中的 query 参数获取到 {foo:"bar"}。
-    /// [`width`] 二维码的宽度，单位 px。最小 280px，最大 1280px;默认是430
+    ///
+    /// 本接口用于获取小程序二维码，适用于需要的码数量较少的业务场景。
+    /// 通过该接口仅能生成已发布的小程序的二维码，带参二维码只有 100,000 个，请谨慎调用。
+    ///
+    /// # 参数
+    /// * `request` - 请求参数，包含 `path`（扫码进入的小程序页面路径，最大128字节）
+    ///   和 `width`（二维码宽度，单位px，最小280，最大1280，默认430）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<Bytes>`，即小程序二维码图片的二进制数据。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/qrcode-link/qr-code/createQRCode.html>
     pub async fn create_wxaqrcode(&self, request: &WxaqrcodeRequest) -> LabradorResult<Bytes> {
         let response = self
             .client
@@ -149,7 +176,20 @@ impl<'a> WechatMxaQrcode<'a> {
         Ok(response.bytes())
     }
 
-    /// 获取小程序URL Scheme
+    /// 获取小程序 URL Scheme
+    ///
+    /// 本接口用于生成小程序的 URL Scheme 码，适用于短信、邮件、外部网页等场景
+    /// 拉起小程序。URL Scheme 可分为到期失效和永久有效两种类型。
+    ///
+    /// # 参数
+    /// * `request` - 请求参数，包含跳转目标小程序信息（jump_wxa）、
+    ///   是否到期失效（is_expire）和失效时间（expire_time）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<UrlSchemeResponse>`，包含生成的 scheme 码（openlink）。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/qrcode-link/url-scheme/generateScheme.html>
     pub async fn generate_url_scheme(
         &self,
         request: &UrlSchemeRequest,
@@ -163,7 +203,20 @@ impl<'a> WechatMxaQrcode<'a> {
         response.into_result()
     }
 
-    /// 获取小程序URL Link
+    /// 获取小程序 URL Link
+    ///
+    /// 本接口用于生成小程序的 URL Link，适用于短信、邮件、网页等场景拉起小程序。
+    /// URL Link 可分为到期失效和永久有效两种类型，支持云开发静态网站自定义 H5 配置。
+    ///
+    /// # 参数
+    /// * `request` - 请求参数，包含路径（path）、查询参数（query）、
+    ///   是否到期失效（is_expire）、失效时间（expire_time）和云开发配置（cloud_base）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<UrlLinkResponse>`，包含生成的 URL Link。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/qrcode-link/url-link/generateUrlLink.html>
     pub async fn generate_url_link(
         &self,
         request: &UrlLinkRequest,
@@ -177,7 +230,20 @@ impl<'a> WechatMxaQrcode<'a> {
         response.into_result()
     }
 
-    /// 获取小程序Short Link
+    /// 获取小程序 Short Link
+    ///
+    /// 本接口用于生成小程序的 Short Link（短链接），适用于短信、邮件等场景。
+    /// Short Link 相比 URL Link 更短，便于在字符限制严格的场景使用。
+    ///
+    /// # 参数
+    /// * `request` - 请求参数，包含页面路径（page_url，可携带query）、
+    ///   页面标题（page_title）和是否永久有效（is_permanent）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<ShortLinkResponse>`，包含生成的短链接（link）。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/qrcode-link/short-link/generateShortLink.html>
     pub async fn generate_short_link(
         &self,
         request: &ShortLinkRequest,

@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -160,7 +160,7 @@ impl<'a> WechatMpMember<'a> {
         let url = self.get_activate_plugin_url(card_id, out_str).await?;
         let decode_url = urlencoding::encode(&url);
         let mut params = serde_urlencoded::from_str::<ActivatePluginParam>(decode_url.as_ref())?;
-        params.biz = params.biz + "==";
+        params.biz += "==";
         Ok(params)
     }
 
@@ -319,17 +319,17 @@ impl WechatMpMemberCardCreateRequest {
         if date_info_type == DateInfoType::DATE_TYPE_FIX_TERM
             && (date_info.fixed_term.is_none() || date_info.fixed_begin_term.is_none())
         {
-            return Err(LabraError::RequestError(format!(
-                "会员卡基本信息的使用日期为:固定日期 fixedTerm和fixedBeginTerm不能为空"
-            )));
+            return Err(LabraError::RequestError(
+                "会员卡基本信息的使用日期为:固定日期 fixedTerm和fixedBeginTerm不能为空".to_string(),
+            ));
         }
         //固定期限
         if date_info_type == DateInfoType::DATE_TYPE_FIX_TIME_RANGE
             && (date_info.begin_timestamp.is_none() || date_info.end_timestamp.is_none())
         {
-            return Err(LabraError::RequestError(format!(
-                "会员卡基本信息的使用日期为:固定期限 fixedTerm和fixedBeginTerm不能为空"
-            )));
+            return Err(LabraError::RequestError(
+                "会员卡基本信息的使用日期为:固定期限 fixedTerm和fixedBeginTerm不能为空".to_string(),
+            ));
         }
         let current_tmp = timestamp_millis();
         if date_info_type == DateInfoType::DATE_TYPE_FIX_TIME_RANGE
@@ -338,7 +338,7 @@ impl WechatMpMemberCardCreateRequest {
                 || date_info.begin_timestamp.unwrap_or_default()
                     > date_info.end_timestamp.unwrap_or_default())
         {
-            return Err(LabraError::RequestError(format!("会员卡基本信息的使用日期为:固定期限，beginTimestamp和endTimestamp的值不合法，请检查")));
+            return Err(LabraError::RequestError("会员卡基本信息的使用日期为:固定期限，beginTimestamp和endTimestamp的值不合法，请检查".to_string()));
         }
 
         if !base_info.use_all_locations.unwrap_or_default() && base_info.location_id_list.is_none()
@@ -426,7 +426,7 @@ pub struct MemberCard {
     pub wx_activate_after_submit: bool,
     /// 跳转型一键激活跳转的地址链接，请填写http:// 或者https://开头的链接.
     pub wx_activate_after_submit_url: Option<String>,
-    /// 参照https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1499332673_Unm7V卡券内跳转小程序
+    /// 参照 <https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1499332673_Unm7V> 卡券内跳转小程序
     /// 积分信息类目对应的小程序 user_name，格式为原始id+@app
     pub bonus_app_brand_user_name: Option<String>,
     /// 积分入口小程序的页面路径
@@ -502,7 +502,7 @@ pub struct BaseInfo {
     /// 用户点击进入会员卡时推送事件.
     /// 填写true为用户点击进入会员卡时推送事件，默认为false。详情见 进入会员卡事件推送
     pub need_push_on_view: Option<bool>,
-    /// 微信小程序开放功能 小程序&卡券打通部分新增8个字段 https://mp.weixin.qq.com/cgi-bin/announce?action=getannouncement&key=1490190158&version=1&lang=zh_CN&platform=2
+    /// 微信小程序开放功能 小程序&卡券打通部分新增8个字段 <https://mp.weixin.qq.com/cgi-bin/announce?action=getannouncement&key=1490190158&version=1&lang=zh_CN&platform=2>
     /// 自定义使用入口跳转小程序的user_name，格式为原始id+@app
     pub custom_app_brand_user_name: Option<String>,
     /// 自定义使用入口小程序页面地址
@@ -519,7 +519,7 @@ pub struct BaseInfo {
     pub activate_app_brand_user_name: Option<String>,
     /// 激活小程序页面地址
     pub activate_app_brand_pass: Option<String>,
-    /// https://developers.weixin.qq.com/doc/offiaccount/Cards_and_Offer/Managing_Coupons_Vouchers_and_Cards.html#2
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Cards_and_Offer/Managing_Coupons_Vouchers_and_Cards.html#2>
     /// “CARD_STATUS_NOT_VERIFY”,待审核 ；
     /// “CARD_STATUS_VERIFY_FAIL”,审核失败；
     /// “CARD_STATUS_VERIFY_OK”，通过审核；
@@ -623,7 +623,7 @@ pub struct CustomCell1 {
     pub tips: String,
     /// 点击类目跳转外链url
     pub url: String,
-    /// 参考https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1499332673_Unm7V卡券内跳转小程序参数说明：会员卡顶部的信息类目字段，包含以下两个字段
+    /// 参考 <https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1499332673_Unm7V> 卡券内跳转小程序参数说明：会员卡顶部的信息类目字段，包含以下两个字段
     /// 自定义信息类目小程序user_name，格式为原始id+@app
     pub app_brand_user_name: Option<String>,
     /// 自定义信息类目小程序的页面路径
@@ -638,7 +638,7 @@ pub struct MemberCustomField {
     pub name: String,
     /// 点击类目跳转外链url
     pub url: String,
-    /// 参考https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1499332673_Unm7V卡券内跳转小程序参数说明：会员卡顶部的信息类目字段，包含以下两个字段
+    /// 参考 <https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1499332673_Unm7V> 卡券内跳转小程序参数说明：会员卡顶部的信息类目字段，包含以下两个字段
     /// 自定义信息类目小程序user_name，格式为原始id+@app
     pub app_brand_user_name: Option<String>,
     /// 自定义信息类目小程序的页面路径
@@ -662,7 +662,7 @@ pub struct MemberCardSkuInfo {
     /// 卡券库存的数量，不支持填写0，上限为100000000
     pub quantity: i32,
     /// 卡券全部库存的数量，上限为100000000。
-    /// https://developers.weixin.qq.com/doc/offiaccount/Cards_and_Offer/Managing_Coupons_Vouchers_and_Cards.html#4
+    /// <https://developers.weixin.qq.com/doc/offiaccount/Cards_and_Offer/Managing_Coupons_Vouchers_and_Cards.html#4>
     pub total_quantity: i32,
 }
 /// 会员卡颜色
@@ -995,7 +995,7 @@ pub struct MemberCardUpdateRequest {
 
 /// 会员卡更新对象
 /// 以下字段顺序根据微信官方文档顺序相同，不能传入非文档之外的字段
-/// https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1466494654_K9rNz
+/// <https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1466494654_K9rNz>
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemberCardUpdate {
     /// 基本信息
@@ -1093,7 +1093,7 @@ pub struct BaseInfoUpdate {
     pub can_give_friend: Option<bool>,
     /// 使用日期,有效期的信息.
     pub date_info: DateInfo,
-    /// 微信小程序开放功能 小程序&卡券打通部分新增8个字段 https://mp.weixin.qq.com/cgi-bin/announce?action=getannouncement&key=1490190158&version=1&lang=zh_CN&platform=2
+    /// 微信小程序开放功能 小程序&卡券打通部分新增8个字段 <https://mp.weixin.qq.com/cgi-bin/announce?action=getannouncement&key=1490190158&version=1&lang=zh_CN&platform=2>
     /// 自定义使用入口跳转小程序的user_name，格式为原始id+@app
     pub custom_app_brand_user_name: Option<String>,
     /// 自定义使用入口小程序页面地址

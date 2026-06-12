@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -103,11 +103,7 @@ impl WechatPayBuilder {
     /// 传入微信支付后台提供的公钥 PEM 和公钥 ID。
     /// 启用后不再通过 `/v3/certificates` 下载平台证书，
     /// 响应验签将使用此公钥。
-    pub fn platform_public_key<S: Into<String>>(
-        mut self,
-        public_key_pem: S,
-        key_id: S,
-    ) -> Self {
+    pub fn platform_public_key<S: Into<String>>(mut self, public_key_pem: S, key_id: S) -> Self {
         self.config.platform_public_key = Some(public_key_pem.into());
         self.config.platform_public_key_id = Some(key_id.into());
         self

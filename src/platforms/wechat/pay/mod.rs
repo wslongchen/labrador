@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -23,6 +23,10 @@
 
 pub mod builder;
 pub mod config;
+pub mod partner;
+pub mod payscore;
+pub mod profitsharing;
+pub mod transfer;
 pub mod types;
 
 use super::constants;
@@ -90,9 +94,9 @@ impl WechatPayClient {
             .api_base_url(base_url)
             .timeout(std::time::Duration::from_secs(30))
             .connect_timeout(std::time::Duration::from_secs(10));
-        let mut signer = WechatPaySigner::from_config(&config);
+        let mut signer = WechatPaySigner::from_config(config);
         // 处理证书配置
-        if let Some(identity) = Self::load_identity(&config)? {
+        if let Some(identity) = Self::load_identity(config)? {
             // 添加私钥
             if let Some(private_key) = identity.private_key_pem() {
                 signer = signer.with_private_key(private_key);
@@ -339,7 +343,7 @@ impl WechatPayClient {
         }
         let raw_body = response.text().unwrap_or_default();
         let result: WechatPayCommonResponse<WechatPayResponseV3> =
-            serde_json::from_str(&raw_body).map_err(|e| LabraError::Json(e))?;
+            serde_json::from_str(&raw_body).map_err(LabraError::Json)?;
 
         if !result.is_success() {
             if let Some(detail) = &result.detail {
@@ -1289,7 +1293,7 @@ impl WechatPayClient {
             &self.config.api_key.clone().unwrap_or_default(),
         )?;
         let sign = response.sign.to_string();
-        if !(calculated_sign == *sign) {
+        if calculated_sign != *sign {
             return Err(LabraError::Sign("签名验证失败".to_string()));
         }
         Ok(response)

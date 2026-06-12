@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -26,7 +26,7 @@ use std::path::Path;
 
 /// 读取文件内容
 pub fn read_file(path: impl AsRef<Path>) -> LabradorResult<Vec<u8>> {
-    fs::read(path).map_err(|e| crate::errors::LabraError::Io(e))
+    fs::read(path).map_err(crate::errors::LabraError::Io)
 }
 
 /// 读取文件内容并返回文件名和字节数据
@@ -45,17 +45,17 @@ pub fn read_file_with_name(file_path: &str) -> LabradorResult<(String, Vec<u8>)>
 
 /// 读取文本文件
 pub fn read_text_file(path: impl AsRef<Path>) -> LabradorResult<String> {
-    fs::read_to_string(path).map_err(|e| crate::errors::LabraError::Io(e))
+    fs::read_to_string(path).map_err(crate::errors::LabraError::Io)
 }
 
 /// 写入文件
 pub fn write_file(path: impl AsRef<Path>, data: &[u8]) -> LabradorResult<()> {
-    fs::write(path, data).map_err(|e| crate::errors::LabraError::Io(e))
+    fs::write(path, data).map_err(crate::errors::LabraError::Io)
 }
 
 /// 写入文本文件
 pub fn write_text_file(path: impl AsRef<Path>, text: &str) -> LabradorResult<()> {
-    fs::write(path, text).map_err(|e| crate::errors::LabraError::Io(e))
+    fs::write(path, text).map_err(crate::errors::LabraError::Io)
 }
 
 /// 检查文件是否存在
@@ -67,7 +67,7 @@ pub fn file_exists(path: impl AsRef<Path>) -> bool {
 pub fn file_size(path: impl AsRef<Path>) -> LabradorResult<u64> {
     fs::metadata(path)
         .map(|meta| meta.len())
-        .map_err(|e| crate::errors::LabraError::Io(e))
+        .map_err(crate::errors::LabraError::Io)
 }
 
 /// 获取文件扩展名
@@ -80,5 +80,5 @@ pub fn file_extension(path: impl AsRef<Path>) -> Option<String> {
 
 /// 创建目录
 pub fn create_dir(path: impl AsRef<Path>) -> LabradorResult<()> {
-    fs::create_dir_all(path).map_err(|e| crate::errors::LabraError::Io(e))
+    fs::create_dir_all(path).map_err(crate::errors::LabraError::Io)
 }

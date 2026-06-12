@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -44,14 +44,19 @@ impl<'a> WechatMxaAuth<'a> {
 
     /// 生物认证秘钥签名验证
     ///
-    /// 该接口用于 SOTER 生物认证秘钥签名验证。
+    /// 本接口用于 SOTER 生物认证秘钥签名验证。
     /// 通过小程序前端获取到的签名参数，在此接口进行验证。
     ///
-    /// # 参数说明
-    /// * `request` - 签名验证请求参数，包含 openid、签名等。
+    /// # 参数
+    /// * `request` - 签名验证请求参数，包含 openid（用户唯一标识）、
+    ///   json_string（通过 wx.startSoterAuthentication 获得的JSON字符串）和
+    ///   json_signature（通过 wx.startSoterAuthentication 获得的签名）
     ///
     /// # 返回
     /// 成功返回空响应，表示验证通过。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/basic-info/soter/verifySignature.html>
     pub async fn verify_signature(
         &self,
         request: &VerifySignatureRequest,
@@ -71,11 +76,16 @@ impl<'a> WechatMxaAuth<'a> {
     /// 业务方后台根据「用户实名信息（姓名+身份证）」调用本接口，
     /// 获取人脸核身会话唯一标识 `verify_id`，然后给到小程序前端使用。
     ///
-    /// # 参数说明
-    /// * `request` - 请求参数，包含姓名、身份证号等。
+    /// # 参数
+    /// * `request` - 请求参数，包含姓名（name）、身份证号（id_card_number），
+    ///   可选参数：业务流水号（biz_id）和回调通知地址（notify_url）
     ///
     /// # 返回
-    /// 包含 `verify_id` 的响应。
+    /// 返回 `LabradorResult<GetVerifyIdResponse>`，包含 `verify_id`（有效期10分钟，一次有效）
+    /// 和 request_id。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/basic-info/face-identify/getFaceIdentifySession.html>
     pub async fn get_verify_id(
         &self,
         request: &GetVerifyIdRequest,
@@ -93,11 +103,15 @@ impl<'a> WechatMxaAuth<'a> {
     /// 业务方后台根据人脸核身会话唯一标识 `verify_id` 调用本接口，
     /// 查询用户人脸核身真实验证结果。
     ///
-    /// # 参数说明
-    /// * `request` - 请求参数，包含 `verify_id`。
+    /// # 参数
+    /// * `request` - 请求参数，包含 `verify_id`（人脸核身会话唯一标识，通过 getVerifyId 获得）
     ///
     /// # 返回
-    /// 包含核身结果信息的响应。
+    /// 返回 `LabradorResult<QueryVerifyInfoResponse>`，包含核身结果（result：0-通过）、
+    /// 核身凭证（verify_ticket）和脱敏的用户实名信息（verify_info）。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/basic-info/face-identify/queryFaceIdentifyResult.html>
     pub async fn query_verify_info(
         &self,
         request: &QueryVerifyInfoRequest,

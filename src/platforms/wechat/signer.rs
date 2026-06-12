@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -80,7 +80,7 @@ impl WechatPaySigner {
                     .map(|cert| (cert.serial_number.clone(), cert.clone()))
                     .collect()
             })
-            .unwrap_or(HashMap::new());
+            .unwrap_or_default();
         Self {
             mch_id: config.mch_id.clone(),
             api_key: config.api_key.clone(),
@@ -186,7 +186,11 @@ impl WechatPaySigner {
         }
         tracing::info!(
             "微信支付 V3 签名: mch_id={}, serial_no={}, private_key_len={}, url={}, method={}",
-            mch_id, serial_no, private_key.len(), format_url, method,
+            mch_id,
+            serial_no,
+            private_key.len(),
+            format_url,
+            method,
         );
         let nonce_str = random_string(32).to_uppercase();
 
@@ -230,7 +234,7 @@ impl WechatPaySigner {
         message: &str,
         signature: &str,
     ) -> LabradorResult<bool> {
-        let signatures = vec![timestamp, nonce, message];
+        let signatures = [timestamp, nonce, message];
         let signature_str = signatures
             .iter()
             .map(|item| item.to_string())
@@ -260,7 +264,7 @@ impl WechatPaySigner {
         let serial_number = signature_header.serial.to_string();
         let timestamp = signature_header.time_stamp.to_string();
         let nonce = signature_header.nonce.to_string();
-        let signatures = vec![timestamp, nonce, message.to_string()];
+        let signatures = [timestamp, nonce, message.to_string()];
         let signature_str = signatures
             .iter()
             .map(|item| item.to_string())
@@ -279,6 +283,7 @@ impl WechatPaySigner {
     }
 
     /// 从XML中提取参数
+    #[allow(clippy::only_used_in_recursion)]
     fn extract_xml_params(
         &self,
         value: &serde_json::Value,
@@ -396,7 +401,7 @@ impl RequestSigner for WechatPaySigner {
     }
 
     fn secret_key(&self) -> &str {
-        self.api_key.as_ref().map(|x| x.as_str()).unwrap_or("")
+        self.api_key.as_deref().unwrap_or("")
     }
 
     fn as_any(&self) -> &dyn Any {

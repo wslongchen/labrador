@@ -7,8 +7,8 @@ description = "Labrador - Mini thirdpart client for rust."
 readme = "README.md"
 keywords = ["alipay", "wechat", "jd", "taobao", "pdd"]
 categories = ["api-bindings"]
-homepage = "https://github.com/wslongchen/labrador"
-repository = "https://github.com/wslongchen/labrador"
+homepage = "https://github.com/woofcloud/labrador"
+repository = "https://github.com/woofcloud/labrador"
 documentation = "https://docs.rs/labrador"
 license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -103,3 +103,28 @@ pdd = []
 jd = []
 # Provide qiniu
 qiniu = []
+
+# Examples
+[[example]]
+name = "wechat_mp"
+required-features = ["wechat"]
+
+[[example]]
+name = "wechat_miniapp"
+required-features = ["wechat"]
+
+[[example]]
+name = "wechat_cp"
+required-features = ["wechat"]
+
+[[example]]
+name = "wechat_pay"
+required-features = ["wechat"]
+
+[[example]]
+name = "alipay"
+required-features = ["alipay"]
+
+[[example]]
+name = "payment_tester"
+required-features = ["wechat", "alipay"]

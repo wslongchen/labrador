@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -48,11 +48,14 @@ impl<'a> WechatMxaImgOcr<'a> {
     ///
     /// 本接口用于对图片主体区域进行智能识别和裁剪，返回裁剪后的图片URL。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `img_url` - 待裁剪图片的URL地址（需为微信小程序后台配置的合法域名）
     ///
     /// # 返回
-    /// 包含裁剪后图片URL的响应。
+    /// 返回 `LabradorResult<AiCropResponse>`，包含裁剪后的图片URL列表及裁剪框坐标。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/img-ocr/img-identify/imgAICrop.html>
     pub async fn img_aicrop(&self, img_url: &str) -> LabradorResult<AiCropResponse> {
         let request = serde_json::json!({
             "img_url": img_url,
@@ -69,11 +72,14 @@ impl<'a> WechatMxaImgOcr<'a> {
     ///
     /// 识别图片中的二维码、条码、DataMatrix和PDF417，返回识别结果列表。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `img_url` - 包含条码/二维码的图片URL地址
     ///
     /// # 返回
-    /// 包含识别出的所有码信息的响应。
+    /// 返回 `LabradorResult<QrCodeResponse>`，包含识别出的所有码信息（类型、数据、位置）和图片大小。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/img-ocr/img-identify/QRCodeIdentify.html>
     pub async fn img_qrcode(&self, img_url: &str) -> LabradorResult<QrCodeResponse> {
         let request = serde_json::json!({
             "img_url": img_url,
@@ -112,11 +118,14 @@ impl<'a> WechatMxaImgOcr<'a> {
     ///
     /// 本接口用于识别图片中的通用印刷体文字。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `img_url` - 待识别图片的URL地址
     ///
     /// # 返回
-    /// 包含识别出的文字项列表的响应。
+    /// 返回 `LabradorResult<OcrCommResponse>`，包含识别出的文字项列表及每个文字的位置信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/img-ocr/ocr/printedTextOCR.html>
     pub async fn ocr_comm(&self, img_url: &str) -> LabradorResult<OcrCommResponse> {
         let request = serde_json::json!({
             "img_url": img_url,
@@ -131,13 +140,16 @@ impl<'a> WechatMxaImgOcr<'a> {
 
     /// 行驶证识别
     ///
-    /// 提供机动车行驶证信息OCR识别。
+    /// 提供机动车行驶证信息OCR识别，可识别正副页的车辆信息。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `img_url` - 行驶证图片的URL地址
     ///
     /// # 返回
-    /// 包含行驶证信息的响应。
+    /// 返回 `LabradorResult<OcrDrivingResponse>`，包含车牌号、车辆类型、所有人、品牌型号等行驶证信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/img-ocr/ocr/drivingLicenseOCR.html>
     pub async fn ocr_driving(&self, img_url: &str) -> LabradorResult<OcrDrivingResponse> {
         let request = serde_json::json!({
             "img_url": img_url,
@@ -152,13 +164,16 @@ impl<'a> WechatMxaImgOcr<'a> {
 
     /// 银行卡识别
     ///
-    /// 本接口提供银行卡卡面信息OCR识别。
+    /// 本接口提供银行卡卡面信息OCR识别，可识别银行卡号。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `img_url` - 银行卡图片的URL地址
     ///
     /// # 返回
-    /// 包含银行卡信息的响应。
+    /// 返回 `LabradorResult<OcrBankcardResponse>`，包含识别出的银行卡号。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/img-ocr/ocr/bankCardOCR.html>
     pub async fn ocr_bankcard(&self, img_url: &str) -> LabradorResult<OcrBankcardResponse> {
         let request = serde_json::json!({
             "img_url": img_url,
@@ -173,13 +188,17 @@ impl<'a> WechatMxaImgOcr<'a> {
 
     /// 营业执照识别
     ///
-    /// 本接口提供营业执照 OCR 识别能力。
+    /// 本接口提供营业执照 OCR 识别能力，可识别企业名称、注册号、经营范围等信息。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `img_url` - 营业执照图片的URL地址
     ///
     /// # 返回
-    /// 包含营业执照信息的响应。
+    /// 返回 `LabradorResult<OcrBizLicenseResponse>`，包含注册号、企业名称、法定代表人、
+    /// 经营范围、注册资本等营业执照信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/img-ocr/ocr/businessLicenseOCR.html>
     pub async fn ocr_bizlicense(&self, img_url: &str) -> LabradorResult<OcrBizLicenseResponse> {
         let request = serde_json::json!({
             "img_url": img_url,
@@ -194,13 +213,17 @@ impl<'a> WechatMxaImgOcr<'a> {
 
     /// 驾驶证识别
     ///
-    /// 本接口用于驾驶证识别。
+    /// 本接口用于驾驶证信息OCR识别，可识别证号、姓名、准驾车型等信息。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `img_url` - 驾驶证图片的URL地址
     ///
     /// # 返回
-    /// 包含驾驶证信息的响应。
+    /// 返回 `LabradorResult<OcrDrivingLicenseResponse>`，包含证号、姓名、性别、国籍、
+    /// 出生日期、准驾车型、有效期限等驾驶证信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/img-ocr/ocr/driverLicenseOCR.html>
     pub async fn ocr_drivinglicense(
         &self,
         img_url: &str,
@@ -218,13 +241,16 @@ impl<'a> WechatMxaImgOcr<'a> {
 
     /// 身份证识别
     ///
-    /// 本接口提供身份证正反面OCR识别功能。
+    /// 本接口提供身份证正反面OCR识别功能，可识别姓名、身份证号、有效日期等信息。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `img_url` - 身份证图片的URL地址
     ///
     /// # 返回
-    /// 包含身份证信息的响应。
+    /// 返回 `LabradorResult<OcrIdCardResponse>`，包含类型（正面/背面）、姓名、身份证号和有效日期。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/img-ocr/ocr/idCardOCR.html>
     pub async fn ocr_idcard(&self, img_url: &str) -> LabradorResult<OcrIdCardResponse> {
         let request = serde_json::json!({
             "img_url": img_url,

@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -1288,7 +1288,9 @@ impl WechatPayShorturlRequest {
     }
 }
 
+/// 解密后的退款通知数据格式示例：
 ///
+/// ```text
 /// <root>
 /// <out_refund_no><![CDATA[131811191610442717309]]></out_refund_no>
 /// <out_trade_no><![CDATA[71106718111915575302817]]></out_trade_no>
@@ -1304,7 +1306,7 @@ impl WechatPayShorturlRequest {
 /// <total_fee><![CDATA[3960]]></total_fee>
 /// <transaction_id><![CDATA[4200000215201811190261405420]]></transaction_id>
 /// </root>
-///
+/// ```
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct WechatDecryptRefundNotifyResponse {
     /// 退款编号
@@ -1335,7 +1337,9 @@ pub struct WechatDecryptRefundNotifyResponse {
     pub transaction_id: String,
 }
 
+/// 支付通知的XML数据格式示例：
 ///
+/// ```text
 /// <xml>
 /// <return_code>SUCCESS</return_code>
 /// <appid><![CDATA[wx2421b1c4370ec43b]]></appid>
@@ -1343,7 +1347,7 @@ pub struct WechatDecryptRefundNotifyResponse {
 /// <nonce_str><![CDATA[TeqClE3i0mvn3DrK]]></nonce_str>
 /// <req_info><![CDATA[T87GAHG17TGAHG1TGHAHAHA1Y1CIOA9UGJH1GAHV871HAGAGQYQQPOOJMXNBCXBVNMNMAJAA]]></req_info>
 /// </xml>
-///
+/// ```
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WechatEncryptResponse {
     pub appid: Option<String>,
@@ -2990,7 +2994,7 @@ impl WechatPayShortUrlResponse {
             .clone()
             .unwrap_or_default()
             .ne(&"SUCCESS")
-            && !response.return_code.is_some()
+            && response.return_code.is_none()
         {
             return Err(LabraError::RequestError(format!(
                 "微信回调失败: {}",

@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -47,8 +47,11 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// 该接口用于商家绑定或解绑其在快递公司侧的商户账号。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `request` - 绑定/解绑请求参数，包含快递公司ID、绑定状态、账号密码等。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/express/express-by-business/bindAccount.html>
     pub async fn bind_account(
         &self,
         request: &BindAccountRequest,
@@ -64,6 +67,9 @@ impl<'a> WechatMxaExpress<'a> {
     /// 获取所有绑定的物流账号
     ///
     /// 该接口用于获取商家在所有快递公司已绑定的账号列表。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/express/express-by-business/getAllBindAccount.html>
     pub async fn get_all_bound_account(&self) -> LabradorResult<Vec<BoundAccount>> {
         let response: WechatApiResponse<GetAllBoundAccountResponse> = self
             .client
@@ -76,6 +82,9 @@ impl<'a> WechatMxaExpress<'a> {
     /// 获取支持的快递公司列表
     ///
     /// 该接口用于获取微信物流助手当前支持的所有快递公司列表。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/express/express-by-business/getAllDelivery.html>
     pub async fn get_all_delivery(&self) -> LabradorResult<Vec<ExpressDeliveryCompany>> {
         let response: WechatApiResponse<GetAllDeliveryResponse> = self
             .client
@@ -89,8 +98,11 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// 该接口用于在生成运单后，发货前取消运单。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `request` - 取消运单请求参数，包含运单ID、商户订单号等。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/express/express-by-business/cancelOrder.html>
     pub async fn cancel_order(
         &self,
         request: &CancelExpressOrderRequest,
@@ -108,8 +120,11 @@ impl<'a> WechatMxaExpress<'a> {
     /// 该接口用于配置面单打印员，可以设置多个。
     /// 若需要使用微信打单 PC 软件，才需要调用此接口。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `request` - 配置打印员请求参数，包含打印员openid或微信号、绑定/解绑标记。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/express/express-by-business/updatePrinter.html>
     pub async fn update_printer(
         &self,
         request: &UpdatePrinterRequest,
@@ -126,9 +141,12 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// 该接口用于获取商家在指定快递公司的电子面单账户余额。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `delivery_id` - 快递公司ID
     /// * `biz_id` - 商家侧在快递公司绑定的业务ID（即 account）
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/express/express-by-business/getQuota.html>
     pub async fn get_quota(&self, delivery_id: &str, biz_id: &str) -> LabradorResult<QuotaInfo> {
         let response: WechatApiResponse<QuotaInfo> = self
             .client
@@ -145,8 +163,11 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// 该接口用于根据运单ID或商户订单号获取运单的详细信息。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `request` - 查询运单请求参数。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/express/express-by-business/getOrder.html>
     pub async fn get_order(
         &self,
         request: &GetExpressOrderRequest,
@@ -163,8 +184,11 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// 该接口用于模拟快递公司更新订单状态，仅限测试环境使用。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `request` - 模拟更新请求参数。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/express/express-by-business/testUpdateOrder.html>
     pub async fn test_update_order(
         &self,
         request: &TestUpdateOrderRequest,
@@ -180,6 +204,9 @@ impl<'a> WechatMxaExpress<'a> {
     /// 获取打印员列表
     ///
     /// 该接口用于获取当前已配置的所有面单打印员信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/express/express-by-business/getAllPrinter.html>
     pub async fn get_all_printer(&self) -> LabradorResult<Vec<PrinterInfo>> {
         let response: WechatApiResponse<GetAllPrinterResponse> = self
             .client
@@ -193,8 +220,11 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// 该接口用于查询运单的实时轨迹信息。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `request` - 查询轨迹请求参数。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/express/express-by-business/getPath.html>
     pub async fn get_path(&self, request: &GetPathRequest) -> LabradorResult<PathInfo> {
         let response: WechatApiResponse<PathInfo> = self
             .client
@@ -208,8 +238,11 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// 该接口用于根据多个商户订单号批量获取运单信息。
     ///
-    /// # 参数说明
-    /// * `request` - 批量查询请求参数，包含订单号列表。
+    /// # 参数
+    /// * `request` - 批量查询请求参数，包含订单号列表（最多50个）。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/express/express-by-business/batchGetOrder.html>
     pub async fn batch_get_order(
         &self,
         request: &BatchGetOrderRequest,
@@ -226,11 +259,14 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// 该接口用于生成物流运单，获取电子面单。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `request` - 生成运单请求参数，包含收发件人信息、货物信息、快递公司ID等。
     ///
     /// # 返回
     /// 包含运单号、面单数据等信息的响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/express/express-by-business/addOrder.html>
     pub async fn add_order(
         &self,
         request: &AddExpressOrderRequest,
@@ -250,8 +286,11 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// 该接口用于快递公司更新商家的账号审核结果。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `request` - 更新审核结果请求。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/express/express-by-delivery/updateBusiness.html>
     pub async fn update_business(
         &self,
         request: &UpdateBusinessRequest,
@@ -268,8 +307,11 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// 该接口用于快递公司更新运单的物流轨迹信息。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `request` - 更新轨迹请求。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/express/express-by-delivery/updatePath.html>
     pub async fn update_path(
         &self,
         request: &UpdatePathRequest,
@@ -286,8 +328,11 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// 该接口用于快递公司预览面单模板样式。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `request` - 预览模板请求。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/express/express-by-delivery/previewTemplate.html>
     pub async fn preview_template(
         &self,
         request: &PreviewTemplateRequest,
@@ -304,8 +349,11 @@ impl<'a> WechatMxaExpress<'a> {
     ///
     /// 该接口用于快递公司获取运单中联系人的脱敏信息。
     ///
-    /// # 参数说明
+    /// # 参数
     /// * `request` - 获取联系人信息请求。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/express/express-by-delivery/getContact.html>
     pub async fn get_contact(&self, request: &GetContactRequest) -> LabradorResult<ContactInfo> {
         let response: WechatApiResponse<ContactInfo> = self
             .client
@@ -373,6 +421,7 @@ pub struct ExpressDeliveryCompany {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct GetAllDeliveryResponse {
+    #[serde(default)]
     list: Vec<ExpressDeliveryCompany>,
 }
 

@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -77,7 +77,7 @@ impl<'a> WechatMpMedia<'a> {
     /// - 语音（voice）：2M，播放长度不超过60s，支持AMR\MP3格式
     /// - 视频（video）：10MB，支持MP4格式
     /// - 缩略图（thumb）：64KB，支持JPG格式
-    /// 媒体文件在后台保存时间为3天，即3天后media_id失效。
+    ///   媒体文件在后台保存时间为3天，即3天后media_id失效。
     pub async fn upload_media(
         &self,
         media_type: &str,
@@ -104,6 +104,15 @@ impl<'a> WechatMpMedia<'a> {
     }
 
     /// 新增临时素材（通过文件路径）
+    ///
+    /// 本接口用于通过本地文件路径上传临时素材。便捷方法，内部读取文件后调用 `upload_media`。
+    ///
+    /// # 参数
+    /// * `media_type` - 媒体文件类型：image、voice、video、thumb
+    /// * `file_path` - 本地文件的路径
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<TempMediaResponse>`，包含media_id和素材类型等信息。
     pub async fn upload_media_with_file(
         &self,
         media_type: &str,
@@ -122,6 +131,15 @@ impl<'a> WechatMpMedia<'a> {
     }
 
     /// 新增临时素材（通过URL）
+    ///
+    /// 本接口用于通过远程URL下载后上传临时素材。便捷方法，内部下载后调用 `upload_media`。
+    ///
+    /// # 参数
+    /// * `media_type` - 媒体文件类型：image、voice、video、thumb
+    /// * `url` - 远程文件的URL地址
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<TempMediaResponse>`，包含media_id和素材类型等信息。
     pub async fn upload_media_with_url(
         &self,
         media_type: &str,

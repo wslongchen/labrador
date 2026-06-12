@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -41,6 +41,14 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     // --- 小程序使用接口 ---
 
     /// 获取已支持的配送公司列表
+    ///
+    /// 本接口用于获取当前城市已支持的即时配送公司列表。
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<Vec<DeliveryCompany>>`，包含配送公司ID和名称的列表。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/immediate-delivery/delivery-by-business/getAllImmeDelivery.html>
     pub async fn get_all_delivery_company(&self) -> LabradorResult<Vec<DeliveryCompany>> {
         let response: WechatApiResponse<GetAllDeliveryCompanyResponse> = self
             .client
@@ -51,6 +59,20 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     }
 
     /// 预下配送单
+    ///
+    /// 本接口用于在正式下单前进行预下单，用于查询运费、预计送达时间等信息。
+    /// 预下单不产生实际配送订单。
+    ///
+    /// # 参数
+    /// * `request` - 预下单请求参数，包含配送公司ID（delivery_id）、门店编号（shop_no）、
+    ///   发货人（sender）、收货人（receiver）、货物信息（cargo）、订单信息（order_info）等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<PreAddOrderResponse>`，包含运费（fee）、预计送达时间
+    /// （expected_delivery_time）、距离（distance）等信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/immediate-delivery/delivery-by-business/preAddOrder.html>
     pub async fn pre_add_order(
         &self,
         request: &PreAddOrderRequest,
@@ -63,7 +85,15 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
         response.into_result()
     }
 
-    /// 拉取已绑定账号
+    /// 拉取已绑定门店
+    ///
+    /// 本接口用于获取商家在配送公司侧已绑定的门店信息列表。
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<BoundShopInfo>`，包含已绑定门店的列表信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/immediate-delivery/delivery-by-business/getBindShop.html>
     pub async fn get_bound_shop(&self) -> LabradorResult<BoundShopInfo> {
         let response: WechatApiResponse<BoundShopInfo> = self
             .client
@@ -74,6 +104,18 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     }
 
     /// 预取消配送单
+    ///
+    /// 本接口用于在正式取消前预查询取消配送单的费用信息。
+    ///
+    /// # 参数
+    /// * `request` - 预取消请求参数，包含门店编号（shop_no）、订单ID（order_id）、
+    ///   运单号（waybill_id）、取消原因ID（cancel_reason_id）和取消原因（cancel_reason）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<PreCancelOrderResponse>`，包含扣除费用（deduct_fee）和描述信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/immediate-delivery/delivery-by-business/preCancelOrder.html>
     pub async fn pre_cancel_order(
         &self,
         request: &PreCancelOrderRequest,
@@ -87,6 +129,14 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     }
 
     /// 申请开通即时配送
+    ///
+    /// 本接口用于申请开通小程序的即时配送服务能力。
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，成功时返回空响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/immediate-delivery/delivery-by-business/openImmediateDelivery.html>
     pub async fn open_immediate_delivery(&self) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -96,7 +146,19 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
         Ok(response)
     }
 
-    /// 发起绑定请求
+    /// 发起门店绑定请求
+    ///
+    /// 本接口用于向配送公司发起门店绑定申请，绑定成功后可使用该配送公司的即时配送服务。
+    ///
+    /// # 参数
+    /// * `request` - 绑定门店请求参数，包含配送公司ID（delivery_id）、门店名称（shop_name）、
+    ///   门店地址（shop_address）、联系电话（shop_phone）、联系人等信息
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，成功时返回空响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/immediate-delivery/delivery-by-business/bindShop.html>
     pub async fn add_shop(&self, request: &AddShopRequest) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -107,6 +169,18 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     }
 
     /// 重新下单
+    ///
+    /// 本接口用于在配送异常或取消后重新下单，使用原订单信息创建新的配送订单。
+    ///
+    /// # 参数
+    /// * `request` - 重新下单请求参数，包含门店编号（shop_no）、原订单ID（order_id）、
+    ///   原运单号（waybill_id）和配送公司ID（delivery_id）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<ReAddOrderResponse>`，包含新订单ID、运单号、运费等信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/immediate-delivery/delivery-by-business/reAddOrder.html>
     pub async fn re_add_order(
         &self,
         request: &ReAddOrderRequest,
@@ -119,7 +193,19 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
         response.into_result()
     }
 
-    /// 模拟更新配送单状态（用于测试）
+    /// 模拟更新配送单状态（用于正式环境测试）
+    ///
+    /// 本接口用于在正式环境中模拟配送公司更新配送单状态，仅限测试使用。
+    ///
+    /// # 参数
+    /// * `request` - 模拟更新请求参数，包含门店编号（shop_no）、订单ID（order_id）、
+    ///   运单号（waybill_id）、操作时间（action_time）、订单状态（order_status）等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，成功时返回空响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/immediate-delivery/delivery-by-business/mockUpdateOrder.html>
     pub async fn realmock_update_order(
         &self,
         request: &MockUpdateOrderRequest,
@@ -136,6 +222,18 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     }
 
     /// 模拟配送公司更新配送单状态（用于沙盒环境）
+    ///
+    /// 本接口用于在沙盒环境中模拟配送公司更新配送单状态，用于开发调试。
+    ///
+    /// # 参数
+    /// * `request` - 模拟更新请求参数，包含门店编号（shop_no）、订单ID（order_id）、
+    ///   运单号（waybill_id）、操作时间（action_time）、订单状态（order_status）等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，成功时返回空响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/immediate-delivery/delivery-by-business/testUpdateOrder.html>
     pub async fn test_update_order(
         &self,
         request: &MockUpdateOrderRequest,
@@ -149,6 +247,19 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     }
 
     /// 拉取配送单信息
+    ///
+    /// 本接口用于查询指定配送单的详细信息，包括订单状态、骑手信息、费用等。
+    ///
+    /// # 参数
+    /// * `request` - 查询请求参数，包含门店编号（shop_no）、订单ID（order_id）
+    ///   或运单号（waybill_id）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<DeliveryOrderDetail>`，包含订单ID、运单号、订单状态、
+    /// 骑手信息、费用、收发件人信息等详细信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/immediate-delivery/delivery-by-business/getOrder.html>
     pub async fn get_order(
         &self,
         request: &GetDeliveryOrderRequest,
@@ -162,6 +273,18 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     }
 
     /// 异常件退回商家确认
+    ///
+    /// 本接口用于商家确认异常件退回，确认后配送单将进入退回流程。
+    ///
+    /// # 参数
+    /// * `request` - 确认退回请求参数，包含门店编号（shop_no）、订单ID（order_id）
+    ///   或运单号（waybill_id）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，成功时返回空响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/immediate-delivery/delivery-by-business/confirmReturn.html>
     pub async fn confirm_return(
         &self,
         request: &ConfirmReturnRequest,
@@ -178,6 +301,18 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     }
 
     /// 取消配送单
+    ///
+    /// 本接口用于正式取消配送单。建议先调用预取消接口查询取消费用。
+    ///
+    /// # 参数
+    /// * `request` - 取消请求参数，包含门店编号（shop_no）、订单ID（order_id）
+    ///   或运单号（waybill_id）、取消原因ID（cancel_reason_id）和取消原因（cancel_reason）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<CancelOrderResponse>`，包含扣除费用（deduct_fee）和描述信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/immediate-delivery/delivery-by-business/cancelOrder.html>
     pub async fn cancel_order(
         &self,
         request: &CancelDeliveryOrderRequest,
@@ -191,6 +326,18 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     }
 
     /// 添加小费
+    ///
+    /// 本接口用于在配送过程中向骑手添加小费，以激励骑手更快送达。
+    ///
+    /// # 参数
+    /// * `request` - 添加小费请求参数，包含门店编号（shop_no）、订单ID（order_id）
+    ///   或运单号（waybill_id）、小费金额（tips，单位分）、备注（remark）等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，成功时返回空响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/immediate-delivery/delivery-by-business/addTips.html>
     pub async fn add_tips(&self, request: &AddTipsRequest) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -200,7 +347,20 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
         Ok(response)
     }
 
-    /// 添加配送单
+    /// 正式下单
+    ///
+    /// 本接口用于正式创建即时配送订单。建议先调用预下单接口确认费用等信息后再正式下单。
+    ///
+    /// # 参数
+    /// * `request` - 下单请求参数，包含配送公司ID（delivery_id）、门店编号（shop_no）、
+    ///   发货人（sender）、收货人（receiver）、货物信息（cargo）、订单信息（order_info）等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<AddDeliveryOrderResponse>`，包含订单ID、运单号、运费、
+    /// 预计送达时间等信息。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/immediate-delivery/delivery-by-business/addOrder.html>
     pub async fn add_order(
         &self,
         request: &AddDeliveryOrderRequest,
@@ -216,6 +376,18 @@ impl<'a> WechatMxaImmediateDelivery<'a> {
     // --- 运力方使用接口 ---
 
     /// 更新配送单状态（供配送公司调用）
+    ///
+    /// 本接口供配送公司（运力方）调用，用于更新配送单的实时状态。
+    ///
+    /// # 参数
+    /// * `request` - 更新请求参数，包含运单号（waybill_id）、订单状态（order_status）、
+    ///   操作时间（action_time）和操作描述（action_msg）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`，成功时返回空响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/immediate-delivery/delivery-by-delivery/updateOrder.html>
     pub async fn delivery_update_order(
         &self,
         request: &DeliveryUpdateOrderRequest,

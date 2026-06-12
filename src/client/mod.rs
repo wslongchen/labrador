@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -56,7 +56,7 @@ pub use interceptors::RequestInterceptor;
 pub(crate) const DEFAULT_USER_AGENT: &str = concat!(
     "Labrador/",
     env!("CARGO_PKG_VERSION"),
-    " (+https://github.com/wslongchen/labrador)"
+    " (+https://github.com/woofcloud/labrador)"
 );
 
 /// API客户端
@@ -109,10 +109,10 @@ impl ApiClient {
         // 配置TLS
         if let Some(tls_config) = &config.tls_config {
             if let Some(min_protocol_version) = tls_config.min_protocol_version.as_ref() {
-                client_builder = client_builder.min_tls_version(min_protocol_version.clone());
+                client_builder = client_builder.min_tls_version(*min_protocol_version);
             }
             if let Some(max_protocol_version) = tls_config.max_protocol_version.as_ref() {
-                client_builder = client_builder.max_tls_version(max_protocol_version.clone());
+                client_builder = client_builder.max_tls_version(*max_protocol_version);
             }
             for cert in &tls_config.root_certificates {
                 client_builder = client_builder.add_root_certificate(cert.clone());

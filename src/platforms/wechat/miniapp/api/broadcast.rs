@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -45,11 +45,15 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 创建直播间
     ///
     /// 调用此接口创建直播间，创建成功后将在直播间列表展示。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `request` - 创建直播间所需的参数，详见 [`CreateRoomRequest`]
     ///
     /// # 返回
     /// 成功返回包含 `room_id` 的响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/createLiveRoom.html>
     pub async fn create_room(
         &self,
         request: &CreateRoomRequest,
@@ -65,12 +69,16 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 获取直播间列表和回放
     ///
     /// 该接口用于获取直播间列表及直播间信息。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `start` - 起始偏移量，从0开始
     /// * `limit` - 获取数量，最大30
     ///
     /// # 返回
     /// 包含直播间信息列表和总数的响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/getLiveInfo.html>
     pub async fn get_live_info(&self, start: i32, limit: i32) -> LabradorResult<LiveInfoResponse> {
         let response: WechatApiResponse<LiveInfoResponse> = self
             .client
@@ -86,8 +94,12 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 删除直播间
     ///
     /// 该接口用于删除直播间。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/deleteLiveRoom.html>
     pub async fn delete_room(&self, room_id: i32) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -103,8 +115,12 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 导入商品到直播间
     ///
     /// 该接口用于往指定直播间导入商品。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `request` - 导入商品参数，包含直播间ID和商品ID列表等。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/addGoodsToRoom.html>
     pub async fn add_goods_to_room(
         &self,
         request: &AddGoodsToRoomRequest,
@@ -120,8 +136,12 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 编辑直播间
     ///
     /// 该接口用于编辑直播间信息。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `request` - 编辑直播间参数，包含直播间ID及需修改的字段。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/editLiveRoom.html>
     pub async fn edit_room(&self, request: &EditRoomRequest) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -134,11 +154,15 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 获取直播间推流地址
     ///
     /// 该接口用于获取直播间推流地址。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
     ///
     /// # 返回
-    /// 包含推流地址的响应。
+    /// 包含推流地址和拉流地址的响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/getPushUrl.html>
     pub async fn get_push_url(&self, room_id: i32) -> LabradorResult<PushUrlResponse> {
         let response: WechatApiResponse<PushUrlResponse> = self
             .client
@@ -153,16 +177,18 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
 
     /// 获取直播间分享二维码
     ///
-    /// 该接口用于获取直播间分享二维码。
-    /// # 参数说明
+    /// 该接口用于获取直播间分享二维码图片。
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
     /// * `params` - 自定义参数，可传入页面路径参数。
     ///
     /// # 返回
-    /// 包含二维码图片二进制数据的响应（此处返回Bytes，需要进一步处理）。
-    /// 注意：此接口返回的是图片流，而非JSON，需要特殊处理。
-    /// 此处为简化，返回 `WechatApiResponse<Vec<u8>>` 可能不合适，实际使用时可能需要调整。
-    /// 建议在 `wechat_client` 层增加一个直接返回 `Bytes` 的方法。
+    /// 返回 `LabradorResult<Vec<u8>>`，即二维码图片的二进制数据。
+    /// 注意：此接口返回的是图片流，而非JSON。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/getSharedCode.html>
     pub async fn get_shared_code(
         &self,
         room_id: i32,
@@ -185,8 +211,12 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 获取主播副号
     ///
     /// 该接口用于获取主播副号。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/getSubAnchor.html>
     pub async fn get_sub_anchor(&self, room_id: i32) -> LabradorResult<SubAnchorResponse> {
         let response: WechatApiResponse<SubAnchorResponse> = self
             .client
@@ -202,9 +232,13 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 修改主播副号
     ///
     /// 该接口用于修改主播副号。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
     /// * `username` - 副号微信号
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/modifySubAnchor.html>
     pub async fn modify_sub_anchor(
         &self,
         room_id: i32,
@@ -227,8 +261,12 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 删除主播副号
     ///
     /// 该接口用于删除主播副号。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/deleteSubAnchor.html>
     pub async fn delete_sub_anchor(&self, room_id: i32) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -244,9 +282,13 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 添加主播副号
     ///
     /// 该接口用于添加主播副号。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
     /// * `username` - 副号微信号
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/addSubAnchor.html>
     pub async fn add_sub_anchor(
         &self,
         room_id: i32,
@@ -269,9 +311,13 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 删除直播间商品
     ///
     /// 该接口用于删除直播间内已导入的商品。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
     /// * `goods_id` - 商品ID
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/deleteGoodsInRoom.html>
     pub async fn delete_goods_from_room(
         &self,
         room_id: i32,
@@ -294,9 +340,13 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 推送商品到直播间
     ///
     /// 该接口用于将商品推送至直播间，观众端会收到推送消息。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
     /// * `goods_id` - 商品ID
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/pushGoods.html>
     pub async fn push_goods(
         &self,
         room_id: i32,
@@ -319,10 +369,14 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 上下架商品
     ///
     /// 该接口用于在直播间内上架或下架商品。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
     /// * `goods_id` - 商品ID
     /// * `on_sale` - 上架状态：1-上架，0-下架
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/setGoodsOnSale.html>
     pub async fn set_goods_on_sale(
         &self,
         room_id: i32,
@@ -347,8 +401,12 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 直播间商品排序
     ///
     /// 该接口用于调整直播间内商品的展示顺序。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `request` - 排序参数，包含直播间ID和排序后的商品ID列表。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/sortGoods.html>
     pub async fn sort_goods(
         &self,
         request: &SortGoodsRequest,
@@ -364,8 +422,12 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 修改直播间小助手
     ///
     /// 该接口用于修改直播间小助手信息。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `request` - 修改小助手参数。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/modifyAssistant.html>
     pub async fn modify_assistant(
         &self,
         request: &ModifyAssistantRequest,
@@ -381,8 +443,12 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 查询直播间小助手列表
     ///
     /// 该接口用于查询直播间小助手列表。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/getAssistantList.html>
     pub async fn get_assistant_list(&self, room_id: i32) -> LabradorResult<AssistantListResponse> {
         let response: WechatApiResponse<AssistantListResponse> = self
             .client
@@ -398,9 +464,13 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 删除直播间小助手
     ///
     /// 该接口用于删除直播间指定小助手。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
     /// * `username` - 小助手微信号
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/removeAssistant.html>
     pub async fn remove_assistant(
         &self,
         room_id: i32,
@@ -423,9 +493,13 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 添加直播间小助手
     ///
     /// 该接口用于添加直播间小助手。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
     /// * `username` - 小助手微信号
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/addAssistant.html>
     pub async fn add_assistant(
         &self,
         room_id: i32,
@@ -447,9 +521,14 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
 
     /// 开启/关闭直播间全局禁言
     ///
-    /// # 参数说明
+    /// 该接口用于控制直播间的全局禁言状态。
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
-    /// * `ban_comment` - 0-开启禁言，1-关闭禁言（或相反，请以官方文档为准）
+    /// * `ban_comment` - 禁言状态：1-开启禁言，0-关闭禁言
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/updateComment.html>
     pub async fn update_comment(
         &self,
         room_id: i32,
@@ -471,9 +550,14 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
 
     /// 开启/关闭直播间官方收录
     ///
-    /// # 参数说明
+    /// 该接口用于控制直播间是否被官方收录（feed流展示）。
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
-    /// * `is_feed_public` - 0-关闭，1-开启
+    /// * `is_feed_public` - 收录状态：1-开启收录，0-关闭收录
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/updateFeedPublic.html>
     pub async fn update_feed_public(
         &self,
         room_id: i32,
@@ -495,9 +579,14 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
 
     /// 开启/关闭客服功能
     ///
-    /// # 参数说明
+    /// 该接口用于控制直播间的客服功能开关。
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
-    /// * `close_kf` - 0-关闭，1-开启（或相反，请以官方文档为准）
+    /// * `close_kf` - 客服状态：1-关闭客服，0-开启客服
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/updateKF.html>
     pub async fn update_kf(
         &self,
         room_id: i32,
@@ -519,9 +608,14 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
 
     /// 开启/关闭回放功能
     ///
-    /// # 参数说明
+    /// 该接口用于控制直播间的回放功能开关。
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
-    /// * `close_replay` - 0-关闭，1-开启（或相反，请以官方文档为准）
+    /// * `close_replay` - 回放状态：1-关闭回放，0-开启回放
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/updateReplay.html>
     pub async fn update_replay(
         &self,
         room_id: i32,
@@ -543,12 +637,17 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
 
     /// 下载商品讲解视频
     ///
-    /// # 参数说明
+    /// 该接口用于获取直播间中指定商品的讲解视频下载地址。
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
     /// * `goods_id` - 商品ID
     ///
     /// # 返回
     /// 包含视频下载地址等信息的响应。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/studio-management/getGoodsVideo.html>
     pub async fn get_goods_video(
         &self,
         room_id: i32,
@@ -570,6 +669,15 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 添加并提审商品
     ///
     /// 调用此接口上传并提审需要直播的商品信息，审核通过后商品录入【小程序直播】商品库。
+    ///
+    /// # 参数
+    /// * `request` - 添加商品请求参数，包含商品名称、缩略图、价格类型、价格和详情页路径等。
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<AddGoodsResponse>`，包含商品ID。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/commodity-management/addGoods.html>
     pub async fn add_goods(&self, request: &AddGoodsRequest) -> LabradorResult<AddGoodsResponse> {
         let response: WechatApiResponse<AddGoodsResponse> = self
             .client
@@ -582,8 +690,12 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 重新提交商品审核
     ///
     /// 调用此接口可以对已撤回提审的商品再次发起提审申请。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `goods_id` - 商品ID
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/commodity-management/reAuditGoods.html>
     pub async fn audit_goods(&self, goods_id: i32) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -599,8 +711,12 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 获取商品的信息与审核状态
     ///
     /// 该接口用于获取商品的信息与审核状态。
-    /// # 参数说明
-    /// * `goods_id` - 商品ID数组，最多10个
+    ///
+    /// # 参数
+    /// * `goods_ids` - 商品ID数组，最多10个
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/commodity-management/getGoodsWarehouse.html>
     pub async fn get_goods_warehouse(&self, goods_ids: &[i32]) -> LabradorResult<Vec<GoodsInfo>> {
         let response: WechatApiResponse<GoodsWarehouseResponse> = self
             .client
@@ -616,8 +732,12 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 撤回商品审核
     ///
     /// 该接口用于撤回商品审核，消耗的提审次数不返还。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `goods_id` - 商品ID
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/commodity-management/resetAuditGoods.html>
     pub async fn reset_audit_goods(&self, goods_id: i32) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -634,8 +754,15 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     ///
     /// 调用此接口可以更新商品信息。
     /// 审核通过的商品仅允许更新价格类型与价格，审核中的商品不允许更新，未审核的商品允许更新所有字段。
+    ///
     /// # 注意
     /// 只传入需要更新的字段。
+    ///
+    /// # 参数
+    /// * `request` - 更新商品请求参数，包含商品ID及需要更新的字段。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/commodity-management/updateGoods.html>
     pub async fn update_goods(
         &self,
         request: &UpdateGoodsRequest,
@@ -651,10 +778,14 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 获取商品列表
     ///
     /// 该接口用于获取不同审核状态的商品信息。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `status` - 商品状态，0：未审核，1：审核中，2：审核通过，3：审核驳回
     /// * `offset` - 起始偏移量
     /// * `limit` - 获取数量，最大30
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/commodity-management/getApprovedGoods.html>
     pub async fn get_approved_goods(
         &self,
         status: i32,
@@ -675,8 +806,12 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 删除商品
     ///
     /// 调用此接口，可删除【小程序直播】商品库中的商品，删除后直播间上架的该商品也将被同步删除，不可恢复。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `goods_id` - 商品ID
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/commodity-management/deleteGoods.html>
     pub async fn delete_goods(&self, goods_id: i32) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -694,9 +829,13 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 设置成员角色
     ///
     /// 调用此接口设置小程序直播成员的管理员、运营者和主播角色。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `username` - 成员微信号
     /// * `role` - 角色，2-主播，3-运营者，4-管理员
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/role-management/addRole.html>
     pub async fn add_role(&self, username: &str, role: i32) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -715,9 +854,13 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 移除成员角色
     ///
     /// 调用此接口可移除小程序直播成员的管理员、运营者和主播角色。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `username` - 成员微信号
     /// * `role` - 角色，2-主播，3-运营者，4-管理员
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/role-management/deleteRole.html>
     pub async fn delete_role(
         &self,
         username: &str,
@@ -740,10 +883,14 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 查询成员列表
     ///
     /// 该接口用于查询小程序直播成员列表。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `role` - 角色，2-主播，3-运营者，4-管理员
     /// * `offset` - 起始偏移量
     /// * `limit` - 获取数量，最大30
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/role-management/getRoleList.html>
     pub async fn get_role_list(
         &self,
         role: i32,
@@ -766,8 +913,12 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 发送直播开始事件
     ///
     /// 该接口用于向长期订阅用户群发直播间开始事件。
-    /// # 参数说明
+    ///
+    /// # 参数
     /// * `room_id` - 直播间ID
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/subscribe-message/pushMessage.html>
     pub async fn push_message(&self, room_id: i32) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -783,8 +934,12 @@ impl<'a> WechatMxaLiveBroadcast<'a> {
     /// 获取长期订阅用户列表
     ///
     /// 该接口用于获取长期订阅用户列表。
-    /// # 参数说明
-    /// * `request` - 包含分页参数和可选的上次拉取时间戳。
+    ///
+    /// # 参数
+    /// * `request` - 包含分页参数（limit、offset）和可选的上次拉取时间戳（last_time）。
+    ///
+    /// # 微信官方文档
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/livebroadcast/subscribe-message/getFollowers.html>
     pub async fn get_wxa_followers(
         &self,
         request: &GetWxaFollowersRequest,

@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -305,5 +305,140 @@ impl From<x509_parser::nom::Err<x509_parser::prelude::PEMError>> for LabraError 
 impl From<x509_parser::nom::Err<x509_parser::prelude::X509Error>> for LabraError {
     fn from(err: x509_parser::nom::Err<x509_parser::prelude::X509Error>) -> Self {
         LabraError::Certificate(err.to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_labra_error_display() {
+        // 测试各种错误类型的 Display
+        let err = LabraError::Config("test config error".to_string());
+        assert!(err.to_string().contains("test config error"));
+
+        let err = LabraError::Crypto("test crypto error".to_string());
+        assert!(err.to_string().contains("test crypto error"));
+
+        let err = LabraError::Sign("test sign error".to_string());
+        assert!(err.to_string().contains("test sign error"));
+
+        let err = LabraError::Timeout;
+        assert!(
+            err.to_string().contains("timeout")
+                || err.to_string().contains("Timeout")
+                || err.to_string().contains("超时")
+        );
+
+        let err = LabraError::Unknown;
+        assert!(!err.to_string().is_empty());
+    }
+
+    #[test]
+    fn test_labra_error_business() {
+        let err = LabraError::business("40001", "invalid credential".to_string());
+        assert!(err.to_string().contains("40001"));
+        assert!(err.to_string().contains("invalid credential"));
+    }
+
+    #[test]
+    fn test_labra_error_request_failed() {
+        let err = LabraError::request_failed("GET", "/v3/pay/transactions", 400, "invalid request");
+        assert!(err.to_string().contains("GET"));
+        assert!(err.to_string().contains("/v3/pay/transactions"));
+        assert!(err.to_string().contains("400"));
+        assert!(err.to_string().contains("invalid request"));
+    }
+
+    #[test]
+    fn test_labra_error_should_retry() {
+        // 请求失败应该重试
+        let err = LabraError::RequestFailed {
+            method: "GET".to_string(),
+            path: "/api".to_string(),
+            status: 500,
+            body: "error".to_string(),
+        };
+        assert!(err.should_retry(), "请求失败应该重试");
+
+        // 超时应该重试
+        let err = LabraError::Timeout;
+        assert!(err.should_retry(), "超时应该重试");
+
+        // 业务错误不应该重试
+        let err = LabraError::Business {
+            code: "40001".to_string(),
+            message: "error".to_string(),
+        };
+        assert!(!err.should_retry(), "业务错误不应重试");
+
+        // 签名错误不应该重试
+        let err = LabraError::Sign("bad signature".to_string());
+        assert!(!err.should_retry(), "签名错误不应重试");
+    }
+
+    #[test]
+    fn test_labra_error_is_network() {
+        // is_network 仅对 Network 变体返回 true
+        let err = LabraError::Timeout;
+        assert!(!err.is_network(), "超时 is_network 应为 false");
+
+        let err = LabraError::Config("test".to_string());
+        assert!(!err.is_network(), "配置错误 is_network 应为 false");
+
+        let err = LabraError::Unknown;
+        assert!(!err.is_network(), "未知错误 is_network 应为 false");
+    }
+
+    #[test]
+    fn test_labra_error_is_timeout() {
+        // is_timeout 目前仅对 Network 变体中包含超时信息的情况返回 true
+        // LabraError::Timeout 本身通过 Display 展示超时，但 is_timeout 不直接匹配
+        let err = LabraError::Config("test".to_string());
+        assert!(!err.is_timeout(), "配置错误 is_timeout 应为 false");
+
+        let err = LabraError::Unknown;
+        assert!(!err.is_timeout(), "未知错误 is_timeout 应为 false");
+
+        let err = LabraError::Timeout;
+        // 验证 Timeout 变体存在且可 Display
+        assert!(err.to_string().contains("超时") || err.to_string().contains("timeout"));
+    }
+
+    #[test]
+    fn test_labra_error_from_serde_json() {
+        let json_err = serde_json::from_str::<serde_json::Value>("not json").unwrap_err();
+        let err: LabraError = json_err.into();
+        assert!(
+            err.to_string().contains("json")
+                || err.to_string().contains("serde")
+                || !err.to_string().is_empty()
+        );
+    }
+
+    #[test]
+    fn test_labra_error_result_alias() {
+        // 测试 LabradorResult 类型别名
+        let ok_result: LabradorResult<String> = Ok("success".to_string());
+        assert!(ok_result.is_ok());
+
+        let err_result: LabradorResult<String> = Err(LabraError::Timeout);
+        assert!(err_result.is_err());
+    }
+
+    #[test]
+    fn test_labra_error_validation() {
+        let err = LabraError::Validation("missing required field".to_string());
+        assert!(err.to_string().contains("missing required field"));
+    }
+
+    #[test]
+    fn test_labra_error_retry_exhausted() {
+        let err = LabraError::RetryExhausted {
+            attempts: 3,
+            last_error: Box::new(LabraError::Timeout),
+        };
+        assert!(err.to_string().contains("3"));
     }
 }

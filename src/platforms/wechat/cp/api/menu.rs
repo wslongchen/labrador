@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -39,7 +39,17 @@ impl<'a> WechatCpMenu<'a> {
 
     /// 创建菜单（使用默认应用ID）
     ///
-    /// 使用客户端配置的agent_id创建菜单。
+    /// 使用客户端配置的 agent_id 为应用创建自定义菜单。
+    /// 一级菜单最多 3 个，二级菜单最多 5 个。
+    ///
+    /// # 参数
+    /// * `menu` - 菜单配置信息，包含按钮列表和可选的匹配规则
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90231>
     pub async fn create(&self, menu: MenuInfo) -> LabradorResult<WechatApiResponse> {
         let agent_id = self
             .client
@@ -50,7 +60,17 @@ impl<'a> WechatCpMenu<'a> {
 
     /// 创建菜单（指定应用ID）
     ///
-    /// 为指定应用创建自定义菜单。
+    /// 为指定应用创建自定义菜单。一级菜单最多 3 个，二级菜单最多 5 个。
+    ///
+    /// # 参数
+    /// * `agent_id` - 应用 id
+    /// * `menu` - 菜单配置信息，包含按钮列表和可选的匹配规则
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90231>
     pub async fn create_with_agentid(
         &self,
         agent_id: i32,
@@ -65,7 +85,13 @@ impl<'a> WechatCpMenu<'a> {
 
     /// 删除菜单（使用默认应用ID）
     ///
-    /// 使用客户端配置的agent_id删除菜单。
+    /// 使用客户端配置的 agent_id 删除应用的自定义菜单。
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90232>
     pub async fn delete(&self) -> LabradorResult<WechatApiResponse> {
         let agent_id = self
             .client
@@ -77,6 +103,15 @@ impl<'a> WechatCpMenu<'a> {
     /// 删除菜单（指定应用ID）
     ///
     /// 删除指定应用的自定义菜单。
+    ///
+    /// # 参数
+    /// * `agent_id` - 应用 id
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90232>
     pub async fn delete_with_agentid(&self, agent_id: i32) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -87,7 +122,13 @@ impl<'a> WechatCpMenu<'a> {
 
     /// 获取菜单（使用默认应用ID）
     ///
-    /// 使用客户端配置的agent_id获取菜单配置。
+    /// 使用客户端配置的 agent_id 获取当前菜单配置。
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<MenuInfo>`，包含菜单按钮列表
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90233>
     pub async fn get(&self) -> LabradorResult<MenuInfo> {
         let agent_id = self
             .client
@@ -99,6 +140,15 @@ impl<'a> WechatCpMenu<'a> {
     /// 获取菜单（指定应用ID）
     ///
     /// 获取指定应用的菜单配置。
+    ///
+    /// # 参数
+    /// * `agent_id` - 应用 id
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<MenuInfo>`，包含菜单按钮列表
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/90233>
     pub async fn get_with_agentid(&self, agent_id: i32) -> LabradorResult<MenuInfo> {
         let response: WechatApiResponse<MenuInfo> = self
             .client

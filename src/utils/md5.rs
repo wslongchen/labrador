@@ -2,7 +2,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -12,10 +12,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -37,14 +37,14 @@ pub fn md5<S:Into<String>>(input: S) -> String {
 
     #[cfg(feature = "openssl-crypto")]
     fn crypto_md5(input: String) -> String {
-
-        let mut result = String::default();
-        if let Ok(mut h) = openssl::hash::Hasher::new(openssl::hash::MessageDigest::md5()) {
-            h.update(input.as_bytes()).unwrap();
-            let res = h.finish().unwrap();
-            result = hex::encode(result).to_string();
+        match openssl::hash::Hasher::new(openssl::hash::MessageDigest::md5()) {
+            Ok(mut h) => {
+                h.update(input.as_bytes()).unwrap();
+                let res = h.finish().unwrap();
+                hex::encode(res)
+            }
+            Err(_) => String::new(),
         }
-        result
     }
 
     #[cfg(not(feature = "openssl-crypto"))]

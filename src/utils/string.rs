@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -44,9 +44,9 @@ pub fn uuid() -> String {
 /// 驼峰命名转蛇形命名
 pub fn camel_to_snake(camel: &str) -> String {
     let mut snake = String::new();
-    let mut chars = camel.chars().peekable();
+    let chars = camel.chars().peekable();
 
-    while let Some(c) = chars.next() {
+    for c in chars {
         if c.is_uppercase() && !snake.is_empty() {
             snake.push('_');
         }

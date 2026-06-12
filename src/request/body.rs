@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -232,7 +232,7 @@ impl RequestBody {
     /// 返回用于签名计算的规范字符串表示。
     ///
     /// JSON body 返回完整序列化 JSON（如 `{"appid":"...","amount":{...}}`），
-    /// 避免 [`as_text`] 对 `serde_json::Value::Object` 返回空串导致签名不匹配。
+    /// 避免 `as_text` 对 `serde_json::Value::Object` 返回空串导致签名不匹配。
     pub fn to_sign_string(&self) -> String {
         match self {
             RequestBody::Json(v) => v.to_string(),

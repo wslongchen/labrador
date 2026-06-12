@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -375,7 +375,7 @@ impl AlipayClient {
             .decrypt(&encrypted_data)
             .map_err(|e| LabraError::Crypto(format!("解密失败: {}", e)))?;
 
-        String::from_utf8(decrypted).map_err(|e| LabraError::Utf8(e))
+        String::from_utf8(decrypted).map_err(LabraError::Utf8)
     }
 
     /// 生成签名
@@ -591,13 +591,12 @@ impl AlipayClient {
     {
         use serde_json::Value;
 
-        let json_value: Value =
-            serde_json::from_str(response_text).map_err(|e| LabraError::Json(e))?;
+        let json_value: Value = serde_json::from_str(response_text).map_err(LabraError::Json)?;
 
         // 检查错误响应
         if let Some(error_response) = json_value.get("error_response") {
             let error: AlipayResponse<Value> =
-                serde_json::from_value(error_response.clone()).map_err(|e| LabraError::Json(e))?;
+                serde_json::from_value(error_response.clone()).map_err(LabraError::Json)?;
 
             return Err(LabraError::business(
                 error.sub_code.unwrap_or(error.code.clone()),
@@ -609,7 +608,7 @@ impl AlipayClient {
         let response_key = method.response_key();
         if let Some(response_value) = json_value.get(&response_key) {
             let response: AlipayResponse<T> =
-                serde_json::from_value(response_value.clone()).map_err(|e| LabraError::Json(e))?;
+                serde_json::from_value(response_value.clone()).map_err(LabraError::Json)?;
             // 获取签名和证书序列号
             let sign = json_value
                 .get("sign")
@@ -682,7 +681,7 @@ impl AlipayClient {
         let response_value = json_value
             .get(key)
             .ok_or_else(|| LabraError::Other(format!("找不到 key: {}", key)))?;
-        serde_json::to_string(response_value).map_err(|e| LabraError::Json(e).into())
+        serde_json::to_string(response_value).map_err(LabraError::Json)
     }
 
     /// 执行页面支付请求（同步）
@@ -805,13 +804,7 @@ impl AlipayClient {
         let sign_content = sign_params
             .iter()
             .filter(|(_, v)| !v.is_empty())
-            .map(|(k, v)| {
-                format!(
-                    "{}={}",
-                    k,
-                    urlencoding::decode(v).unwrap_or_default().to_string()
-                )
-            })
+            .map(|(k, v)| format!("{}={}", k, urlencoding::decode(v).unwrap_or_default()))
             .collect::<Vec<String>>()
             .join("&");
 
@@ -823,8 +816,8 @@ impl AlipayClient {
 
         // 解析通知数据
         let notify: AlipayNotifyResponse =
-            serde_json::from_value(serde_json::to_value(&params).map_err(|e| LabraError::Json(e))?)
-                .map_err(|e| LabraError::Json(e))?;
+            serde_json::from_value(serde_json::to_value(&params).map_err(LabraError::Json)?)
+                .map_err(LabraError::Json)?;
 
         Ok(notify)
     }
@@ -841,16 +834,16 @@ impl AlipayClient {
 
     /// 获取支付宝支付服务
     pub fn alipay_service(&self) -> AlipayPayService<'_> {
-        AlipayPayService::new(&self)
+        AlipayPayService::new(self)
     }
 
     /// 获取支付宝小程序服务
     pub fn alipay_mining_service(&self) -> AlipayMiniappService<'_> {
-        AlipayMiniappService::new(&self)
+        AlipayMiniappService::new(self)
     }
 
     /// 获取支付宝开放平台服务
     pub fn alipay_open_service(&self) -> AlipayOpenService<'_> {
-        AlipayOpenService::new(&self)
+        AlipayOpenService::new(self)
     }
 }

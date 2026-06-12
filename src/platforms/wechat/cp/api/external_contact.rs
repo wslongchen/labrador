@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -51,6 +51,15 @@ impl<'a> WechatCpExternalContact<'a> {
     /// 注意:
     /// - 通过API添加的「联系我」不会在管理端进行展示，每个企业可通过API最多配置50万个「联系我」
     /// - 临时会话模式不占用「联系我」数量，但每日最多添加10万个，并且仅支持单人
+    ///
+    /// # 参数
+    /// * `contact_way` - 「联系我」配置，包含类型、场景、使用成员等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<ContactWayResponse>`，包含 config_id 和二维码链接
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92228>
     pub async fn add_contact_way(
         &self,
         contact_way: ContactWay,
@@ -71,6 +80,17 @@ impl<'a> WechatCpExternalContact<'a> {
     }
 
     /// 获取企业已配置的「联系我」方式
+    ///
+    /// 通过 config_id 查询「联系我」方式的详细配置。
+    ///
+    /// # 参数
+    /// * `config_id` - 「联系我」方式的配置 id
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<ContactWay>`，包含「联系我」的完整配置
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92228>
     pub async fn get_contact_way(&self, config_id: &str) -> LabradorResult<ContactWay> {
         let response: WechatApiResponse<ContactWay> = self
             .client
@@ -83,6 +103,17 @@ impl<'a> WechatCpExternalContact<'a> {
     }
 
     /// 更新企业已配置的「联系我」方式
+    ///
+    /// 更新已有的「联系我」配置，config_id 必填。
+    ///
+    /// # 参数
+    /// * `contact_way` - 「联系我」配置（必须包含 config_id）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92228>
     pub async fn update_contact_way(
         &self,
         contact_way: ContactWay,
@@ -107,6 +138,15 @@ impl<'a> WechatCpExternalContact<'a> {
     }
 
     /// 删除企业已配置的「联系我」方式
+    ///
+    /// # 参数
+    /// * `config_id` - 「联系我」方式的配置 id
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92228>
     pub async fn delete_contact_way(&self, config_id: &str) -> LabradorResult<WechatApiResponse> {
         let response: WechatApiResponse = self
             .client
@@ -121,6 +161,16 @@ impl<'a> WechatCpExternalContact<'a> {
     /// 结束临时会话
     ///
     /// 将指定的企业成员和客户之前的临时会话断开，断开前会自动下发已配置的结束语。
+    ///
+    /// # 参数
+    /// * `user_id` - 企业成员的 userid
+    /// * `external_user_id` - 外部联系人的 userid
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92228>
     pub async fn close_temp_chat(
         &self,
         user_id: &str,
@@ -144,6 +194,15 @@ impl<'a> WechatCpExternalContact<'a> {
     /// 获取客户列表
     ///
     /// 企业可通过此接口获取指定成员添加的客户列表。
+    ///
+    /// # 参数
+    /// * `userid` - 企业成员的 userid
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<Vec<String>>`，包含该成员添加的客户 external_userid 列表
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92113>
     pub async fn list_external_contacts(&self, userid: &str) -> LabradorResult<Vec<String>> {
         let response: WechatApiResponse<ExternalContactListResponse> = self
             .client
@@ -155,6 +214,16 @@ impl<'a> WechatCpExternalContact<'a> {
     /// 获取客户详情
     ///
     /// 企业可通过此接口，根据外部联系人的userid，拉取客户详情。
+    ///
+    /// # 参数
+    /// * `external_userid` - 外部联系人的 userid
+    /// * `cursor` - 用于分页查询的游标，首次请求可不填
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<CpExternalContactDetail>`，包含外部联系人信息和跟进人信息
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92114>
     pub async fn get_contact_detail(
         &self,
         external_userid: &str,
@@ -174,6 +243,17 @@ impl<'a> WechatCpExternalContact<'a> {
     /// 批量获取客户详情
     ///
     /// 企业/第三方可通过此接口获取指定成员添加的客户信息列表。
+    ///
+    /// # 参数
+    /// * `userid_list` - 企业成员的 userid 列表，最多 100 个
+    /// * `cursor` - 用于分页查询的游标
+    /// * `limit` - 每次返回的最大记录数，默认为 50，最大为 100
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<BatchExternalContactDetail>`，包含客户信息列表和下一页游标
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92994>
     pub async fn batch_get_contact_detail(
         &self,
         userid_list: Vec<String>,
@@ -195,6 +275,17 @@ impl<'a> WechatCpExternalContact<'a> {
     }
 
     /// 修改客户备注信息
+    ///
+    /// 企业可通过此接口修改指定成员添加的客户的备注信息。
+    ///
+    /// # 参数
+    /// * `req` - 备注信息请求，包含 userid、external_userid、备注名、描述等
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92115>
     pub async fn update_remark(
         &self,
         req: UpdateRemarkRequest,
@@ -207,6 +298,14 @@ impl<'a> WechatCpExternalContact<'a> {
     }
 
     /// 获取配置了客户联系功能的成员列表
+    ///
+    /// 企业可通过此接口获取配置了客户联系功能的成员列表。
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<Vec<String>>`，包含具有客户联系功能的成员 userid 列表
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92571>
     pub async fn list_followers(&self) -> LabradorResult<Vec<String>> {
         let response: WechatApiResponse<FollowUserListResponse> = self
             .client
@@ -218,6 +317,18 @@ impl<'a> WechatCpExternalContact<'a> {
     // ==================== 离职继承 ====================
 
     /// 获取待分配的离职成员列表
+    ///
+    /// 企业和第三方可通过此接口获取离职成员的未分配客户列表。
+    ///
+    /// # 参数
+    /// * `cursor` - 分页查询游标
+    /// * `page_size` - 分页大小，最多 1000，默认 1000
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<UnassignedListResponse>`，包含待分配的客户信息
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92124>
     pub async fn list_unassigned(
         &self,
         cursor: Option<&str>,
@@ -235,6 +346,17 @@ impl<'a> WechatCpExternalContact<'a> {
     }
 
     /// 分配离职成员的客户
+    ///
+    /// 企业可通过此接口分配离职成员的客户给其他成员。
+    ///
+    /// # 参数
+    /// * `req` - 转移请求，包含原跟进人、新跟进人和客户列表
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<TransferCustomerResponse>`，包含每个客户的转移结果
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92124>
     pub async fn transfer_resigned_customer(
         &self,
         req: TransferCustomerRequest,
@@ -247,6 +369,19 @@ impl<'a> WechatCpExternalContact<'a> {
     }
 
     /// 查询离职成员的客户分配情况
+    ///
+    /// 查询离职成员的客户分配结果。
+    ///
+    /// # 参数
+    /// * `handover_userid` - 原跟进人的 userid
+    /// * `takeover_userid` - 新跟进人的 userid
+    /// * `cursor` - 分页查询游标
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<TransferResultResponse>`，包含每个客户的分配状态
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92124>
     pub async fn get_resigned_transfer_result(
         &self,
         handover_userid: &str,
@@ -270,6 +405,17 @@ impl<'a> WechatCpExternalContact<'a> {
     // ==================== 在职继承 ====================
 
     /// 转接在职成员的客户
+    ///
+    /// 企业可通过此接口将在职成员的客户转接给其他成员。
+    ///
+    /// # 参数
+    /// * `req` - 转移请求，包含原跟进人、新跟进人和客户列表
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<TransferCustomerResponse>`，包含每个客户的转移结果
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92125>
     pub async fn transfer_customer(
         &self,
         req: TransferCustomerRequest,
@@ -282,6 +428,19 @@ impl<'a> WechatCpExternalContact<'a> {
     }
 
     /// 查询在职成员的客户转接情况
+    ///
+    /// 查询在职成员的客户转接结果。
+    ///
+    /// # 参数
+    /// * `handover_userid` - 原跟进人的 userid
+    /// * `takeover_userid` - 新跟进人的 userid
+    /// * `cursor` - 分页查询游标
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<TransferResultResponse>`，包含每个客户的转接状态
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92125>
     pub async fn get_transfer_result(
         &self,
         handover_userid: &str,
@@ -305,6 +464,20 @@ impl<'a> WechatCpExternalContact<'a> {
     // ==================== 客户群管理 ====================
 
     /// 获取客户群列表
+    ///
+    /// 企业可通过此接口获取客户群列表。
+    ///
+    /// # 参数
+    /// * `status_filter` - 客户群状态过滤：0-所有列表，1-离职待继承，2-离职继承中，3-离职继承完成
+    /// * `owner_filter` - 群主过滤条件，可指定 userid 或 partyid
+    /// * `cursor` - 分页查询游标
+    /// * `limit` - 分页大小，最大 1000
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<GroupChatListResponse>`，包含客户群列表和下一页游标
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92120>
     pub async fn list_group_chat(
         &self,
         status_filter: Option<u8>,
@@ -330,6 +503,18 @@ impl<'a> WechatCpExternalContact<'a> {
     }
 
     /// 获取客户群详情
+    ///
+    /// 通过 chat_id 获取客户群的详细信息，包括群成员列表等。
+    ///
+    /// # 参数
+    /// * `chat_id` - 客户群 id
+    /// * `need_name` - 是否需要返回群成员的名字，0-不返回，1-返回
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<GroupChatInfo>`，包含客户群的完整信息
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92122>
     pub async fn get_group_chat(
         &self,
         chat_id: &str,
@@ -347,6 +532,18 @@ impl<'a> WechatCpExternalContact<'a> {
     }
 
     /// 分配离职成员的客户群
+    ///
+    /// 企业可通过此接口将离职成员的客户群分配给其他成员。
+    ///
+    /// # 参数
+    /// * `chat_id_list` - 需要转移的客户群 id 列表，最多 100 个
+    /// * `new_owner` - 新群主的 userid
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<GroupChatTransferResponse>`，包含分配失败的客户群列表
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92127>
     pub async fn transfer_group_chat(
         &self,
         chat_id_list: Vec<String>,
@@ -366,6 +563,17 @@ impl<'a> WechatCpExternalContact<'a> {
     // ==================== 消息群发 ====================
 
     /// 添加企业群发消息任务
+    ///
+    /// 企业可通过此接口创建企业群发消息任务。
+    ///
+    /// # 参数
+    /// * `msg_template` - 消息模板，包含消息内容和发送范围
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<MsgTemplateAddResponse>`，包含 msgid 和发送失败的客户列表
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92135>
     pub async fn add_msg_template(
         &self,
         msg_template: MsgTemplate,
@@ -378,6 +586,24 @@ impl<'a> WechatCpExternalContact<'a> {
     }
 
     /// 获取群发记录列表
+    ///
+    /// 企业可通过此接口获取企业的群发记录。
+    ///
+    /// # 参数
+    /// * `chat_type` - 群发任务的类型：single-发给客户，group-发给客户群
+    /// * `start_time` - 群发任务记录开始时间
+    /// * `end_time` - 群发任务记录结束时间
+    /// * `creator` - 群发任务创建人
+    /// * `filter_type` - 过滤类型：0-全部，1-已发送，2-未发送
+    /// * `limit` - 分页大小，最大 100
+    /// * `cursor` - 分页查询游标
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<GroupMsgListResponse>`，包含群发记录列表
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92135>
+    #[allow(clippy::too_many_arguments)]
     pub async fn get_group_msg_list(
         &self,
         chat_type: &str,
@@ -407,6 +633,19 @@ impl<'a> WechatCpExternalContact<'a> {
     }
 
     /// 获取群发成员发送任务列表
+    ///
+    /// 获取群发消息的成员发送任务列表。
+    ///
+    /// # 参数
+    /// * `msgid` - 群发消息的 id
+    /// * `limit` - 分页大小，最大 1000
+    /// * `cursor` - 分页查询游标
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<GroupMsgTaskResponse>`，包含成员发送任务列表
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92135>
     pub async fn get_group_msg_task(
         &self,
         msgid: &str,
@@ -425,6 +664,20 @@ impl<'a> WechatCpExternalContact<'a> {
     }
 
     /// 获取企业群发成员执行结果
+    ///
+    /// 获取指定成员群发消息的发送结果。
+    ///
+    /// # 参数
+    /// * `msgid` - 群发消息的 id
+    /// * `userid` - 发送成员 userid
+    /// * `limit` - 分页大小，最大 1000
+    /// * `cursor` - 分页查询游标
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<GroupMsgSendResultResponse>`，包含发送结果列表
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92135>
     pub async fn get_group_msg_send_result(
         &self,
         msgid: &str,
@@ -451,6 +704,15 @@ impl<'a> WechatCpExternalContact<'a> {
     ///
     /// 企业微信在向企业推送添加外部联系人事件时，会额外返回一个welcome_code，
     /// 企业以此为凭据调用接口，即可通过成员向新添加的客户发送个性化的欢迎语。
+    ///
+    /// # 参数
+    /// * `welcome_msg` - 欢迎语消息，包含 welcome_code 和消息内容（文本/附件等）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92137>
     pub async fn send_welcome_msg(
         &self,
         welcome_msg: WelcomeMsg,
@@ -465,6 +727,17 @@ impl<'a> WechatCpExternalContact<'a> {
     // ==================== 入群欢迎语素材 ====================
 
     /// 添加入群欢迎语素材
+    ///
+    /// 企业可通过此接口添加入群欢迎语素材。
+    ///
+    /// # 参数
+    /// * `template` - 入群欢迎语模板，支持文本、图片、链接、小程序、文件、视频等类型
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<String>`，包含创建的模板 id
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92366>
     pub async fn add_group_welcome_template(
         &self,
         template: GroupWelcomeTemplate,
@@ -480,6 +753,17 @@ impl<'a> WechatCpExternalContact<'a> {
     }
 
     /// 编辑入群欢迎语素材
+    ///
+    /// 编辑已有的入群欢迎语素材，template_id 必填。
+    ///
+    /// # 参数
+    /// * `template` - 入群欢迎语模板（必须包含 template_id）
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<WechatApiResponse>`
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92366>
     pub async fn edit_group_welcome_template(
         &self,
         template: GroupWelcomeTemplate,
@@ -495,6 +779,17 @@ impl<'a> WechatCpExternalContact<'a> {
     }
 
     /// 获取入群欢迎语素材
+    ///
+    /// 通过 template_id 获取入群欢迎语素材的详细内容。
+    ///
+    /// # 参数
+    /// * `template_id` - 模板 id
+    ///
+    /// # 返回
+    /// 返回 `LabradorResult<GroupWelcomeTemplate>`，包含模板的完整内容
+    ///
+    /// # 官方文档
+    /// <https://developer.work.weixin.qq.com/document/path/92366>
     pub async fn get_group_welcome_template(
         &self,
         template_id: &str,

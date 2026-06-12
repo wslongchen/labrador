@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -230,12 +230,10 @@ impl XmlParser {
                     let mut children = serde_json::Map::new();
 
                     // 解析属性
-                    for attr in e.attributes() {
-                        if let Ok(attr) = attr {
-                            let key = String::from_utf8_lossy(attr.key.as_ref());
-                            let value = String::from_utf8_lossy(&attr.value).into_owned();
-                            attributes.insert(key.to_string(), serde_json::Value::String(value));
-                        }
+                    for attr in e.attributes().flatten() {
+                        let key = String::from_utf8_lossy(attr.key.as_ref());
+                        let value = String::from_utf8_lossy(&attr.value).into_owned();
+                        attributes.insert(key.to_string(), serde_json::Value::String(value));
                     }
 
                     // 解析子元素
@@ -302,12 +300,10 @@ impl XmlParser {
                 let mut elem = BytesStart::new(name);
 
                 // 处理属性
-                if let Some(attrs) = obj.get("@attributes") {
-                    if let serde_json::Value::Object(attr_map) = attrs {
-                        for (key, val) in attr_map {
-                            if let serde_json::Value::String(s) = val {
-                                elem.push_attribute((key.as_str(), s.as_str()));
-                            }
+                if let Some(serde_json::Value::Object(attr_map)) = obj.get("@attributes") {
+                    for (key, val) in attr_map {
+                        if let serde_json::Value::String(s) = val {
+                            elem.push_attribute((key.as_str(), s.as_str()));
                         }
                     }
                 }
@@ -317,29 +313,23 @@ impl XmlParser {
                     .map_err(|e| LabraError::Xml(format!("写入开始标签失败: {}", e)))?;
 
                 // 处理文本内容
-                if let Some(text) = obj.get("@text") {
-                    if let serde_json::Value::String(s) = text {
-                        writer
-                            .write_event(Event::Text(BytesText::new(s)))
-                            .map_err(|e| LabraError::Xml(format!("写入文本失败: {}", e)))?;
-                    }
+                if let Some(serde_json::Value::String(s)) = obj.get("@text") {
+                    writer
+                        .write_event(Event::Text(BytesText::new(s)))
+                        .map_err(|e| LabraError::Xml(format!("写入文本失败: {}", e)))?;
                 }
 
                 // 处理CDATA
-                if let Some(cdata) = obj.get("@cdata") {
-                    if let serde_json::Value::String(s) = cdata {
-                        writer
-                            .write_event(Event::CData(BytesCData::new(s)))
-                            .map_err(|e| LabraError::Xml(format!("写入CDATA失败: {}", e)))?;
-                    }
+                if let Some(serde_json::Value::String(s)) = obj.get("@cdata") {
+                    writer
+                        .write_event(Event::CData(BytesCData::new(s)))
+                        .map_err(|e| LabraError::Xml(format!("写入CDATA失败: {}", e)))?;
                 }
 
                 // 处理子元素
-                if let Some(children) = obj.get("@children") {
-                    if let serde_json::Value::Object(child_map) = children {
-                        for (key, val) in child_map {
-                            Self::write_element(writer, key, val)?;
-                        }
+                if let Some(serde_json::Value::Object(child_map)) = obj.get("@children") {
+                    for (key, val) in child_map {
+                        Self::write_element(writer, key, val)?;
                     }
                 }
 
@@ -425,6 +415,7 @@ impl XmlParser {
         Ok(results)
     }
 
+    #[allow(clippy::only_used_in_recursion)]
     fn query_recursive(
         value: &serde_json::Value,
         parts: &[&str],
@@ -444,11 +435,9 @@ impl XmlParser {
                     Self::query_recursive(child, parts, index + 1, results)?;
                 }
                 // 也检查@children
-                if let Some(children) = obj.get("@children") {
-                    if let serde_json::Value::Object(child_map) = children {
-                        if let Some(child) = child_map.get(part) {
-                            Self::query_recursive(child, parts, index + 1, results)?;
-                        }
+                if let Some(serde_json::Value::Object(child_map)) = obj.get("@children") {
+                    if let Some(child) = child_map.get(part) {
+                        Self::query_recursive(child, parts, index + 1, results)?;
                     }
                 }
             }
@@ -548,6 +537,7 @@ impl XmlElement {
     }
 
     /// 转换为字符串
+    #[allow(clippy::inherent_to_string)]
     pub fn to_string(&self) -> String {
         let mut result = String::new();
         self.write_to_string(&mut result, 0);

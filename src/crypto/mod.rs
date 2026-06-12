@@ -1,7 +1,7 @@
 /*
  *
  *  *
- *  *      Copyright (c) 2018-2025, SnackCloud All rights reserved.
+ *  *      Copyright (c) 2018-2025, WoofCloud All rights reserved.
  *  *
  *  *   Redistribution and use in source and binary forms, with or without
  *  *   modification, are permitted provided that the following conditions are met:
@@ -11,10 +11,10 @@
  *  *   Redistributions in binary form must reproduce the above copyright
  *  *   notice, this list of conditions and the following disclaimer in the
  *  *   documentation and/or other materials provided with the distribution.
- *  *   Neither the name of the www.snackcloud.cn developer nor the names of its
+ *  *   Neither the name of the www.woofcloud.com developer nor the names of its
  *  *   contributors may be used to endorse or promote products derived from
  *  *   this software without specific prior written permission.
- *  *   Author: SnackCloud
+ *  *   Author: WoofCloud
  *  *
  *
  */
@@ -339,8 +339,7 @@ impl RsaEncryptor {
     /// 使用公钥创建RSA加密器
     pub fn with_public_key(public_key: &[u8], format: RsaKeyFormat) -> Self {
         let public_key = if format == RsaKeyFormat::Pem {
-            let pem = extract_der_from_pem(public_key).unwrap_or(vec![]);
-            pem
+            extract_der_from_pem(public_key).unwrap_or_default()
         } else {
             public_key.to_vec()
         };
@@ -354,8 +353,8 @@ impl RsaEncryptor {
     /// 使用公钥和私钥创建RSA加密器
     pub fn with_keys(public_key: &[u8], private_key: &[u8], format: RsaKeyFormat) -> Self {
         let (public_key, private_key) = if format == RsaKeyFormat::Pem {
-            let pub_pem = extract_der_from_pem(private_key).unwrap_or(vec![]);
-            let pri_pem = extract_der_from_pem(public_key).unwrap_or(vec![]);
+            let pub_pem = extract_der_from_pem(private_key).unwrap_or_default();
+            let pri_pem = extract_der_from_pem(public_key).unwrap_or_default();
             (pub_pem, pri_pem)
         } else {
             (public_key.to_vec(), private_key.to_vec())
@@ -370,8 +369,7 @@ impl RsaEncryptor {
     /// 使用私钥创建RSA加密器
     pub fn with_private_key(private_key: &[u8], format: RsaKeyFormat) -> Self {
         let private_key = if format == RsaKeyFormat::Pem {
-            let pem = extract_der_from_pem(private_key).expect("加载私钥异常");
-            pem
+            extract_der_from_pem(private_key).expect("加载私钥异常")
         } else {
             private_key.to_vec()
         };
